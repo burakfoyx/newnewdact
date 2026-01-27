@@ -58,6 +58,15 @@ struct SettingsView: View {
                             }
                         }
                         .pickerStyle(.navigationLink)
+                        
+                        Toggle("Low Power Mode (Static Background)", isOn: Binding(
+                             get: { active.lowPowerMode },
+                             set: { newVal in 
+                                 var updated = active
+                                 updated.lowPowerMode = newVal
+                                 accountManager.updateAccount(updated)
+                             }
+                        ))
                     }
                 }
                 

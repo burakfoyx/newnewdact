@@ -7,6 +7,7 @@ struct Account: Codable, Identifiable, Hashable {
     let url: String
     let apiKey: String
     var theme: AppTheme = .blue // Default theme
+    var lowPowerMode: Bool = false
 }
 
 class AccountManager: ObservableObject {
