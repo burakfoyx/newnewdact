@@ -76,7 +76,6 @@ struct ServerListView: View {
             await viewModel.loadServers()
         }
     }
-    }
 }
 
 struct ServerRow: View {
