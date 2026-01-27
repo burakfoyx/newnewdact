@@ -22,10 +22,10 @@ struct ContentView: View {
             TabView(selection: $selectedTab) {
                 NavigationStack {
                     PanelListView(selectedTab: $selectedTab)
-                        .navigationTitle("Panels")
+                        .navigationTitle("API Keys")
                 }
                 .tabItem {
-                    Label("Panels", systemImage: "square.grid.2x2.fill")
+                    Label("API", systemImage: "key.fill")
                 }
                 .tag(0)
                 
@@ -48,6 +48,12 @@ struct ContentView: View {
                 .tag(2)
             }
             .tint(accountManager.activeAccount?.theme.mainColor ?? .blue)
+        }
+        .onAppear {
+            let appearance = UITabBarAppearance()
+            appearance.configureWithTransparentBackground()
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
         }
     }
 }

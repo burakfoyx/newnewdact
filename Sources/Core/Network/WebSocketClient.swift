@@ -95,8 +95,14 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
     }
     
     func sendCommand(_ command: String) {
-        let message = "{\"event\":\"send\",\"args\":[\"\(command)\"]}"
-        sendString(message)
+        let payload: [String: Any] = [
+            "event": "send",
+            "args": [command]
+        ]
+        if let data = try? JSONSerialization.data(withJSONObject: payload),
+           let message = String(data: data, encoding: .utf8) {
+            sendString(message)
+        }
     }
     
     func sendPowerAction(_ signal: String) {

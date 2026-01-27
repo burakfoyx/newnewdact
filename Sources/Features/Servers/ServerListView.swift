@@ -2,21 +2,19 @@ import SwiftUI
 
 class ServerListViewModel: ObservableObject {
     @Published var servers: [ServerAttributes] = []
-    @Published var serverStates: [String: String] = [:]
+    @Published var serverStats: [String: ServerStats] = [:]
     @Published var isLoading = false
     @Published var errorMessage: String?
     
     func loadServers() async {
         await MainActor.run { isLoading = true }
-        
         do {
             let fetchedServers = try await PterodactylClient.shared.fetchServers()
             await MainActor.run {
                 self.servers = fetchedServers
                 self.isLoading = false
             }
-            // Fetch statuses after list is populated
-            await fetchStatuses()
+            await fetchStats()
         } catch {
             await MainActor.run {
                 self.errorMessage = error.localizedDescription
@@ -25,21 +23,21 @@ class ServerListViewModel: ObservableObject {
         }
     }
     
-    func fetchStatuses() async {
-        await withTaskGroup(of: (String, String?).self) { group in
+    func fetchStats() async {
+        await withTaskGroup(of: (String, ServerStats?).self) { group in
             for server in servers {
                 group.addTask {
                     if let stats = try? await PterodactylClient.shared.fetchResources(serverId: server.identifier) {
-                        return (server.uuid, stats.currentState)
+                        return (server.uuid, stats)
                     }
                     return (server.uuid, nil)
                 }
             }
             
-            for await (uuid, state) in group {
-                if let state = state {
+            for await (uuid, stats) in group {
+                if let stats = stats {
                     await MainActor.run {
-                        self.serverStates[uuid] = state
+                        self.serverStats[uuid] = stats
                     }
                 }
             }
@@ -72,10 +70,10 @@ struct ServerListView: View {
                 }
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 20) {
+                    LazyVStack(spacing: 12) { // Tighter spacing
                         ForEach(viewModel.servers, id: \.uuid) { server in
                             NavigationLink(destination: ServerDetailView(server: server)) {
-                                ServerRow(server: server, state: viewModel.serverStates[server.uuid])
+                                ServerRow(server: server, stats: viewModel.serverStats[server.uuid])
                             }
                             .buttonStyle(PlainButtonStyle())
                         }
@@ -85,79 +83,89 @@ struct ServerListView: View {
             }
         }
         .navigationTitle("Servers")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                NavigationLink(destination: SettingsView()) {
-                     Image(systemName: "gearshape.fill")
-                        .foregroundStyle(.white)
-                }
-            }
-        }
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .background(Color.clear) // Transparent for global background
+        .background(Color.clear)
         .task {
             if viewModel.servers.isEmpty {
                 await viewModel.loadServers()
             }
         }
-        // Auto-refresh stats occasionally? 
-        // For now, only on load.
     }
 }
 
 struct ServerRow: View {
     let server: ServerAttributes
-    let state: String?
+    let stats: ServerStats?
     
     var statusColor: Color {
         // Dynamic State
-        if let state = state {
+        if let state = stats?.currentState {
             switch state {
             case "running": return .green
             case "starting": return .yellow
             case "stopping": return .orange
             case "offline": return .gray
-            default: return .black // Unknown
+            case "installing": return .blue
+            case "suspended": return .orange
+            default: return .black
             }
         }
         
         // Static Fallbacks
         if server.isSuspended { return .orange }
         if server.isInstalling { return .blue }
-        return .black // Default "Unknown" until fetched
+        return .black
+    }
+    
+    var memoryUsage: String {
+        guard let bytes = stats?.resources.memoryBytes else { return "0 MB" }
+        return String(format: "%.0f MB", Double(bytes) / 1024 / 1024)
+    }
+    
+    var cpuUsage: String {
+        guard let cpu = stats?.resources.cpuAbsolute else { return "0%" }
+        return String(format: "%.1f%%", cpu)
     }
 
     var body: some View {
         HStack {
-            // Status Indicator (Dot)
-            Circle()
-                .fill(statusColor)
-                .frame(width: 8, height: 8)
-                .shadow(color: statusColor.opacity(0.4), radius: 4)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(server.name)
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                Text(server.node)
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
-                
-                HStack(spacing: 12) {
-                    Label("\(server.limits.memory ?? 0)MB", systemImage: "memorychip")
-                    Label("\(server.limits.disk ?? 0)MB", systemImage: "internaldrive")
+            VStack(alignment: .leading, spacing: 6) {
+                // IP Address (Headline)
+                HStack {
+                     Image(systemName: "network")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.6))
+                        
+                     Text(server.sftpDetails.ip) // Using IP from SFTP details as primary IP proxy
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.white)
                 }
-                .font(.caption2)
-                .foregroundStyle(.white.opacity(0.5))
-                .padding(.top, 4)
+                
+                // Resources
+                HStack(spacing: 16) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "cpu")
+                        Text(cpuUsage)
+                    }
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.8))
+                    
+                    HStack(spacing: 4) {
+                        Image(systemName: "memorychip")
+                        Text(memoryUsage)
+                    }
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.8))
+                }
             }
             
             Spacer()
             
-            Image(systemName: "chevron.right")
-                .foregroundStyle(.white.opacity(0.3))
+            // Minimal chevron or status hint?
+            // "Loose the dot icon... keep the gradient"
+            // The gradient is the background.
         }
-        .padding()
+        .padding(12) // Lower internal padding
         .background(
             LinearGradient(
                 colors: [statusColor.opacity(0.25), statusColor.opacity(0.05)],
@@ -165,6 +173,6 @@ struct ServerRow: View {
                 endPoint: .trailing
             )
         )
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
