@@ -107,7 +107,7 @@ struct ServerDetailView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .ignoresSafeArea(.keyboard, edges: .bottom)
+        // Removed ignoresSafeArea(.keyboard) to allow content to adjust for keyboard
     }
     
     var statusColor: Color {
@@ -249,7 +249,9 @@ struct GlassyNavBar: View {
             }
         }
         .padding(14)
-        .glassEffect(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5) // Soffer shadow
     }
 }
 

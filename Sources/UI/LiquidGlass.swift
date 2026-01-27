@@ -75,7 +75,8 @@ struct LiquidGlassEffectModifier<CShape: Shape>: ViewModifier {
                      .padding(1)
                      .mask(shape)
             )
-            .shadow(color: config.tintColor?.opacity(0.2) ?? .black.opacity(0.1), radius: 12, x: 0, y: 6)
+            // Reduced shadow opacity to avoid "black box" look, per user request
+            .shadow(color: config.tintColor?.opacity(0.1) ?? .black.opacity(0.05), radius: 8, x: 0, y: 4)
             .scaleEffect(config.isInteractive ? 1.0 : 1.0)
     }
 }
@@ -169,6 +170,7 @@ struct LiquidBackgroundView: View {
                 .drawingGroup() // Optimize rendering performance
             }
         }
+        .ignoresSafeArea(.keyboard) // Ensure background stays fixed
         .onAppear {
             withAnimation(.easeInOut(duration: 15).repeatForever(autoreverses: true)) {
                 animate = true
