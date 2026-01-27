@@ -16,7 +16,7 @@ struct ContentView: View {
     var authenticatedView: some View {
         TabView {
             NavigationStack {
-                ServerListView()
+                PanelListView()
                     .navigationTitle("Panels")
             }
             .tabItem {

@@ -76,6 +76,8 @@ struct ServerDetailView: View {
                 // Bottom Tab Bar ...
             }
         }
+        .toolbar(.hidden, for: .navigationBar)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
     
     var statusColor: Color {
