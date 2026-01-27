@@ -79,7 +79,7 @@ struct AuthenticationView: View {
                     }
                 }
             }
-            .onChange(of: viewModel.isAuthenticated) { authenticated in
+            .onChange(of: viewModel.isAuthenticated) { _, authenticated in
                  if authenticated {
                      isPresented = false
                  }

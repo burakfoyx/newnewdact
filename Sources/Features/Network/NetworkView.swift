@@ -5,6 +5,7 @@ struct NetworkView: View {
     @StateObject private var viewModel: NetworkViewModel
     
     init(serverId: String) {
+        self.serverId = serverId
         _viewModel = StateObject(wrappedValue: NetworkViewModel(serverId: serverId))
     }
     

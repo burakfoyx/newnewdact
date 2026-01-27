@@ -28,7 +28,7 @@ struct ContentView: View {
                    checkAuth()
                 }
         }
-        .onChange(of: showLogin) { isShown in
+        .onChange(of: showLogin) { _, isShown in
             if !isShown {
                  // Re-check auth
                  checkAuth()
@@ -86,7 +86,7 @@ struct LandingView: View {
                         Image(systemName: "swift") // Placeholder icon
                             .font(.system(size: 60))
                             .foregroundStyle(.white)
-                            .symbolEffect(.bounce, options: .repeating)
+                            .symbolEffect(.pulse)
                         
                         Text("XYIdactyl")
                             .font(.system(size: 34, weight: .bold, design: .rounded))
