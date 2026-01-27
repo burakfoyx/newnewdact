@@ -18,4 +18,7 @@ enum AppTheme: String, CaseIterable, Codable, Identifiable {
         case .gold: return [.orange.opacity(0.4), .yellow.opacity(0.3), .brown.opacity(0.4)]
         }
     }
+    var mainColor: Color {
+        gradientColors.first ?? .blue
+    }
 }

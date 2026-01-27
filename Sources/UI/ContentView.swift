@@ -8,7 +8,7 @@ struct ContentView: View {
             if accountManager.activeAccount != nil {
                 authenticatedView
             } else {
-                AuthenticationView()
+                AuthenticationView(isPresented: .constant(true))
             }
         }
     }

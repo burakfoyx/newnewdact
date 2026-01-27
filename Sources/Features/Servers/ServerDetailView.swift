@@ -113,6 +113,7 @@ extension View {
 struct GlassyNavBar: View {
     let title: String
     let stats: WebsocketResponse.Stats?
+    let limits: ServerLimits
     let statusState: String
     let onBack: () -> Void
     let onPowerAction: (String) -> Void
@@ -137,18 +138,37 @@ struct GlassyNavBar: View {
                     .glassEffect(in: Circle())
             }
             
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
                     .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                 
-                HStack(spacing: 8) {
-                    Label(stats?.memory_bytes.formattedMemory ?? "0 MB", systemImage: "memorychip")
-                    Label(stats?.cpu_absolute.formattedCPU ?? "0%", systemImage: "cpu")
+                HStack(spacing: 12) {
+                     // CPU Ring
+                     GlassProgressRing(
+                        value: stats?.cpu_absolute ?? 0,
+                        total: Double(limits.cpu ?? 100), 
+                        label: "CPU",
+                        color: .blue
+                     )
+                     
+                     // Memory Ring
+                     GlassProgressRing(
+                        value: Double(stats?.memory_bytes ?? 0) / 1024 / 1024,
+                        total: Double(limits.memory ?? 1024),
+                        label: "RAM",
+                        color: .purple
+                     )
+                     
+                     // Disk Ring
+                     GlassProgressRing(
+                        value: Double(stats?.disk_bytes ?? 0) / 1024 / 1024,
+                        total: Double(limits.disk ?? 1024),
+                        label: "DISK",
+                        color: .cyan
+                     )
                 }
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.7))
             }
             
             Spacer()
@@ -164,7 +184,7 @@ struct GlassyNavBar: View {
                     .foregroundStyle(.white)
             }
             .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .padding(.vertical, 4)
             .glassEffect(.thick, in: Capsule())
             
             // Power Action
@@ -177,7 +197,7 @@ struct GlassyNavBar: View {
                 Image(systemName: "power")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.white)
-                    .padding(10)
+                    .padding(8)
                     .glassEffect(
                         .regular.tint(Color.red),
                         in: Circle()
@@ -186,5 +206,45 @@ struct GlassyNavBar: View {
         }
         .padding(14)
         .glassEffect(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+}
+
+struct GlassProgressRing: View {
+    let value: Double
+    let total: Double
+    let label: String
+    let color: Color
+    
+    var progress: Double {
+        guard total > 0 else { return 0 }
+        return min(max(value / total, 0), 1)
+    }
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            ZStack {
+                Circle()
+                   .stroke(.white.opacity(0.1), lineWidth: 3)
+                
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(
+                        AngularGradient(colors: [color.opacity(0.5), color], center: .center),
+                        style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    .shadow(color: color.opacity(0.5), radius: 5)
+                
+                // Show percentage or minimal value? Percentage is safest for ring.
+                Text("\(Int(progress * 100))")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 36, height: 36)
+            
+            Text(label)
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.white.opacity(0.6))
+        }
     }
 }
