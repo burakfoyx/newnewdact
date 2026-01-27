@@ -3,9 +3,10 @@ import Combine
 
 struct Account: Codable, Identifiable, Hashable {
     var id: UUID = UUID()
-    let name: String // User provided label, e.g. "My Hosting"
+    let name: String
     let url: String
     let apiKey: String
+    var theme: AppTheme = .blue // Default theme
 }
 
 class AccountManager: ObservableObject {
