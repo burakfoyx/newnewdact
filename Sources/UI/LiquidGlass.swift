@@ -147,7 +147,7 @@ struct LiquidBackgroundView: View {
         ZStack {
             // Space Background
             LinearGradient(
-                colors: [Color.black, Color(red: 0.05, green: 0, blue: 0.1)],
+                colors: [Color(red: 0.1, green: 0.05, blue: 0.25), Color(red: 0.05, green: 0.05, blue: 0.2)],
                 startPoint: .top, 
                 endPoint: .bottom
             )
@@ -155,7 +155,7 @@ struct LiquidBackgroundView: View {
             
             // Stars Layer
             StarsView()
-                .opacity(0.8)
+                .opacity(0.9)
                 .rotationEffect(Angle(degrees: animate && !lowPowerMode ? 360 : 0))
                 .animation(lowPowerMode ? nil : .linear(duration: 240).repeatForever(autoreverses: false), value: animate)
             
@@ -204,7 +204,7 @@ struct NebulaClouds: View {
             ZStack {
                 // Cloud 1
                 Circle()
-                    .fill(colors[0].opacity(0.3))
+                    .fill(colors[0].opacity(0.5))
                     .frame(width: 400, height: 400)
                     .blur(radius: 80)
                     .position(x: proxy.size.width * 0.5, y: proxy.size.height * 0.4)
@@ -213,7 +213,7 @@ struct NebulaClouds: View {
                 
                 // Cloud 2
                 Circle()
-                    .fill(colors.count > 1 ? colors[1].opacity(0.3) : colors[0].opacity(0.3))
+                    .fill(colors.count > 1 ? colors[1].opacity(0.5) : colors[0].opacity(0.5))
                     .frame(width: 350, height: 350)
                     .blur(radius: 60)
                     .position(x: proxy.size.width * 0.2, y: proxy.size.height * 0.6)
@@ -223,7 +223,7 @@ struct NebulaClouds: View {
                 // Cloud 3
                 if colors.count > 2 {
                     Circle()
-                        .fill(colors[2].opacity(0.3))
+                        .fill(colors[2].opacity(0.5))
                         .frame(width: 300, height: 300)
                         .blur(radius: 70)
                         .position(x: proxy.size.width * 0.8, y: proxy.size.height * 0.7)
