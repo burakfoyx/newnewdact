@@ -132,9 +132,8 @@ struct GlassyNavBar: View {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.white.opacity(0.8))
-                    .frame(width: 32, height: 32)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Circle())
+                    .padding(8)
+                    .glassEffect(in: Circle())
             }
             
             VStack(alignment: .leading, spacing: 2) {
@@ -165,12 +164,7 @@ struct GlassyNavBar: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(.thickMaterial) // Thicker for better contrast
-            .clipShape(Capsule())
-            .overlay(
-                Capsule().stroke(.white.opacity(0.2), lineWidth: 0.5)
-            )
-            .shadow(color: .black.opacity(0.1), radius: 2, x:0, y: 1)
+            .glassEffect(.thick, in: Capsule())
             
             // Power Action
             Menu {
@@ -183,21 +177,13 @@ struct GlassyNavBar: View {
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.white)
                     .padding(10)
-                    .background(
-                        LinearGradient(colors: [.red.opacity(0.8), .orange.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    .glassEffect(
+                        .regular.tint(Color.red),
+                        in: Circle()
                     )
-                    .clipShape(Circle())
-                    .shadow(color: .red.opacity(0.3), radius: 5)
-                    .overlay(Circle().stroke(.white.opacity(0.2), lineWidth: 1))
             }
         }
         .padding(14)
-        .background(.regularMaterial) // Native material
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(LinearGradient(colors: [.white.opacity(0.5), .white.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
-        )
+        .glassEffect(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 }
