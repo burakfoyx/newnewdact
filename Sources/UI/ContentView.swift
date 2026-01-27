@@ -2,20 +2,44 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var accountManager = AccountManager.shared
-    @State private var showLogin = false
     
     var body: some View {
-        ZStack {
+        Group {
             if accountManager.activeAccount != nil {
-                ServerListView()
-                    .environmentObject(accountManager)
+                authenticatedView
             } else {
-                LandingView(showLogin: $showLogin)
+                AuthenticationView()
             }
         }
-        .fullScreenCover(isPresented: $showLogin) {
-            AuthenticationView(isPresented: $showLogin)
+    }
+    
+    var authenticatedView: some View {
+        TabView {
+            NavigationStack {
+                ServerListView()
+                    .navigationTitle("Panels")
+            }
+            .tabItem {
+                Label("Panels", systemImage: "square.grid.2x2.fill")
+            }
+            
+            NavigationStack {
+                ServerListView() // Potentially filtered or different view
+                    .navigationTitle("Servers")
+            }
+            .tabItem {
+                Label("Servers", systemImage: "server.rack")
+            }
+            
+            NavigationStack {
+                SettingsView()
+                    .navigationTitle("Settings")
+            }
+            .tabItem {
+                 Label("Settings", systemImage: "gearshape.fill")
+            }
         }
+        .tint(accountManager.activeAccount?.theme.mainColor ?? .blue)
     }
 }
 

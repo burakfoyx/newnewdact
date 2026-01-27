@@ -8,17 +8,8 @@ struct ConsoleView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Stats Bar
-            if let stats = viewModel.stats {
-                HStack {
-                    Label(stats.memory_bytes.formattedMemory, systemImage: "memorychip")
-                    Spacer()
-                    Label(stats.cpu_absolute.formattedCPU, systemImage: "cpu")
-                }
-                .font(.caption.monospaced())
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .foregroundStyle(.white.opacity(0.7))
-            }
+            // Stats removed (displayed in header)
+            Spacer().frame(height: 10)
             
             // Logs
             ScrollViewReader { proxy in
@@ -117,6 +108,7 @@ class ConsoleViewModel: ObservableObject {
     
     init(serverId: String) {
         self.serverId = serverId
+        self.logs.append("System: Console interface initialized.")
         setupSubscription()
     }
     

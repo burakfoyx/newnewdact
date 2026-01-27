@@ -10,9 +10,9 @@ public struct Glass {
     var tintColor: Color? = nil
     var isInteractive: Bool = false
     
-    public static let regular = Glass(variant: .regular)
-    public static let thick = Glass(variant: .thick)
-    public static let thin = Glass(variant: .ultraThin)
+    public static let regular = Glass(variant: .ultraThinMaterial)
+    public static let thick = Glass(variant: .regularMaterial)
+    public static let thin = Glass(variant: .thinMaterial)
     
     public func tint(_ color: Color) -> Glass {
         var copy = self
@@ -50,14 +50,15 @@ struct LiquidGlassEffectModifier<CShape: Shape>: ViewModifier {
                 config.variant
             )
             .background(
-                config.tintColor?.opacity(0.1) ?? Color.clear
+                config.tintColor?.opacity(0.05) ?? Color.clear
             )
             .clipShape(shape)
             .overlay(
+                // Glass bending / edge refraction imitation with stronger borders
                 shape.stroke(
                     LinearGradient(
                         colors: [
-                            .white.opacity(0.5),
+                            .white.opacity(0.6),
                             .white.opacity(0.1),
                             .clear,
                             .white.opacity(0.2)
@@ -65,11 +66,17 @@ struct LiquidGlassEffectModifier<CShape: Shape>: ViewModifier {
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: 1.0
+                    lineWidth: 0.5
                 )
             )
-            .shadow(color: config.tintColor?.opacity(0.3) ?? .black.opacity(0.1), radius: 10, x: 0, y: 5)
-            .scaleEffect(config.isInteractive ? 1.0 : 1.0) // Placeholder for interaction logic if we tracked state
+            // Inner light/reflection for depth
+            .overlay(
+                shape.stroke(Color.white.opacity(0.1), lineWidth: 1)
+                     .padding(1)
+                     .mask(shape)
+            )
+            .shadow(color: config.tintColor?.opacity(0.2) ?? .black.opacity(0.1), radius: 12, x: 0, y: 6)
+            .scaleEffect(config.isInteractive ? 1.0 : 1.0)
     }
 }
 
