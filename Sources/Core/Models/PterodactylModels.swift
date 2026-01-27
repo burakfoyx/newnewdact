@@ -98,6 +98,14 @@ struct WebsocketResponse: Codable {
     let data: WebsocketData
 }
 
+    struct Stats: Codable {
+        let memory_bytes: Int64
+        let cpu_absolute: Double
+        let disk_bytes: Int64
+        let state: String
+    }
+}
+
 struct WebsocketData: Codable {
     let token: String
     let socket: String

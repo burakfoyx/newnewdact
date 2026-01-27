@@ -3,44 +3,61 @@ import Combine
 
 
 struct ConsoleView: View {
-    let serverId: String
-    @StateObject private var viewModel: ConsoleViewModel
-    
-    init(serverId: String) {
-        self.serverId = serverId
-        _viewModel = StateObject(wrappedValue: ConsoleViewModel(serverId: serverId))
-    }
+    @ObservedObject var viewModel: ConsoleViewModel
     
     var body: some View {
         VStack(spacing: 0) {
-            // Terminal Output
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 2) {
-                    ForEach(viewModel.logs) { log in
-                        Text(log.text)
-                            .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(Color.green)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+            // Stats Bar
+            if let stats = viewModel.stats {
+                HStack {
+                    Label(stats.memory_bytes.formattedMemory, systemImage: "memorychip")
+                    Spacer()
+                    Label(stats.cpu_absolute.formattedCPU, systemImage: "cpu")
+                }
+                .font(.caption.monospaced())
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .foregroundStyle(.white.opacity(0.7))
+            }
+            
+            // Logs
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 4) {
+                        ForEach(viewModel.logs, id: \.self) { log in
+                            Text(log)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.9))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                    .padding()
+                }
+                .onChange(of: viewModel.logs.count) {
+                    if let last = viewModel.logs.last {
+                         withAnimation {
+                             proxy.scrollTo(last, anchor: .bottom)
+                         }
                     }
                 }
-                .padding()
             }
-            .background(Color.black.opacity(0.9))
-            .defaultScrollAnchor(.bottom)
             
             // Input
             HStack {
-                TextField("Type a command...", text: $viewModel.inputCommand)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .padding()
-                    .background(Color.white.opacity(0.1))
+                TextField("Type a command...", text: $viewModel.command)
+                    .textFieldStyle(.plain)
+                    .font(.system(.body, design: .monospaced))
                     .foregroundStyle(.white)
+                    .padding(10)
+                    .background(Color.white.opacity(0.1))
                     .cornerRadius(8)
                 
-                Button(action: viewModel.sendCommand) {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.blue)
+                Button(action: { viewModel.sendCommand() }) {
+                    Image(systemName: "paperplane.fill")
+                        .foregroundStyle(.white)
+                        .padding(10)
+                        .background(Color.blue)
+                        .cornerRadius(8)
                 }
             }
             .padding()
@@ -95,22 +112,66 @@ struct LogEntry: Identifiable {
 
 class ConsoleViewModel: ObservableObject {
     let serverId: String
-    @Published var logs: [LogEntry] = []
+    @Published var logs: [String] = []
     @Published var inputCommand: String = ""
     @Published var isConnected = false
+    @Published var stats: WebsocketResponse.Stats?
+    @Published var state: String = "unknown"
     
-    private let wsClient = WebSocketClient()
     private var cancellables = Set<AnyCancellable>()
     
     init(serverId: String) {
         self.serverId = serverId
+        setupSubscription()
+    }
+    
+    private func setupSubscription() {
+        cancellables.removeAll()
         
-        wsClient.eventSubject
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] event in
-                self?.handleEvent(event)
+        WebSocketClient.shared.messageSubject
+            .receive(on: RunLoop.main) // Use RunLoop.main for MainActor equivalent in Combine
+            .sink { [weak self] message in
+                guard let self = self else { return }
+                
+                // Parse message
+                // Pterodactyl sends {"event":"stats","args":["{...}"]}
+                // or {"event":"status", "args":["running"]}
+                // or {"event":"console output", "args":["log line"]}
+                
+                // NOTE: The actual message format from Wings is usually a JSON string that needs parsing.
+                // Assuming WebSocketClient sends raw string or parsed object.
+                // Let's assume raw string for now and parse carefully.
+                
+                self.handleMessage(message)
             }
             .store(in: &cancellables)
+        
+        WebSocketClient.shared.connectionStatusSubject
+            .receive(on: RunLoop.main)
+            .sink { [weak self] status in
+                self?.isConnected = (status == .connected)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func handleMessage(_ message: String) {
+        guard let data = message.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let event = json["event"] as? String,
+              let args = json["args"] as? [Any] else { return }
+              
+        if event == "console output", let log = args.first as? String {
+             self.logs.append(log)
+             if logs.count > 100 { logs.removeFirst() }
+        } else if event == "status", let state = args.first as? String {
+             self.state = state
+        } else if event == "stats", let statsStr = args.first as? String {
+             // Stats usually come as a JSON string inside the array
+             if let statsData = statsStr.data(using: .utf8),
+                let stats = try? JSONDecoder().decode(WebsocketResponse.Stats.self, from: statsData) {
+                 self.stats = stats
+             }
+        }
     }
     
     func connect() {
