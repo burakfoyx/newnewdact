@@ -70,7 +70,8 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
         
         // Use provided origin (Panel URL) or fallback
         if let origin = origin {
-            request.addValue(origin, forHTTPHeaderField: "Origin")
+            let sanitizedOrigin = origin.trimmingCharacters(in: .init(charactersIn: "/"))
+            request.addValue(sanitizedOrigin, forHTTPHeaderField: "Origin")
         } else if let host = url.host {
             request.addValue("https://\(host)", forHTTPHeaderField: "Origin")
         } else {
