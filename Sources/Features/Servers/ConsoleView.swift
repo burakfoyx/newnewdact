@@ -128,28 +128,10 @@ class ConsoleViewModel: ObservableObject {
     private func setupSubscription() {
         cancellables.removeAll()
         
-        WebSocketClient.shared.messageSubject
-            .receive(on: RunLoop.main) // Use RunLoop.main for MainActor equivalent in Combine
-            .sink { [weak self] message in
-                guard let self = self else { return }
-                
-                // Parse message
-                // Pterodactyl sends {"event":"stats","args":["{...}"]}
-                // or {"event":"status", "args":["running"]}
-                // or {"event":"console output", "args":["log line"]}
-                
-                // NOTE: The actual message format from Wings is usually a JSON string that needs parsing.
-                // Assuming WebSocketClient sends raw string or parsed object.
-                // Let's assume raw string for now and parse carefully.
-                
-                self.handleMessage(message)
-            }
-            .store(in: &cancellables)
-        
-        WebSocketClient.shared.connectionStatusSubject
+        WebSocketClient.shared.eventSubject
             .receive(on: RunLoop.main)
-            .sink { [weak self] status in
-                self?.isConnected = (status == .connected)
+            .sink { [weak self] event in
+                self?.handleEvent(event)
             }
             .store(in: &cancellables)
     }
@@ -188,26 +170,20 @@ class ConsoleViewModel: ObservableObject {
     }
     
     func connect() {
-        // In a real implementation, we need to first fetch the WEBSOCKET DETAILS from the API
-        // GET /api/client/servers/{uuid}/websocket
-        // Then connect with that URL and Token.
-        // For this demo, I'll simulate or assume we fetch it.
-        // I will add a method to PterodactylClient to fetch websocket credentials
-        
         Task {
             if let details = try? await PterodactylClient.shared.fetchWebsocketDetails(serverId: serverId) {
-                wsClient.connect(url: URL(string: details.url)!, token: details.token)
+                WebSocketClient.shared.connect(url: URL(string: details.url)!, token: details.token)
             }
         }
     }
     
     func disconnect() {
-        wsClient.disconnect()
+        WebSocketClient.shared.disconnect()
     }
     
     func sendCommand() {
         guard !inputCommand.isEmpty else { return }
-        wsClient.sendCommand(inputCommand)
+        WebSocketClient.shared.sendCommand(inputCommand)
         inputCommand = ""
     }
     
@@ -217,16 +193,26 @@ class ConsoleViewModel: ObservableObject {
     
     private func handleEvent(_ event: WebSocketEvent) {
         switch event {
-        case .consoleOutput(let text):
-            // Strip ANSI codes if necessary, for now raw
-            logs.append(LogEntry(text: text))
+        case .consoleOutput(let log):
+            self.logs.append(log)
             if logs.count > 100 { logs.removeFirst() }
+            
+        case .stats(let statsJson):
+             if let statsData = statsJson.data(using: .utf8),
+                let stats = try? JSONDecoder().decode(WebsocketResponse.Stats.self, from: statsData) {
+                 self.stats = stats
+             }
+             
+        case .status(let status):
+            self.state = status
+            
         case .connected:
-            isConnected = true
+            self.isConnected = true
+            
         case .disconnected:
-            isConnected = false
+            self.isConnected = false
+            
         default:
             break
         }
     }
-}
