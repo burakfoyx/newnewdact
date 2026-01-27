@@ -133,25 +133,7 @@ class ConsoleViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    private func handleMessage(_ message: String) {
-        guard let data = message.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let event = json["event"] as? String,
-              let args = json["args"] as? [Any] else { return }
-              
-        if event == "console output", let log = args.first as? String {
-             self.logs.append(log)
-             if logs.count > 100 { logs.removeFirst() }
-        } else if event == "status", let state = args.first as? String {
-             self.state = state
-        } else if event == "stats", let statsStr = args.first as? String {
-             // Stats usually come as a JSON string inside the array
-             if let statsData = statsStr.data(using: .utf8),
-                let stats = try? JSONDecoder().decode(WebsocketResponse.Stats.self, from: statsData) {
-                 self.stats = stats
-             }
-        }
-    }
+
     
     func sendCommand() {
         guard !inputCommand.isEmpty else { return }
@@ -205,6 +187,15 @@ class ConsoleViewModel: ObservableObject {
     }
     
     private func handleEvent(_ event: WebSocketEvent) {
+        // Failsafe: If receiving data, we are connected
+        if !isConnected {
+             switch event {
+             case .consoleOutput, .stats, .status:
+                 self.isConnected = true
+             default: break
+             }
+        }
+        
         switch event {
         case .consoleOutput(let log):
             self.logs.append(log)

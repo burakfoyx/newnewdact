@@ -72,30 +72,14 @@ struct ServerDetailView: View {
                     StartupView(serverId: server.identifier)
                         .tag(ServerTab.startup)
                         
-                    // Placeholders
-                    VStack {
-                         Image(systemName: "clock.fill")
-                            .font(.largeTitle)
-                         Text("Schedules Coming Soon")
-                    }
-                    .foregroundStyle(.white)
-                    .tag(ServerTab.schedules)
+                    SchedulesView(serverId: server.identifier)
+                        .tag(ServerTab.schedules)
                         
-                    VStack {
-                         Image(systemName: "cylinder.split.1x2.fill")
-                            .font(.largeTitle)
-                         Text("Databases Coming Soon")
-                    }
-                    .foregroundStyle(.white)
-                    .tag(ServerTab.databases)
+                    DatabasesView(serverId: server.identifier)
+                        .tag(ServerTab.databases)
                         
-                    VStack {
-                         Image(systemName: "person.2.fill")
-                            .font(.largeTitle)
-                         Text("Users Coming Soon")
-                    }
-                    .foregroundStyle(.white)
-                    .tag(ServerTab.users)
+                    UsersView(serverId: server.identifier)
+                        .tag(ServerTab.users)
                     
                     ServerSettingsView(server: server)
                         .tag(ServerTab.settings)
@@ -251,7 +235,6 @@ struct GlassyNavBar: View {
         .padding(14)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5) // Soffer shadow
     }
 }
 

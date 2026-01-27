@@ -84,7 +84,7 @@ struct ServerRow: View {
     var statusColor: Color {
         if server.isSuspended { return .orange }
         if server.isInstalling { return .blue }
-        return .gray
+        return .green // Assume online/ready if not suspended/installing
     }
 
     var body: some View {
