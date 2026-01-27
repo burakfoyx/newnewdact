@@ -87,10 +87,11 @@ struct ServerRow: View {
         LiquidGlassCard {
             HStack {
                 // Status Indicator
+                // Default to gray/purple for "ready" to avoid implying "running" (green) when we don't know power state without WebSocket.
                 Circle()
-                    .fill(server.isSuspended ? Color.red : (server.isInstalling ? Color.yellow : Color.green))
-                    .frame(width: 12, height: 12)
-                    .shadow(color: (server.isSuspended ? Color.red : (server.isInstalling ? Color.yellow : Color.green)).opacity(0.5), radius: 4)
+                    .fill(server.isSuspended ? Color.red : (server.isInstalling ? Color.yellow : Color.blue.opacity(0.5)))
+                    .frame(width: 8, height: 8)
+                    .shadow(color: (server.isSuspended ? Color.red : (server.isInstalling ? Color.yellow : Color.blue)).opacity(0.3), radius: 4)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(server.name)

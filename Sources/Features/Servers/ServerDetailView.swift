@@ -43,6 +43,7 @@ struct ServerDetailView: View {
                  GlassyNavBar(
                      title: server.name,
                      stats: consoleViewModel.stats,
+                     limits: server.limits,
                      statusState: consoleViewModel.state,
                      onBack: { dismiss() },
                      onPowerAction: { action in consoleViewModel.sendPowerAction(action) }
