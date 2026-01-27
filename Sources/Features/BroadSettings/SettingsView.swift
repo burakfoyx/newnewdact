@@ -86,6 +86,8 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
             .navigationTitle("Accounts")
             .sheet(isPresented: $showLogin) {
                 AuthenticationView(isPresented: $showLogin)
