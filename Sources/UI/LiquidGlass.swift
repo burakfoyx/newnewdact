@@ -168,3 +168,52 @@ struct LiquidBackgroundView: View {
         }
     }
 }
+
+// MARK: - Legacy Compatibility (Restoring missing types)
+
+public enum GlassVariant {
+    case clear
+    case frosted
+    case heavy
+    
+    var material: Material {
+        switch self {
+        case .clear: return .ultraThinMaterial
+        case .frosted: return .regularMaterial
+        case .heavy: return .thickMaterial
+        }
+    }
+}
+
+extension View {
+    // Restoring the old modifier signature used by other views
+    public func liquidGlass(variant: GlassVariant = .frosted, cornerRadius: CGFloat = 24) -> some View {
+        self.glassEffect(Glass(variant: variant.material), in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+    }
+}
+
+public struct LiquidGlassCard<Content: View>: View {
+    let content: Content
+    
+    public init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    public var body: some View {
+        content
+            .padding()
+            .liquidGlass(variant: .frosted, cornerRadius: 24)
+    }
+}
+
+public struct LiquidButtonStyle: ButtonStyle {
+    public init() {}
+    
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding()
+            .glassEffect(.regular.interactive())
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.spring(response: 0.3), value: configuration.isPressed)
+    }
+}
