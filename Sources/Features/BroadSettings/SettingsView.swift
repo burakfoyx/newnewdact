@@ -80,12 +80,31 @@ struct AccountRow: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
+            
+            // Theme Indicator
+            Circle()
+                .fill(LinearGradient(colors: account.theme.gradientColors, startPoint: .topLeading, endPoint: .bottomTrailing))
+                .frame(width: 16, height: 16)
+                .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 1))
+            
             if isActive {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
             }
         }
-        .contentShape(Rectangle()) // Make tappable
+        .contentShape(Rectangle())
+        .contextMenu {
+            Text("Select Theme")
+            ForEach(AppTheme.allCases) { theme in
+                Button {
+                    var updatedAccount = account
+                    updatedAccount.theme = theme
+                    AccountManager.shared.updateAccount(updatedAccount)
+                } label: {
+                    Label(theme.rawValue, systemImage: "paintbrush")
+                }
+            }
+        }
     }
 }
 

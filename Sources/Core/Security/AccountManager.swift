@@ -59,6 +59,16 @@ class AccountManager: ObservableObject {
         }
     }
     
+    func updateAccount(_ account: Account) {
+        if let index = accounts.firstIndex(where: { $0.id == account.id }) {
+            accounts[index] = account
+            saveAccounts()
+            if activeAccount?.id == account.id {
+                activeAccount = account
+            }
+        }
+    }
+    
     private func saveAccounts() {
         if let data = try? JSONEncoder().encode(accounts) {
             try? keychain.save(data, account: accountsKey)
