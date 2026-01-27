@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var accountManager = AccountManager.shared
     @State private var selectedTab = 0
     
     var body: some View {

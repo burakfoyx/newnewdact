@@ -27,7 +27,6 @@ struct ServerListView: View {
     @StateObject private var viewModel = ServerListViewModel()
     
     var body: some View {
-    var body: some View {
         ZStack {
             // Background
             LiquidBackgroundView()
