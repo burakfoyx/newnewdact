@@ -200,37 +200,66 @@ struct NebulaClouds: View {
     let colors: [Color]
     let animate: Bool
     
+    var diversifiedColors: [Color] {
+        var base = colors
+        if base.isEmpty { base = [.blue, .purple] }
+        // Ensure at least 4 colors by adding variations
+        if base.count < 3 {
+             base.append(base[0].opacity(0.6))
+             base.append(Color.cyan.opacity(0.3))
+        }
+        if base.count < 4 {
+             base.append(Color.indigo.opacity(0.4))
+        }
+        // If still somehow short, Cycle
+        while base.count < 4 {
+            base.append(base[0])
+        }
+        return base
+    }
+
     var body: some View {
+        let palette = diversifiedColors
+        
         GeometryReader { proxy in
             ZStack {
-                // Cloud 1
-                Circle()
-                    .fill(colors[0].opacity(0.5))
-                    .frame(width: 400, height: 400)
-                    .blur(radius: 80)
-                    .position(x: proxy.size.width * 0.5, y: proxy.size.height * 0.4)
-                    .offset(x: animate ? -50 : 50, y: animate ? -30 : 50)
-                    .animation(animate ? .easeInOut(duration: 20).repeatForever(autoreverses: true) : nil, value: animate)
+                // Cloud 1 - Large Ellipse
+                Ellipse()
+                    .fill(palette[0].opacity(0.45))
+                    .frame(width: 500, height: 350)
+                    .blur(radius: 90)
+                    .position(x: proxy.size.width * 0.3, y: proxy.size.height * 0.3)
+                    .offset(x: animate ? -30 : 20, y: animate ? -20 : 10)
+                    .rotationEffect(Angle(degrees: animate ? 10 : -10))
+                    .animation(animate ? .easeInOut(duration: 18).repeatForever(autoreverses: true) : nil, value: animate)
                 
-                // Cloud 2
+                // Cloud 2 - Circle
                 Circle()
-                    .fill(colors.count > 1 ? colors[1].opacity(0.5) : colors[0].opacity(0.5))
-                    .frame(width: 350, height: 350)
-                    .blur(radius: 60)
-                    .position(x: proxy.size.width * 0.2, y: proxy.size.height * 0.6)
-                    .offset(x: animate ? 100 : -100, y: animate ? 100 : -50)
+                    .fill(palette[1].opacity(0.40))
+                    .frame(width: 400, height: 400)
+                    .blur(radius: 70)
+                    .position(x: proxy.size.width * 0.8, y: proxy.size.height * 0.7)
+                    .offset(x: animate ? 40 : -40, y: animate ? 30 : -20)
+                    .animation(animate ? .easeInOut(duration: 22).repeatForever(autoreverses: true) : nil, value: animate)
+                
+                // Cloud 3 - Vertical Ellipse
+                Ellipse()
+                    .fill(palette[2].opacity(0.35))
+                    .frame(width: 300, height: 500)
+                    .blur(radius: 80)
+                    .position(x: proxy.size.width * 0.1, y: proxy.size.height * 0.8)
+                    .offset(x: animate ? 20 : -10, y: animate ? -40 : 20)
+                    .rotationEffect(Angle(degrees: animate ? -15 : 5))
                     .animation(animate ? .easeInOut(duration: 25).repeatForever(autoreverses: true) : nil, value: animate)
                 
-                // Cloud 3
-                if colors.count > 2 {
-                    Circle()
-                        .fill(colors[2].opacity(0.5))
-                        .frame(width: 300, height: 300)
-                        .blur(radius: 70)
-                        .position(x: proxy.size.width * 0.8, y: proxy.size.height * 0.7)
-                        .offset(x: animate ? -100 : 150, y: animate ? 200 : 100)
-                        .animation(animate ? .easeInOut(duration: 30).repeatForever(autoreverses: true) : nil, value: animate)
-                }
+                // Cloud 4 - Accent
+                Circle()
+                    .fill(palette[3].opacity(0.5))
+                    .frame(width: 250, height: 250)
+                    .blur(radius: 50)
+                    .position(x: proxy.size.width * 0.6, y: proxy.size.height * 0.5)
+                    .offset(x: animate ? -50 : 50, y: animate ? 50 : -50)
+                    .animation(animate ? .easeInOut(duration: 20).repeatForever(autoreverses: true) : nil, value: animate)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }

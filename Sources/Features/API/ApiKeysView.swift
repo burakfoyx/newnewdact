@@ -88,6 +88,7 @@ struct ApiKeysView: View {
                  }
             }
         }
+        .background(Color.clear)
         .sheet(isPresented: $viewModel.showCreateSheet) {
             NavigationStack {
                 Form {

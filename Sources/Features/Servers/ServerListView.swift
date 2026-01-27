@@ -58,8 +58,8 @@ struct ServerListView: View {
             } else if let error = viewModel.errorMessage {
                 VStack {
                     Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundStyle(.orange)
+                    .font(.largeTitle)
+                    .foregroundStyle(.orange)
                     Text(error)
                         .multilineTextAlignment(.center)
                         .padding()
@@ -82,6 +82,7 @@ struct ServerListView: View {
                 }
             }
         }
+        .background(Color.clear)
         .navigationTitle("Servers")
         .toolbarColorScheme(.dark, for: .navigationBar)
         .background(Color.clear)
