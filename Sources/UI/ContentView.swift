@@ -22,12 +22,35 @@ struct ContentView: View {
             TabView(selection: $selectedTab) {
                 NavigationStack {
                     PanelListView(selectedTab: $selectedTab)
-                        .navigationTitle("API Keys")
+                        .navigationTitle("Panels")
+                }
+                .tabItem {
+                    Label("Panels", systemImage: "rectangle.stack.fill")
+                }
+                .tag(0)
+                
+                NavigationStack {
+                    VStack(spacing: 20) {
+                        Image(systemName: "key.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .glassEffect(.regular, in: Circle())
+                            .padding()
+                            
+                        Text("API Options")
+                            .font(.title2.bold())
+                            .foregroundStyle(.white)
+                        
+                        Text("Advanced API configuration coming soon.")
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .navigationTitle("API")
                 }
                 .tabItem {
                     Label("API", systemImage: "key.fill")
                 }
-                .tag(0)
+                .tag(1)
                 
                 NavigationStack {
                     ServerListView()
@@ -36,7 +59,7 @@ struct ContentView: View {
                 .tabItem {
                     Label("Servers", systemImage: "server.rack")
                 }
-                .tag(1)
+                .tag(2)
                 
                 NavigationStack {
                     SettingsView()
@@ -45,7 +68,7 @@ struct ContentView: View {
                 .tabItem {
                      Label("Settings", systemImage: "gearshape.fill")
                 }
-                .tag(2)
+                .tag(3)
             }
             .tint(accountManager.activeAccount?.theme.mainColor ?? .blue)
         }

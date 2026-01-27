@@ -118,13 +118,15 @@ struct ServerRow: View {
     }
     
     var memoryUsage: String {
-        guard let bytes = stats?.resources.memoryBytes else { return "0 MB" }
-        return String(format: "%.0f MB", Double(bytes) / 1024 / 1024)
+        let usedMB = Double(stats?.resources.memoryBytes ?? 0) / 1024 / 1024
+        let limitMB = Double(server.limits.memory ?? 0)
+        return String(format: "%.0f / %.0f MB", usedMB, limitMB)
     }
     
     var cpuUsage: String {
-        guard let cpu = stats?.resources.cpuAbsolute else { return "0%" }
-        return String(format: "%.1f%%", cpu)
+        let used = stats?.resources.cpuAbsolute ?? 0
+        let limit = Double(server.limits.cpu ?? 0)
+        return String(format: "%.1f%% / %.0f%%", used, limit)
     }
 
     var body: some View {
@@ -136,7 +138,7 @@ struct ServerRow: View {
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.6))
                         
-                     Text(server.sftpDetails.ip) // Using IP from SFTP details as primary IP proxy
+                     Text(server.sftpDetails.ip) 
                         .font(.headline.weight(.semibold))
                         .foregroundStyle(.white)
                 }
@@ -160,19 +162,20 @@ struct ServerRow: View {
             }
             
             Spacer()
-            
-            // Minimal chevron or status hint?
-            // "Loose the dot icon... keep the gradient"
-            // The gradient is the background.
         }
-        .padding(12) // Lower internal padding
+        .padding(12) 
+        .background(.ultraThinMaterial) // Lightweight blurred background
         .background(
-            LinearGradient(
+             LinearGradient(
                 colors: [statusColor.opacity(0.25), statusColor.opacity(0.05)],
                 startPoint: .leading,
                 endPoint: .trailing
             )
         )
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+             RoundedRectangle(cornerRadius: 16, style: .continuous)
+                 .stroke(.white.opacity(0.1), lineWidth: 1)
+        )
     }
 }
