@@ -2,7 +2,7 @@ workflows:
   ios-release:
     name: iOS Release
     max_build_duration: 60
-    instance_type: mac_mini_m2 # Updated to M2 for 2026 context
+    instance_type: mac_mini_m2
     environment:
       xcode: latest
       cocoapods: default
@@ -15,20 +15,37 @@ workflows:
           xcodegen generate
       - name: Build IPA
         script: |
+          set -e # Fail script if build fails
+          
+          # Clean build directory
+          rm -rf build
+          mkdir build
+          
+          # Archive using relative path 'build/' to avoid env var confusion
           xcodebuild -project XYIdactyl.xcodeproj \
             -scheme XYIdactyl \
             -sdk iphoneos \
             -configuration Release \
-            -archivePath $CM_BUILD_DIR/XYIdactyl.xcarchive \
+            -archivePath build/XYIdactyl.xcarchive \
             archive \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
             
-          # Payload creation for Sideloading
+          # Verify existence
+          if [ ! -d "build/XYIdactyl.xcarchive/Products/Applications/XYIdactyl.app" ]; then
+            echo "Error: App bundle not found in archive!"
+            ls -R build/
+            exit 1
+          fi
+            
+          # Payload creation
+          rm -rf Payload
           mkdir -p Payload
-          mv $CM_BUILD_DIR/XYIdactyl.xcarchive/Products/Applications/XYIdactyl.app Payload/
+          cp -R build/XYIdactyl.xcarchive/Products/Applications/XYIdactyl.app Payload/
+          
+          # Zip
           zip -r XYIdactyl.ipa Payload
     artifacts:
       - "*.ipa"
-      - "*.xcarchive"
+      - "build/*.xcarchive"
