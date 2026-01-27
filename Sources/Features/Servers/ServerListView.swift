@@ -81,39 +81,50 @@ struct ServerListView: View {
 struct ServerRow: View {
     let server: ServerAttributes
     
+    var statusColor: Color {
+        if server.isSuspended { return .orange }
+        if server.isInstalling { return .blue }
+        return .gray
+    }
+
     var body: some View {
-        LiquidGlassCard {
-            HStack {
-                // Status Indicator
-                // Colors per user request: Orange=Suspended, Blue=Installing, Gray=Unknown/Off
-                Circle()
-                    .fill(server.isSuspended ? Color.orange : (server.isInstalling ? Color.blue : Color.gray))
-                    .frame(width: 8, height: 8)
-                    .shadow(color: (server.isSuspended ? Color.orange : (server.isInstalling ? Color.blue : Color.clear)).opacity(0.4), radius: 4)
+        HStack {
+            // Status Indicator (Dot) - Kept for specific detail
+            Circle()
+                .fill(statusColor)
+                .frame(width: 8, height: 8)
+                .shadow(color: statusColor.opacity(0.4), radius: 4)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(server.name)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Text(server.node)
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.6))
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(server.name)
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                    Text(server.node)
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.6))
-                    
-                    HStack(spacing: 12) {
-                        Label("\(server.limits.memory ?? 0)MB", systemImage: "memorychip")
-                        Label("\(server.limits.disk ?? 0)MB", systemImage: "internaldrive")
-                    }
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.5))
-                    .padding(.top, 4)
+                HStack(spacing: 12) {
+                    Label("\(server.limits.memory ?? 0)MB", systemImage: "memorychip")
+                    Label("\(server.limits.disk ?? 0)MB", systemImage: "internaldrive")
                 }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.white.opacity(0.3))
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.5))
+                .padding(.top, 4)
             }
-            .padding(4)
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .foregroundStyle(.white.opacity(0.3))
         }
+        .padding()
+        .background(
+            LinearGradient(
+                colors: [statusColor.opacity(0.25), statusColor.opacity(0.05)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+        )
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 }
