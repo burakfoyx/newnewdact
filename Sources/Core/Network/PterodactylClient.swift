@@ -229,4 +229,43 @@ actor PterodactylClient {
         let decoded = try JSONDecoder().decode(ServerStatsResponse.self, from: data)
         return decoded.attributes
     }
+    // MARK: - New Features
+    func fetchDatabases(serverId: String) async throws -> [DatabaseAttributes] {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/databases")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let response = try JSONDecoder().decode(DatabaseResponse.self, from: data)
+        return response.data.map { $0.attributes }
+    }
+    
+    func fetchSchedules(serverId: String) async throws -> [ScheduleAttributes] {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/schedules")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let response = try JSONDecoder().decode(ScheduleResponse.self, from: data)
+        return response.data.map { $0.attributes }
+    }
+    
+    func fetchUsers(serverId: String) async throws -> [SubuserAttributes] {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/users")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let response = try JSONDecoder().decode(SubuserResponse.self, from: data)
+        return response.data.map { $0.attributes }
+    }
 }
