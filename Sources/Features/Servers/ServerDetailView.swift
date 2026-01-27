@@ -40,68 +40,14 @@ struct ServerDetailView: View {
             
             VStack(spacing: 0) {
                  // Header
-                 HStack {
-                     // Back Button ...
-                     Button(action: { dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(12)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
-                    }
-                    
-                     VStack(alignment: .leading) {
-                         Text(server.name)
-                             .font(.headline)
-                             .foregroundStyle(.white)
-                         // Real-time Resources
-                         HStack(spacing: 8) {
-                             Label(consoleViewModel.stats?.memory_bytes.formattedMemory ?? "0 MB", systemImage: "memorychip")
-                             Label(consoleViewModel.stats?.cpu_absolute.formattedCPU ?? "0%", systemImage: "cpu")
-                         }
-                         .font(.caption2)
-                         .foregroundStyle(.white.opacity(0.7))
-                     }
-                     
-                     Spacer()
-                     
-                     // Power Menu ...
-                     Menu {
-                        Button(action: { consoleViewModel.sendPowerAction("start") }) {
-                            Label("Start", systemImage: "play.fill")
-                        }
-                        Button(action: { consoleViewModel.sendPowerAction("restart") }) {
-                            Label("Restart", systemImage: "arrow.clockwise")
-                        }
-                        Button(action: { consoleViewModel.sendPowerAction("stop") }) {
-                            Label("Stop", systemImage: "stop.fill")
-                        }
-                        Button(role: .destructive, action: { consoleViewModel.sendPowerAction("kill") }) {
-                            Label("Kill", systemImage: "flame.fill")
-                        }
-                    } label: {
-                        Image(systemName: "power.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundStyle(.white)
-                            .shadow(color: .blue.opacity(0.5), radius: 5)
-                    }
-                     
-                     // Real Status Badge
-                     HStack(spacing: 6) {
-                         Circle()
-                             .fill(statusColor)
-                             .frame(width: 8, height: 8)
-                             .shadow(color: statusColor, radius: 4)
-                         Text(consoleViewModel.state.capitalized)
-                             .font(.caption2.bold())
-                             .foregroundStyle(.white)
-                     }
-                     .padding(.horizontal, 10)
-                     .padding(.vertical, 6)
-                     .background(.ultraThinMaterial)
-                     .capsule()
-                 }
+                 GlassyNavBar(
+                     title: server.name,
+                     stats: consoleViewModel.stats,
+                     statusState: consoleViewModel.state,
+                     onBack: { dismiss() },
+                     onPowerAction: { action in consoleViewModel.sendPowerAction(action) }
+                 )
+                 .padding()
                  .padding()
                  
                   TabView(selection: $selectedTab) {
@@ -158,5 +104,95 @@ extension Double {
 extension View {
     func capsule() -> some View {
         clipShape(Capsule())
+    }
+}
+
+struct GlassyNavBar: View {
+    let title: String
+    let stats: WebsocketResponse.Stats?
+    let statusState: String
+    let onBack: () -> Void
+    let onPowerAction: (String) -> Void
+    
+    var statusColor: Color {
+        switch statusState {
+        case "running": return .green
+        case "starting": return .yellow
+        case "stopping": return .orange
+        case "offline": return .red
+        default: return .gray
+        }
+    }
+    
+    var body: some View {
+        HStack(spacing: 12) {
+             Button(action: onBack) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .padding(10)
+                    .background(.white.opacity(0.1))
+                    .clipShape(Circle())
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                
+                HStack(spacing: 8) {
+                    Label(stats?.memory_bytes.formattedMemory ?? "0 MB", systemImage: "memorychip")
+                    Label(stats?.cpu_absolute.formattedCPU ?? "0%", systemImage: "cpu")
+                }
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.6))
+            }
+            
+            Spacer()
+            
+            // Status Pill
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 6, height: 6)
+                    .shadow(color: statusColor.opacity(0.8), radius: 4)
+                Text(statusState.capitalized)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(.ultraThinMaterial)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule().stroke(.white.opacity(0.1), lineWidth: 0.5)
+            )
+            
+            // Power Action
+            Menu {
+                Button(action: { onPowerAction("start") }) { Label("Start", systemImage: "play.fill") }
+                Button(action: { onPowerAction("restart") }) { Label("Restart", systemImage: "arrow.clockwise") }
+                Button(action: { onPowerAction("stop") }) { Label("Stop", systemImage: "stop.fill") }
+                Button(role: .destructive, action: { onPowerAction("kill") }) { Label("Kill", systemImage: "flame.fill") }
+            } label: {
+                Image(systemName: "power")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(10)
+                    .background(
+                        LinearGradient(colors: [.red.opacity(0.8), .orange.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+                    .clipShape(Circle())
+                    .shadow(color: .red.opacity(0.3), radius: 5)
+            }
+        }
+        .padding(12)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(.white.opacity(0.2), lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
 }

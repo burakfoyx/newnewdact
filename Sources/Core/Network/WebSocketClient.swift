@@ -141,12 +141,12 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
         guard let data = text.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
               let event = json["event"] as? String,
-              let args = json["args"] as? [String] else {
+              let args = json["args"] as? [Any] else {
             // Check for jwt error or other formats
             return
         }
         
-        let content = args.first ?? ""
+        let content = (args.first as? String) ?? ""
         
         switch event {
         case "auth success":

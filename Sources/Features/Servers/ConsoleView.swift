@@ -65,37 +65,7 @@ struct ConsoleView: View {
         }
         .navigationTitle("Console")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                HStack {
-                    Circle()
-                        .fill(viewModel.isConnected ? Color.green : Color.red)
-                        .frame(width: 8, height: 8)
-                    
-                    Menu {
-                        Button(action: { viewModel.sendPowerAction("start") }) {
-                            Label("Start", systemImage: "play.fill")
-                        }
-                        Button(action: { viewModel.sendPowerAction("restart") }) {
-                            Label("Restart", systemImage: "arrow.clockwise")
-                        }
-                        Button(action: { viewModel.sendPowerAction("stop") }) {
-                            Label("Stop", systemImage: "stop.fill")
-                        }
-                        Button(role: .destructive, action: { viewModel.sendPowerAction("kill") }) {
-                            Label("Kill", systemImage: "flame.fill")
-                        }
-                    } label: {
-                        Image(systemName: "power")
-                            .font(.title3)
-                            .foregroundStyle(.white)
-                            .padding(8)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
-                    }
-                }
-            }
-        }
+        // Toolbar removed to avoid duplication with ServerDetailView header
         .onAppear {
             viewModel.connect()
         }

@@ -42,6 +42,25 @@ struct SettingsView: View {
                     }
                 }
                 
+                Section("Appearance") {
+                    if let active = accountManager.activeAccount {
+                        Picker("Theme", selection: Binding(
+                            get: { active.theme },
+                            set: { newTheme in
+                                var updated = active
+                                updated.theme = newTheme
+                                accountManager.updateAccount(updated)
+                            }
+                        )) {
+                            ForEach(AppTheme.allCases) { theme in
+                                Label(theme.rawValue, systemImage: "paintbrush.fill")
+                                    .tag(theme)
+                            }
+                        }
+                        .pickerStyle(.navigationLink)
+                    }
+                }
+                
                 Section {
                     Button(role: .destructive) {
                         if let id = accountManager.activeAccount?.id {
