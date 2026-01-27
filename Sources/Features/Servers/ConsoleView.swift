@@ -42,26 +42,51 @@ struct ConsoleView: View {
                 }
             }
             
-            // Input
-            HStack {
-                TextField("Type a command...", text: $viewModel.inputCommand)
-                    .textFieldStyle(.plain)
-                    .font(.system(.body, design: .monospaced))
-                    .foregroundStyle(.white)
-                    .padding(10)
-                    .background(Color.white.opacity(0.1))
-                    .cornerRadius(8)
-                
-                Button(action: { viewModel.sendCommand() }) {
-                    Image(systemName: "paperplane.fill")
+            // Input Area
+            VStack {
+                HStack(spacing: 12) {
+                    // Connection Status / Reconnect
+                    if !viewModel.isConnected {
+                        Button(action: { viewModel.connect() }) {
+                             Image(systemName: "arrow.clockwise.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.red)
+                                .shadow(color: .red.opacity(0.5), radius: 5)
+                        }
+                        .transition(.scale.combined(with: .opacity))
+                    } else {
+                         Circle()
+                            .fill(Color.green)
+                            .frame(width: 8, height: 8)
+                            .shadow(color: .green, radius: 5)
+                            .padding(.leading, 4)
+                    }
+
+                    TextField("Type a command...", text: $viewModel.inputCommand)
+                        .font(.system(.body, design: .monospaced))
                         .foregroundStyle(.white)
-                        .padding(10)
-                        .background(Color.blue)
-                        .cornerRadius(8)
+                        .tint(.blue)
+                        .submitLabel(.send)
+                        .onSubmit { viewModel.sendCommand() }
+                    
+                    Button(action: { viewModel.sendCommand() }) {
+                        Image(systemName: "paperplane.fill")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(10)
+                            .background(
+                                LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
+                            )
+                            .clipShape(Circle())
+                            .shadow(color: .blue.opacity(0.4), radius: 4)
+                    }
                 }
+                .padding(6)
+                .padding(.horizontal, 6)
+                .glassEffect(.regular, in: Capsule())
+                .padding(.horizontal)
+                .padding(.bottom, 8)
             }
-            .padding()
-            .background(.ultraThinMaterial)
         }
         .navigationTitle("Console")
         .navigationBarTitleDisplayMode(.inline)

@@ -67,8 +67,14 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
         
         var request = URLRequest(url: url)
         request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        // Origin is often required by Pterodactyl Wings
-        request.addValue(url.absoluteString, forHTTPHeaderField: "Origin") 
+        // Origin is required by Wings. Using the WSS URL itself often works, or we need the panel URL.
+        // If console is not displaying, this is the #1 suspect.
+        // Let's try to set a generic valid origin or the URL's host.
+        if let host = url.host {
+            request.addValue("https://\(host)", forHTTPHeaderField: "Origin")
+        } else {
+             request.addValue(url.absoluteString, forHTTPHeaderField: "Origin")
+        } 
         
         webSocketTask = session.webSocketTask(with: request)
         webSocketTask?.resume()
@@ -136,13 +142,15 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
     }
     
     private func handleMessage(_ text: String) {
-        // Simple parsing of Pterodactyl JSON format
-        // Expected format: {"event":"name", "args":["..."]}
+        // Fallback or debug for non-standard frames
         guard let data = text.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
               let event = json["event"] as? String,
               let args = json["args"] as? [Any] else {
-            // Check for jwt error or other formats
+            // Check for potential error messages sent as plain text or different format
+            if text.lowercased().contains("jwt") || text.lowercased().contains("error") {
+                 eventSubject.send(.consoleOutput("System Error: \(text)"))
+            }
             return
         }
         
