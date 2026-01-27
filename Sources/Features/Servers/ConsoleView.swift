@@ -24,7 +24,16 @@ struct ConsoleView: View {
                         }
                     }
                     .padding()
+                    .padding(.bottom, 60) // Extra padding for fade area
                 }
+                .scrollDismissesKeyboard(.interactively) // Feature 2: Swipe down to dismiss
+                .mask(
+                     LinearGradient(stops: [
+                         .init(color: .black, location: 0),
+                         .init(color: .black, location: 0.85),
+                         .init(color: .clear, location: 1.0)
+                     ], startPoint: .top, endPoint: .bottom) // Feature 3: Proper fade
+                )
                 .onChange(of: viewModel.logs.count) {
                     if let last = viewModel.logs.last {
                          withAnimation {
@@ -146,7 +155,15 @@ class ConsoleViewModel: ObservableObject {
     
     func sendCommand() {
         guard !inputCommand.isEmpty else { return }
-        WebSocketClient.shared.sendCommand(inputCommand)
+        
+        if !isConnected {
+            self.logs.append("System: Cannot send - Disconnected")
+            return
+        }
+        
+        let cmd = inputCommand
+        self.logs.append("> \(cmd)") // Local echo
+        WebSocketClient.shared.sendCommand(cmd)
         inputCommand = ""
     }
     
