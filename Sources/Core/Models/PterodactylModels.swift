@@ -86,9 +86,10 @@ struct AllocationAttributes: Codable {
     let ip: String
     let port: Int
     let isDefault: Bool
+    let notes: String?
     
     enum CodingKeys: String, CodingKey {
-        case id, ip, port
+        case id, ip, port, notes
         case isDefault = "is_default"
     }
 }

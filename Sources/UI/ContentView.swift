@@ -37,9 +37,18 @@ struct ContentView: View {
     }
     
     func checkAuth() {
-        // Simple check
-        if KeychainHelper.standard.read(account: "current_session") != nil {
-            isAuthenticated = true
+        if let data = KeychainHelper.standard.read(account: "current_session"),
+           let credentials = try? JSONDecoder().decode([String: String].self, from: data),
+           let url = credentials["url"],
+           let key = credentials["key"] {
+            
+            // Configure the client
+            Task {
+                await PterodactylClient.shared.configure(url: url, key: key)
+                await MainActor.run {
+                    isAuthenticated = true
+                }
+            }
         }
     }
 }

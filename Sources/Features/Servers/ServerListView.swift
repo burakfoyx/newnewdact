@@ -30,7 +30,7 @@ struct ServerListView: View {
         NavigationView {
             ZStack {
                 // Background
-                Color.black.ignoresSafeArea()
+                LiquidBackgroundView()
                 
                 if viewModel.isLoading {
                     ProgressView("Loading Servers...")
@@ -52,7 +52,7 @@ struct ServerListView: View {
                     ScrollView {
                         LazyVStack(spacing: 20) {
                             ForEach(viewModel.servers, id: \.uuid) { server in
-                                NavigationLink(destination: ConsoleView(serverId: server.identifier)) {
+                                NavigationLink(destination: ServerDetailView(server: server)) {
                                     ServerRow(server: server)
                                 }
                                 .buttonStyle(PlainButtonStyle())

@@ -1,75 +1,91 @@
 import SwiftUI
 
-//
-//  LiquidGlass.swift
-//  XYIdactyl
-//
-//  Created for iOS 26 Liquid Glass Design System.
-//
+// MARK: - Liquid Glass Materials & Modifiers
 
-/// A container that applies the Liquid Glass aesthetic:
-/// - Translucent background with heavy blur (Refraction)
-/// - Specular highlights (simulated with gradients)
-/// - Depth effects (shadows and scaling)
-struct LiquidGlassCard<Content: View>: View {
-    let content: Content
+enum GlassVariant {
+    case clear
+    case frosted
+    case heavy
+}
+
+struct LiquidGlassModifier: ViewModifier {
+    let variant: GlassVariant
+    let cornerRadius: CGFloat
     
-    init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-    
-    var body: some View {
+    func body(content: Content) -> some View {
         content
-            .padding()
-            // The core "Liquid" material
-            .background(.regularMaterial) 
-            // Add a subtle specular highlight gradient overlay
+            .background(materialForVariant(variant))
             .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(
                         LinearGradient(
-                            colors: [.white.opacity(0.5), .white.opacity(0.1), .clear],
+                            stops: [
+                                .init(color: .white.opacity(0.6), location: 0),
+                                .init(color: .white.opacity(0.1), location: 0.4),
+                                .init(color: .clear, location: 0.5),
+                                .init(color: .white.opacity(0.05), location: 1)
+                            ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         lineWidth: 1
                     )
             )
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            // Depth shadow - diffuse and soft
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .shadow(color: .black.opacity(0.2), radius: 15, x: 0, y: 10)
+    }
+    
+    private func materialForVariant(_ variant: GlassVariant) -> Material {
+        switch variant {
+        case .clear: return .ultraThinMaterial
+        case .frosted: return .regularMaterial
+        case .heavy: return .thickMaterial
+        }
     }
 }
 
 extension View {
-    /// Applies a liquid glass background to the view.
-    func liquidGlassBackground() -> some View {
-        self
-            .background(.ultraThinMaterial)
-            .overlay(
-                Rectangle()
-                    .fill(.white.opacity(0.05))
-                    .blendMode(.overlay)
-            )
+    func liquidGlass(variant: GlassVariant = .frosted, cornerRadius: CGFloat = 24) -> some View {
+        modifier(LiquidGlassModifier(variant: variant, cornerRadius: cornerRadius))
     }
 }
 
-/// A button style that mimics the tactile "press" of a glass surface.
-struct LiquidButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding()
-            .background(
-                Capsule()
-                    .fill(.thickMaterial)
-                    .shadow(color: .white.opacity(0.1), radius: 1, x: -1, y: -1) // Inner light
-                    .shadow(color: .black.opacity(0.3), radius: 4, x: 2, y: 2)   // Drop shadow
-            )
-            .overlay(
-                Capsule()
-                    .stroke(LinearGradient(colors: [.white.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1)
-            )
-            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
-            .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
+// MARK: - Animated Background
+struct LiquidBackgroundView: View {
+    @State private var animate = false
+    
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            // Mesh Gradient Emulation using Blended Circles
+            GeometryReader { proxy in
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.4))
+                        .frame(width: 400, height: 400)
+                        .blur(radius: 80)
+                        .offset(x: animate ? -100 : 100, y: animate ? -50 : 50)
+                    
+                    Circle()
+                        .fill(Color.purple.opacity(0.4))
+                        .frame(width: 300, height: 300)
+                        .blur(radius: 60)
+                        .offset(x: animate ? 150 : -50, y: animate ? 200 : -100)
+                    
+                    Circle()
+                        .fill(Color.cyan.opacity(0.3))
+                        .frame(width: 350, height: 350)
+                        .blur(radius: 70)
+                        .offset(x: animate ? -50 : 200, y: animate ? 300 : 100)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 10).repeatForever(autoreverses: true)) {
+                animate = true
+            }
+        }
     }
 }
