@@ -1,32 +1,114 @@
 import SwiftUI
 
+@MainActor
+class SchedulesViewModel: ObservableObject {
+    @Published var schedules: [ScheduleAttributes] = []
+    @Published var isLoading = false
+    @Published var error: String?
+    
+    func fetch(serverId: String) async {
+        isLoading = true
+        do {
+            schedules = try await PterodactylClient.shared.fetchSchedules(serverId: serverId)
+            error = nil
+        } catch {
+            self.error = error.localizedDescription
+        }
+        isLoading = false
+    }
+}
+
 struct SchedulesView: View {
     let serverId: String
+    @StateObject private var viewModel = SchedulesViewModel()
     
     var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "clock.fill")
-                .font(.system(size: 60))
-                .foregroundStyle(.white.opacity(0.3))
-                .padding()
-                .glassEffect(.regular, in: Circle())
-            
-            Text("Schedules")
-                .font(.title2.bold())
-                .foregroundStyle(.white)
-            
-            Text("Scheduled tasks functionality is coming soon.")
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.6))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            
-            Button("Refresh") {
-                // Placeholder action
+        ScrollView {
+            VStack(spacing: 16) {
+                if viewModel.isLoading {
+                    ProgressView().tint(.white).padding(.top, 40)
+                } else if let error = viewModel.error {
+                    VStack {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.title)
+                            .foregroundStyle(.orange)
+                        Text(error)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                    .padding()
+                } else if viewModel.schedules.isEmpty {
+                     // Empty State
+                     VStack(spacing: 12) {
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 50))
+                            .foregroundStyle(.white.opacity(0.2))
+                        Text("No schedules found")
+                            .foregroundStyle(.white.opacity(0.6))
+                     }
+                     .frame(maxWidth: .infinity)
+                     .padding(.top, 60)
+                } else {
+                    ForEach(viewModel.schedules, id: \.id) { schedule in
+                        LiquidGlassCard {
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack {
+                                    Text(schedule.name)
+                                        .font(.headline)
+                                        .foregroundStyle(.white)
+                                    Spacer()
+                                    if schedule.isActive {
+                                        Text("Active")
+                                            .font(.caption2.bold())
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.green.opacity(0.3))
+                                            .foregroundColor(.green)
+                                            .clipShape(Capsule())
+                                    } else {
+                                        Text("Inactive")
+                                            .font(.caption2.bold())
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.gray.opacity(0.3))
+                                            .foregroundColor(.white.opacity(0.6))
+                                            .clipShape(Capsule())
+                                    }
+                                }
+                                
+                                Divider().background(Color.white.opacity(0.1))
+                                
+                                HStack {
+                                    Label(formatCron(schedule.cron), systemImage: "clock.arrow.circlepath")
+                                        .foregroundStyle(.blue.opacity(0.8))
+                                    Spacer()
+                                    if let lastRun = schedule.lastRunAt {
+                                        Text("Last: " + formatDate(lastRun))
+                                            .foregroundStyle(.white.opacity(0.5))
+                                    }
+                                }
+                                .font(.caption)
+                            }
+                        }
+                    }
+                }
             }
-            .buttonStyle(LiquidButtonStyle())
+            .padding()
+            .padding(.bottom, 80)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+        .task {
+            if viewModel.schedules.isEmpty { await viewModel.fetch(serverId: serverId) }
+        }
+        .refreshable {
+            await viewModel.fetch(serverId: serverId)
+        }
+    }
+    
+    func formatCron(_ cron: ScheduleCron) -> String {
+        return "\(cron.minute) \(cron.hour) \(cron.dayOfMonth) * \(cron.dayOfWeek)"
+    }
+    
+    func formatDate(_ dateStr: String) -> String {
+        return String(dateStr.prefix(10))
     }
 }
