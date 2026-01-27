@@ -96,8 +96,7 @@ struct AllocationAttributes: Codable {
 
 struct WebsocketResponse: Codable {
     let data: WebsocketData
-}
-
+    
     struct Stats: Codable {
         let memory_bytes: Int64
         let cpu_absolute: Double

@@ -1,20 +1,5 @@
 import SwiftUI
 
-class ConsoleViewModel: ObservableObject {
-    let serverId: String
-    @Published var logs: [String] = []
-    @Published var command = ""
-    @Published var stats: WebsocketResponse.Stats?
-    @Published var state: String = "offline" // running, starting, stopping, offline
-    
-    // ... existing networking code ...
-    
-    // We need to keep the init, but ensure we don't break existing logic.
-    // I will need to edit ConsoleView.swift to accept this ObservedObject instead of creating its own.
-}
-*/
-// I will apply this change directly to code:
-
 struct ServerDetailView: View {
     let server: ServerAttributes
     @StateObject private var consoleViewModel: ConsoleViewModel // Owned here to share state
