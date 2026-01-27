@@ -114,8 +114,11 @@ struct ServerDetailView: View {
         switch consoleViewModel.state {
         case "running": return .green
         case "starting": return .yellow
+        case "restarting": return .yellow
         case "stopping": return .orange
-        case "offline": return .red
+        case "offline": return .gray
+        case "installing": return .blue
+        case "suspended": return .orange
         default: return .gray
         }
     }
@@ -152,8 +155,11 @@ struct GlassyNavBar: View {
         switch statusState {
         case "running": return .green
         case "starting": return .yellow
+        case "restarting": return .yellow
         case "stopping": return .orange
-        case "offline": return .red
+        case "offline": return .gray
+        case "installing": return .blue
+        case "suspended": return .orange
         default: return .gray
         }
     }

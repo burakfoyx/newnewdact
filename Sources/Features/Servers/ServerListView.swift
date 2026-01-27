@@ -85,11 +85,11 @@ struct ServerRow: View {
         LiquidGlassCard {
             HStack {
                 // Status Indicator
-                // Default to gray for "Unknown/Stopped" state. Only specific flags trigger colors.
+                // Colors per user request: Orange=Suspended, Blue=Installing, Gray=Unknown/Off
                 Circle()
-                    .fill(server.isSuspended ? Color.red : (server.isInstalling ? Color.yellow : Color.gray))
+                    .fill(server.isSuspended ? Color.orange : (server.isInstalling ? Color.blue : Color.gray))
                     .frame(width: 8, height: 8)
-                    .shadow(color: (server.isSuspended ? Color.red : (server.isInstalling ? Color.yellow : Color.clear)).opacity(0.4), radius: 4)
+                    .shadow(color: (server.isSuspended ? Color.orange : (server.isInstalling ? Color.blue : Color.clear)).opacity(0.4), radius: 4)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(server.name)

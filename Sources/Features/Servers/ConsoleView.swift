@@ -159,15 +159,27 @@ class ConsoleViewModel: ObservableObject {
     
     func connect() {
         Task {
-            // Need both socket details and origin
-            guard let details = try? await PterodactylClient.shared.fetchWebsocketDetails(serverId: serverId) else { return }
-            let panelURL = await PterodactylClient.shared.getPanelURL()
-            
-            WebSocketClient.shared.connect(
-                url: URL(string: details.url)!, 
-                token: details.token,
-                origin: panelURL?.absoluteString // Important: Wings checks Origin against Panel URL
-            )
+            do {
+                await MainActor.run { self.logs.append("System: Authenticating with Pterodactyl...") }
+                
+                // Need both socket details and origin
+                let details = try await PterodactylClient.shared.fetchWebsocketDetails(serverId: serverId)
+                let panelURL = await PterodactylClient.shared.getPanelURL()
+                
+                WebSocketClient.shared.disconnect() // Ensure crisp state
+                
+                // Add token as query param too, some daemons need it
+                
+                WebSocketClient.shared.connect(
+                    url: URL(string: details.url)!, 
+                    token: details.token,
+                    origin: panelURL?.absoluteString 
+                )
+            } catch {
+                await MainActor.run {
+                    self.logs.append("System Error: Could not connect - \(error.localizedDescription)")
+                }
+            }
         }
     }
     
@@ -192,6 +204,8 @@ class ConsoleViewModel: ObservableObject {
             
         case .connected:
             self.isConnected = true
+            WebSocketClient.shared.sendCommand("send logs")
+            WebSocketClient.shared.sendCommand("send stats")
             
         case .disconnected:
             self.isConnected = false
