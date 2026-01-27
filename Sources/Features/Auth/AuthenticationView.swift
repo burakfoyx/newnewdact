@@ -8,7 +8,7 @@ struct AuthenticationView: View {
         NavigationStack {
             ZStack {
                 // Background
-                LinearGradient(colors: [.black, .blue.opacity(0.1)], startPoint: .top, endPoint: .bottom)
+                LiquidBackgroundView()
                     .ignoresSafeArea()
                 
                 ScrollView {

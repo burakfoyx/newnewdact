@@ -190,6 +190,7 @@ struct StarsView: View {
                         x: stars[i].0 * proxy.size.width,
                         y: stars[i].1 * proxy.size.height
                     )
+                    .shadow(color: .white, radius: 1.5) // Light bloom
             }
         }
     }

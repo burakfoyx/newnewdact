@@ -80,26 +80,8 @@ struct LandingView: View {
     
     var body: some View {
         ZStack {
-            // Animated ambient background
-            LinearGradient(
-                colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3), Color.black],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
-            // Circles for refraction demo
-            Circle()
-                .fill(Color.cyan)
-                .blur(radius: 60)
-                .frame(width: 200, height: 200)
-                .offset(x: -100, y: -150)
-            
-            Circle()
-                .fill(Color.pink)
-                .blur(radius: 60)
-                .frame(width: 200, height: 200)
-                .offset(x: 100, y: 100)
+            LiquidBackgroundView()
+                .ignoresSafeArea()
             
             VStack(spacing: 30) {
                 // Header
