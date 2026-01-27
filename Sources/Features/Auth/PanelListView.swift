@@ -7,8 +7,6 @@ struct PanelListView: View {
     
     var body: some View {
         ZStack {
-            LiquidBackgroundView()
-            
             ScrollView {
                 LazyVStack(spacing: 20) {
                     ForEach(accountManager.accounts) { account in

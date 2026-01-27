@@ -52,8 +52,7 @@ struct ServerListView: View {
     
     var body: some View {
         ZStack {
-            // Background
-            LiquidBackgroundView()
+            // Background handled globally in ContentView
             
             if viewModel.isLoading {
                 ProgressView("Loading Servers...")
@@ -95,7 +94,7 @@ struct ServerListView: View {
             }
         }
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .background(Color.black) // Fallback
+        .background(Color.clear) // Transparent for global background
         .task {
             if viewModel.servers.isEmpty {
                 await viewModel.loadServers()

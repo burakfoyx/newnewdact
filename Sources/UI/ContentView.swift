@@ -18,6 +18,9 @@ struct ContentView: View {
     
     var authenticatedView: some View {
         ZStack(alignment: .bottom) {
+            // Global Background (Single Instance for Performance)
+            LiquidBackgroundView()
+            
             // Content
             Group {
                 switch selectedTab {
@@ -25,13 +28,12 @@ struct ContentView: View {
                     NavigationStack {
                         PanelListView(selectedTab: $selectedTab)
                             .navigationTitle("Panels")
-                            .toolbar(.hidden, for: .navigationBar) // Hide native navbar to use GlassyNavBar if needed, or keeping native for now but adjusting top padding
+                            .toolbar(.hidden, for: .navigationBar)
                     }
                 case 1:
                     NavigationStack {
                         ServerListView()
                             .navigationTitle("Servers")
-                            // We can use a custom NavBar here too for consistency if requested
                     }
                 case 2:
                     NavigationStack {
@@ -47,9 +49,9 @@ struct ContentView: View {
             // Custom Floating Tab Bar
             GlassyTabBar(selectedTab: $selectedTab)
                 .padding(.horizontal, 20)
-                .padding(.bottom, 20) // Floating above safe area
+                .padding(.bottom, 20) 
         }
-        .edgesIgnoringSafeArea(.bottom) // Allow content to go behind tab bar
+        .edgesIgnoringSafeArea(.bottom)
         .tint(accountManager.activeAccount?.theme.mainColor ?? .blue)
     }
 }

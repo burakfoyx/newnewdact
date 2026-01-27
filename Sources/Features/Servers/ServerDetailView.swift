@@ -42,7 +42,7 @@ struct ServerDetailView: View {
     
     var body: some View {
         ZStack {
-            LiquidBackgroundView()
+            // Background handled globally
             
             VStack(spacing: 0) {
                  // Header
@@ -90,6 +90,7 @@ struct ServerDetailView: View {
                 // Bottom Tab Bar ...
             }
         }
+        .background(Color.clear)
         .toolbar(.hidden, for: .navigationBar)
         // Removed ignoresSafeArea(.keyboard) to allow content to adjust for keyboard
     }
