@@ -10,7 +10,7 @@ struct ConsoleView: View {
         VStack(spacing: 0) {
             // Stats Bar
             // Stats removed (displayed in header)
-            Spacer().frame(height: 10)
+
             
             // Logs
             ScrollViewReader { proxy in
@@ -26,14 +26,7 @@ struct ConsoleView: View {
                     .padding()
                     .padding(.bottom, 60) // Extra padding for fade area
                 }
-                .scrollDismissesKeyboard(.interactively) // Feature 2: Swipe down to dismiss
-                .mask(
-                     LinearGradient(stops: [
-                         .init(color: .black, location: 0),
-                         .init(color: .black, location: 0.85),
-                         .init(color: .clear, location: 1.0)
-                     ], startPoint: .top, endPoint: .bottom) // Feature 3: Proper fade
-                )
+                .scrollDismissesKeyboard(.interactively)
                 .onChange(of: viewModel.logs.count) {
                     if let last = viewModel.logs.last {
                          withAnimation {
