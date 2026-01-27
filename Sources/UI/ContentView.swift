@@ -15,90 +15,44 @@ struct ContentView: View {
     }
     
     var authenticatedView: some View {
-        ZStack(alignment: .bottom) {
-            // Global Background (Single Instance for Performance)
+        ZStack {
+            // Global Background
             LiquidBackgroundView()
             
-            // Content
-            Group {
-                switch selectedTab {
-                case 0:
-                    NavigationStack {
-                        PanelListView(selectedTab: $selectedTab)
-                            .navigationTitle("Panels")
-                            .toolbar(.hidden, for: .navigationBar)
-                    }
-                case 1:
-                    NavigationStack {
-                        ServerListView()
-                            .navigationTitle("Servers")
-                    }
-                case 2:
-                    NavigationStack {
-                        SettingsView()
-                            .navigationTitle("Settings")
-                    }
-                default:
-                    EmptyView()
+            TabView(selection: $selectedTab) {
+                NavigationStack {
+                    PanelListView(selectedTab: $selectedTab)
+                        .navigationTitle("Panels")
                 }
+                .tabItem {
+                    Label("Panels", systemImage: "square.grid.2x2.fill")
+                }
+                .tag(0)
+                
+                NavigationStack {
+                    ServerListView()
+                        .navigationTitle("Servers")
+                }
+                .tabItem {
+                    Label("Servers", systemImage: "server.rack")
+                }
+                .tag(1)
+                
+                NavigationStack {
+                    SettingsView()
+                        .navigationTitle("Settings")
+                }
+                .tabItem {
+                     Label("Settings", systemImage: "gearshape.fill")
+                }
+                .tag(2)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
-            // Custom Floating Tab Bar
-            GlassyTabBar(selectedTab: $selectedTab)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20) 
+            .tint(accountManager.activeAccount?.theme.mainColor ?? .blue)
         }
-        .edgesIgnoringSafeArea(.bottom)
-        .tint(accountManager.activeAccount?.theme.mainColor ?? .blue)
     }
 }
 
-struct GlassyTabBar: View {
-    @Binding var selectedTab: Int
-    
-    let tabs = [
-        (0, "Panels", "square.grid.2x2.fill"),
-        (1, "Servers", "server.rack"),
-        (2, "Settings", "gearshape.fill")
-    ]
-    
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(tabs, id: \.0) { index, title, icon in
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        selectedTab = index
-                    }
-                }) {
-                    VStack(spacing: 4) {
-                        Image(systemName: icon)
-                            .font(.system(size: 20, weight: selectedTab == index ? .semibold : .regular))
-                            .symbolEffect(.bounce, value: selectedTab == index)
-                        
-                        Text(title)
-                            .font(.system(size: 10, weight: .medium))
-                    }
-                    .foregroundStyle(selectedTab == index ? .white : .white.opacity(0.5))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .contentShape(Rectangle())
-                }
-            }
-        }
-        .background(.ultraThinMaterial)
-        .background(
-            // "Global" fade effect: Ambient glow behind the bar
-            LinearGradient(colors: [.black.opacity(0.2), .clear], startPoint: .bottom, endPoint: .top)
-        )
-        .clipShape(Capsule())
-        .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
-        .overlay(
-            Capsule()
-                .stroke(LinearGradient(colors: [.white.opacity(0.2), .white.opacity(0.05)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
-        )
-    }
-}
+
 
 struct LandingView: View {
 // ... existing landing view code ...
