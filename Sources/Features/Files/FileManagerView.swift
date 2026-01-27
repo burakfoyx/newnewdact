@@ -109,7 +109,7 @@ struct FileManagerView: View {
         }
         .sheet(item: $selectedFileForEditing) { file in
             let fullPath = viewModel.currentPath == "/" ? file.name : "\(viewModel.currentPath)/\(file.name)"
-            FileEditorView(serverId: serverId, filePath: fullPath)
+            FileEditorView(serverId: viewModel.serverId, filePath: fullPath)
         }
         .task {
             await viewModel.listFiles()

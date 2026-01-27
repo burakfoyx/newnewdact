@@ -109,7 +109,7 @@ struct ServerDetailView: View {
                     StartupView(serverId: server.identifier)
                         .tag(ServerTab.startup)
                     
-                    SettingsView(serverId: server.identifier)
+                    SettingsView()
                         .tag(ServerTab.settings)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
