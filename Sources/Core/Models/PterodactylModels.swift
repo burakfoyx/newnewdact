@@ -105,7 +105,36 @@ struct WebsocketResponse: Codable {
     }
 }
 
-struct WebsocketData: Codable {
-    let token: String
-    let socket: String
+struct ServerStatsResponse: Codable {
+    let object: String
+    let attributes: ServerStats
 }
+
+struct ServerStats: Codable {
+    let currentState: String
+    let isSuspended: Bool
+    let resources: ResourceUsage
+    
+    enum CodingKeys: String, CodingKey {
+        case currentState = "current_state"
+        case isSuspended = "is_suspended"
+        case resources
+    }
+}
+
+struct ResourceUsage: Codable {
+    let memoryBytes: Int64
+    let cpuAbsolute: Double
+    let diskBytes: Int64
+    let networkRxBytes: Int64
+    let networkTxBytes: Int64
+    
+    enum CodingKeys: String, CodingKey {
+        case memoryBytes = "memory_bytes"
+        case cpuAbsolute = "cpu_absolute"
+        case diskBytes = "disk_bytes"
+        case networkRxBytes = "network_rx_bytes"
+        case networkTxBytes = "network_tx_bytes"
+    }
+}
+

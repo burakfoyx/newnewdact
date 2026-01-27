@@ -2,6 +2,7 @@ import SwiftUI
 
 class ServerListViewModel: ObservableObject {
     @Published var servers: [ServerAttributes] = []
+    @Published var serverStates: [String: String] = [:]
     @Published var isLoading = false
     @Published var errorMessage: String?
     
@@ -14,10 +15,33 @@ class ServerListViewModel: ObservableObject {
                 self.servers = fetchedServers
                 self.isLoading = false
             }
+            // Fetch statuses after list is populated
+            await fetchStatuses()
         } catch {
             await MainActor.run {
                 self.errorMessage = error.localizedDescription
                 self.isLoading = false
+            }
+        }
+    }
+    
+    func fetchStatuses() async {
+        await withTaskGroup(of: (String, String?).self) { group in
+            for server in servers {
+                group.addTask {
+                    if let stats = try? await PterodactylClient.shared.fetchResources(serverId: server.identifier) {
+                        return (server.uuid, stats.currentState)
+                    }
+                    return (server.uuid, nil)
+                }
+            }
+            
+            for await (uuid, state) in group {
+                if let state = state {
+                    await MainActor.run {
+                        self.serverStates[uuid] = state
+                    }
+                }
             }
         }
     }
@@ -52,7 +76,7 @@ struct ServerListView: View {
                     LazyVStack(spacing: 20) {
                         ForEach(viewModel.servers, id: \.uuid) { server in
                             NavigationLink(destination: ServerDetailView(server: server)) {
-                                ServerRow(server: server)
+                                ServerRow(server: server, state: viewModel.serverStates[server.uuid])
                             }
                             .buttonStyle(PlainButtonStyle())
                         }
@@ -73,23 +97,40 @@ struct ServerListView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .background(Color.black) // Fallback
         .task {
-            await viewModel.loadServers()
+            if viewModel.servers.isEmpty {
+                await viewModel.loadServers()
+            }
         }
+        // Auto-refresh stats occasionally? 
+        // For now, only on load.
     }
 }
 
 struct ServerRow: View {
     let server: ServerAttributes
+    let state: String?
     
     var statusColor: Color {
+        // Dynamic State
+        if let state = state {
+            switch state {
+            case "running": return .green
+            case "starting": return .yellow
+            case "stopping": return .orange
+            case "offline": return .gray
+            default: return .black // Unknown
+            }
+        }
+        
+        // Static Fallbacks
         if server.isSuspended { return .orange }
         if server.isInstalling { return .blue }
-        return .green // Assume online/ready if not suspended/installing
+        return .black // Default "Unknown" until fetched
     }
 
     var body: some View {
         HStack {
-            // Status Indicator (Dot) - Kept for specific detail
+            // Status Indicator (Dot)
             Circle()
                 .fill(statusColor)
                 .frame(width: 8, height: 8)
