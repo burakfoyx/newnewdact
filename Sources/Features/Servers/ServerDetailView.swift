@@ -43,6 +43,7 @@ struct ServerDetailView: View {
                  GlassyNavBar(
                      title: server.name,
                      statusState: consoleViewModel.state,
+                     selectedTab: $selectedTab, // Added
                      onBack: { dismiss() },
                      onPowerAction: { action in consoleViewModel.sendPowerAction(action) }
                  )
@@ -70,6 +71,17 @@ struct ServerDetailView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(nil, value: selectedTab) // Disable tab slide animation if that's the issue
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .black, location: 0),
+                            .init(color: .black, location: 0.9),
+                            .init(color: .clear, location: 1.0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 
                 // Bottom Tab Bar ...
             }
@@ -112,6 +124,7 @@ extension View {
 struct GlassyNavBar: View {
     let title: String
     let statusState: String
+    @Binding var selectedTab: ServerTab
     let onBack: () -> Void
     let onPowerAction: (String) -> Void
     
@@ -126,53 +139,87 @@ struct GlassyNavBar: View {
     }
     
     var body: some View {
-        HStack(spacing: 12) {
-             Button(action: onBack) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.8))
-                    .padding(8)
-                    .glassEffect(in: Circle())
+        VStack(spacing: 12) {
+            // First Row: Title & Actions
+            HStack(spacing: 12) {
+                 Button(action: onBack) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .padding(8)
+                        .glassEffect(in: Circle())
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                }
+                
+                Spacer()
+                
+                // Status Pill
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(statusColor)
+                        .frame(width: 6, height: 6)
+                        .shadow(color: statusColor.opacity(0.8), radius: 4)
+                    Text(statusState.capitalized)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .glassEffect(.thick, in: Capsule())
+                
+                // Power Action
+                Menu {
+                    Button(action: { onPowerAction("start") }) { Label("Start", systemImage: "play.fill") }
+                    Button(action: { onPowerAction("restart") }) { Label("Restart", systemImage: "arrow.clockwise") }
+                    Button(action: { onPowerAction("stop") }) { Label("Stop", systemImage: "stop.fill") }
+                    Button(role: .destructive, action: { onPowerAction("kill") }) { Label("Kill", systemImage: "flame.fill") }
+                } label: {
+                    Image(systemName: "power")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(8)
+                        .glassEffect(
+                            .regular.tint(Color.red),
+                            in: Circle()
+                        )
+                }
             }
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-            }
-            
-            Spacer()
-            
-            // Status Pill
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 6, height: 6)
-                    .shadow(color: statusColor.opacity(0.8), radius: 4)
-                Text(statusState.capitalized)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.white)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .glassEffect(.thick, in: Capsule())
-            
-            // Power Action
-            Menu {
-                Button(action: { onPowerAction("start") }) { Label("Start", systemImage: "play.fill") }
-                Button(action: { onPowerAction("restart") }) { Label("Restart", systemImage: "arrow.clockwise") }
-                Button(action: { onPowerAction("stop") }) { Label("Stop", systemImage: "stop.fill") }
-                Button(role: .destructive, action: { onPowerAction("kill") }) { Label("Kill", systemImage: "flame.fill") }
-            } label: {
-                Image(systemName: "power")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(8)
-                    .glassEffect(
-                        .regular.tint(Color.red),
-                        in: Circle()
-                    )
+            // Second Row: Morphing Tabs
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(ServerTab.allCases) { tab in
+                        Button(action: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                selectedTab = tab
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: tab.icon)
+                                Text(tab.rawValue)
+                            }
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(selectedTab == tab ? .white : .white.opacity(0.6))
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 14)
+                            .background(
+                                selectedTab == tab ? Color.white.opacity(0.2) : Color.clear
+                            )
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .stroke(selectedTab == tab ? Color.white.opacity(0.3) : Color.clear, lineWidth: 1)
+                            )
+                        }
+                         .buttonStyle(PlainButtonStyle())
+                    }
+                }
             }
         }
         .padding(14)
