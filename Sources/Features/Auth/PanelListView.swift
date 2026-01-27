@@ -18,10 +18,6 @@ struct PanelListView: View {
                             PanelRow(account: account, isActive: accountManager.activeAccount?.id == account.id)
                         }
                         .buttonStyle(PlainButtonStyle())
-                        
-                        // Show server list preview for active account?
-                        // Or just list panels. User says "Panels page... shows servers not the panels".
-                        // So this list should show PANELS.
                     }
                     
                     Button(action: { showAddPanel = true }) {
@@ -39,6 +35,7 @@ struct PanelListView: View {
                 .padding()
             }
         }
+        .background(Color.clear)
         .navigationTitle("Panels") // This title might be hidden if we hide nav bar, but TabView uses it?
         // Actually TabView titles are independent.
         .sheet(isPresented: $showAddPanel) {

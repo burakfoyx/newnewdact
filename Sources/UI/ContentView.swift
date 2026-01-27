@@ -23,6 +23,7 @@ struct ContentView: View {
             TabView(selection: $selectedTab) {
                 NavigationStack {
                     PanelListView(selectedTab: $selectedTab)
+                        .background(Color.clear)
                         .navigationTitle("Panels")
                 }
                 .tabItem {
@@ -32,6 +33,7 @@ struct ContentView: View {
                 
                 NavigationStack {
                     ApiKeysView()
+                        .background(Color.clear)
                         .navigationTitle("API Keys")
                 }
                 .tabItem {
@@ -41,6 +43,7 @@ struct ContentView: View {
                 
                 NavigationStack {
                     ServerListView()
+                        .background(Color.clear)
                         .navigationTitle("Servers")
                 }
                 .tabItem {
@@ -50,10 +53,11 @@ struct ContentView: View {
                 
                 NavigationStack {
                     SettingsView()
+                        .background(Color.clear)
                         .navigationTitle("Settings")
                 }
                 .tabItem {
-                     Label("Settings", systemImage: "gearshape.fill")
+                    Label("Settings", systemImage: "gearshape.fill")
                 }
                 .tag(3)
             }
