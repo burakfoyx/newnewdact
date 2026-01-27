@@ -174,6 +174,19 @@ class ConsoleViewModel: ObservableObject {
         }
     }
     
+    func sendCommand() {
+        guard !command.isEmpty else { return }
+        WebSocketClient.shared.sendCommand(command)
+        command = ""
+    }
+    
+    func sendPowerAction(_ signal: String) {
+        Task {
+            // Use REST API for power actions as it's more reliable than websocket typically for these calls
+            try? await PterodactylClient.shared.sendPowerSignal(serverId: serverId, signal: signal)
+        }
+    }
+    
     func connect() {
         // In a real implementation, we need to first fetch the WEBSOCKET DETAILS from the API
         // GET /api/client/servers/{uuid}/websocket

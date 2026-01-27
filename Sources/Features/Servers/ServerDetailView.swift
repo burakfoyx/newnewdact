@@ -1,8 +1,29 @@
 import SwiftUI
 
+enum ServerTab: String, CaseIterable, Identifiable {
+    case console = "Console"
+    case files = "Files"
+    case network = "Network"
+    case backups = "Backups"
+    case startup = "Startup"
+    case settings = "Settings"
+    
+    var id: String { rawValue }
+    var icon: String {
+        switch self {
+        case .console: return "terminal.fill"
+        case .files: return "folder.fill"
+        case .network: return "network"
+        case .backups: return "archivebox.fill"
+        case .startup: return "play.laptopcomputer"
+        case .settings: return "gearshape.fill"
+        }
+    }
+}
+
 struct ServerDetailView: View {
     let server: ServerAttributes
-    @StateObject private var consoleViewModel: ConsoleViewModel // Owned here to share state
+    @StateObject private var consoleViewModel: ConsoleViewModel
     @State private var selectedTab: ServerTab = .console
     @Environment(\.dismiss) var dismiss
     
@@ -83,7 +104,7 @@ struct ServerDetailView: View {
                  }
                  .padding()
                  
-                 TabView(selection: $selectedTab) {
+                  TabView(selection: $selectedTab) {
                     ConsoleView(viewModel: consoleViewModel) // Pass view model!
                         .tag(ServerTab.console)
                     
