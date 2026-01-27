@@ -136,6 +136,13 @@ struct ResourceUsage: Codable {
         case networkRxBytes = "network_rx_bytes"
         case networkTxBytes = "network_tx_bytes"
     }
+}
+
+struct WebsocketData: Codable {
+    let token: String
+    let socket: String
+}
+
 // MARK: - Databases
 struct DatabaseResponse: Codable {
     let data: [DatabaseData]
