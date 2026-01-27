@@ -1,7 +1,5 @@
 import SwiftUI
 
-import SwiftUI
-
 struct ContentView: View {
     @StateObject private var accountManager = AccountManager.shared
     @State private var selectedTab = 0
@@ -176,7 +174,4 @@ struct LandingView: View {
     ContentView()
 }
 
-
-}
-// Duplicated LandingView removed
 
