@@ -18,6 +18,7 @@ struct ContentView: View {
         ZStack {
             // Global Background
             LiquidBackgroundView()
+                .ignoresSafeArea()
             
             TabView(selection: $selectedTab) {
                 NavigationStack {
@@ -30,22 +31,8 @@ struct ContentView: View {
                 .tag(0)
                 
                 NavigationStack {
-                    VStack(spacing: 20) {
-                        Image(systemName: "key.fill")
-                            .font(.system(size: 60))
-                            .foregroundStyle(.white.opacity(0.5))
-                            .glassEffect(.regular, in: Circle())
-                            .padding()
-                            
-                        Text("API Options")
-                            .font(.title2.bold())
-                            .foregroundStyle(.white)
-                        
-                        Text("Advanced API configuration coming soon.")
-                            .foregroundStyle(.white.opacity(0.7))
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .navigationTitle("API")
+                    ApiKeysView()
+                        .navigationTitle("API Keys")
                 }
                 .tabItem {
                     Label("API", systemImage: "key.fill")

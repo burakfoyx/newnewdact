@@ -268,4 +268,55 @@ actor PterodactylClient {
         let response = try JSONDecoder().decode(SubuserResponse.self, from: data)
         return response.data.map { $0.attributes }
     }
+    // MARK: - API Keys
+    func fetchApiKeys() async throws -> [ApiKeyAttributes] {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        let url = baseURL.appendingPathComponent("api/client/account/api-keys")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let response = try JSONDecoder().decode(ApiKeyResponse.self, from: data)
+        return response.data.map { $0.attributes }
+    }
+    
+    func createApiKey(description: String, allowedIps: [String]) async throws -> ApiKeyAttributes {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        let url = baseURL.appendingPathComponent("api/client/account/api-keys")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "description": description,
+            "allowed_ips": allowedIps
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to create API key")
+        }
+        
+        let decoded = try JSONDecoder().decode(ApiKeyData.self, from: data)
+        return decoded.attributes
+    }
+    
+    func deleteApiKey(identifier: String) async throws {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        let url = baseURL.appendingPathComponent("api/client/account/api-keys/\(identifier)")
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to delete API key")
+        }
+    }
 }

@@ -227,3 +227,27 @@ struct SubuserAttributes: Codable {
 }
 
 
+
+// MARK: - API Keys
+struct ApiKeyResponse: Codable {
+    let data: [ApiKeyData]
+}
+struct ApiKeyData: Codable, Identifiable {
+    let object: String
+    let attributes: ApiKeyAttributes
+    var id: String { attributes.identifier }
+}
+struct ApiKeyAttributes: Codable {
+    let identifier: String
+    let description: String
+    let allowedIps: [String]
+    let lastUsedAt: String?
+    let createdAt: String
+    
+    enum CodingKeys: String, CodingKey {
+        case identifier, description
+        case allowedIps = "allowed_ips"
+        case lastUsedAt = "last_used_at"
+        case createdAt = "created_at"
+    }
+}

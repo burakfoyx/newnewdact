@@ -132,16 +132,19 @@ struct ServerRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 6) {
-                // IP Address (Headline)
-                HStack {
+                // Server Name
+                Text(server.name)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.white)
+                
+                // IP Address
+                HStack(spacing: 4) {
                      Image(systemName: "network")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.6))
-                        
+                        .font(.caption2)
                      Text(server.sftpDetails.ip) 
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .font(.caption)
                 }
+                .foregroundStyle(.white.opacity(0.6))
                 
                 // Resources
                 HStack(spacing: 16) {

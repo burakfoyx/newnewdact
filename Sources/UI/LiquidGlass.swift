@@ -141,26 +141,26 @@ struct LiquidBackgroundView: View {
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color(red: 0.02, green: 0.02, blue: 0.05).ignoresSafeArea()
             
             // Mesh Gradient Emulation
             GeometryReader { proxy in
                 ZStack {
                     Circle()
-                        .fill(colors[0])
+                        .fill(colors[0].opacity(0.8))
                         .frame(width: 400, height: 400)
                         .blur(radius: 80)
                         .offset(x: animate ? -100 : 100, y: animate ? -50 : 50)
                     
                     Circle()
-                        .fill(colors[1])
+                        .fill(colors[1].opacity(0.8))
                         .frame(width: 300, height: 300)
                         .blur(radius: 60)
                         .offset(x: animate ? 150 : -50, y: animate ? 200 : -100)
                     
                     if colors.count > 2 {
                         Circle()
-                            .fill(colors[2])
+                            .fill(colors[2].opacity(0.8))
                             .frame(width: 350, height: 350)
                             .blur(radius: 70)
                             .offset(x: animate ? -50 : 200, y: animate ? 300 : 100)
@@ -170,10 +170,12 @@ struct LiquidBackgroundView: View {
                 .drawingGroup() // Optimize rendering performance
             }
         }
-        .ignoresSafeArea(.keyboard) // Ensure background stays fixed
+        .ignoresSafeArea()
         .onAppear {
-            withAnimation(.easeInOut(duration: 15).repeatForever(autoreverses: true)) {
-                animate = true
+            DispatchQueue.main.async {
+                withAnimation(.easeInOut(duration: 15).repeatForever(autoreverses: true)) {
+                    animate = true
+                }
             }
         }
     }
