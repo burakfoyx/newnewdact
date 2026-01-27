@@ -28,8 +28,10 @@ actor PterodactylClient {
             throw PterodactylError.invalidURL
         }
         
-        let endpoint = baseURL.appendingPathComponent("api/client")
-        var request = URLRequest(url: endpoint)
+        var components = URLComponents(url: baseURL.appendingPathComponent("api/client"), resolvingAgainstBaseURL: true)!
+        components.queryItems = [URLQueryItem(name: "include", value: "allocations")]
+        
+        var request = URLRequest(url: components.url!)
         request.httpMethod = "GET"
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Accept")

@@ -129,6 +129,15 @@ struct ServerRow: View {
         return String(format: "%.1f%% / %.0f%%", used, limit)
     }
 
+    var displayIP: String {
+        if let allocations = server.relationships?.allocations?.data {
+            if let defaultAlloc = allocations.first(where: { $0.attributes.isDefault }) {
+                return "\(defaultAlloc.attributes.ip):\(defaultAlloc.attributes.port)"
+            }
+        }
+        return server.sftpDetails.ip
+    }
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 6) {
@@ -141,7 +150,7 @@ struct ServerRow: View {
                 HStack(spacing: 4) {
                      Image(systemName: "network")
                         .font(.caption2)
-                     Text(server.sftpDetails.ip) 
+                     Text(displayIP) 
                         .font(.caption)
                 }
                 .foregroundStyle(.white.opacity(0.6))

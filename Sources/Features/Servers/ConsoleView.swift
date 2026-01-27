@@ -205,7 +205,7 @@ class ConsoleViewModel: ObservableObject {
             
         case .connected:
             self.isConnected = true
-            WebSocketClient.shared.sendCommand("send logs")
+            self.isConnected = true
             WebSocketClient.shared.sendCommand("send stats")
             
         case .disconnected:
