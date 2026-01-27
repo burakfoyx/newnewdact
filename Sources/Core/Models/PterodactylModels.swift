@@ -136,5 +136,87 @@ struct ResourceUsage: Codable {
         case networkRxBytes = "network_rx_bytes"
         case networkTxBytes = "network_tx_bytes"
     }
+// MARK: - Databases
+struct DatabaseResponse: Codable {
+    let data: [DatabaseData]
 }
+struct DatabaseData: Codable, Identifiable {
+    let object: String
+    let attributes: DatabaseAttributes
+    var id: String { attributes.id }
+}
+struct DatabaseAttributes: Codable {
+    let id: String
+    let name: String
+    let username: String
+    let host: DatabaseHost
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, username, host
+    }
+}
+struct DatabaseHost: Codable {
+    let address: String
+    let port: Int
+}
+
+// MARK: - Schedules
+struct ScheduleResponse: Codable {
+    let data: [ScheduleData]
+}
+struct ScheduleData: Codable, Identifiable {
+    let object: String
+    let attributes: ScheduleAttributes
+    var id: Int { attributes.id }
+}
+struct ScheduleAttributes: Codable {
+    let id: Int
+    let name: String
+    let isActive: Bool
+    let isProcessing: Bool
+    let cron: ScheduleCron
+    let lastRunAt: String?
+    let nextRunAt: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, cron
+        case isActive = "is_active"
+        case isProcessing = "is_processing"
+        case lastRunAt = "last_run_at"
+        case nextRunAt = "next_run_at"
+    }
+}
+struct ScheduleCron: Codable {
+    let dayOfWeek, dayOfMonth, hour, minute: String
+    
+    enum CodingKeys: String, CodingKey {
+        case dayOfWeek = "day_of_week"
+        case dayOfMonth = "day_of_month"
+        case hour, minute
+    }
+}
+
+// MARK: - Users (Subusers)
+struct SubuserResponse: Codable {
+    let data: [SubuserData]
+}
+struct SubuserData: Codable, Identifiable {
+    let object: String
+    let attributes: SubuserAttributes
+    var id: String { attributes.uuid }
+}
+struct SubuserAttributes: Codable {
+    let uuid: String
+    let username: String
+    let email: String
+    let image: String?
+    let twoFactorEnabled: Bool
+    let permissions: [String]
+    
+    enum CodingKeys: String, CodingKey {
+        case uuid, username, email, image, permissions
+        case twoFactorEnabled = "2fa_enabled"
+    }
+}
+
 
