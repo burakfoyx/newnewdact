@@ -14,6 +14,11 @@ enum WebSocketEvent {
 class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
     static let shared = WebSocketClient()
     
+    enum ConnectionStatus {
+        case connected
+        case disconnected
+    }
+    
     private var webSocketTask: URLSessionWebSocketTask?
     private let session = URLSession(configuration: .default)
     private var isConnected = false

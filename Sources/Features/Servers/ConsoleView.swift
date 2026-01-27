@@ -44,7 +44,7 @@ struct ConsoleView: View {
             
             // Input
             HStack {
-                TextField("Type a command...", text: $viewModel.command)
+                TextField("Type a command...", text: $viewModel.inputCommand)
                     .textFieldStyle(.plain)
                     .font(.system(.body, design: .monospaced))
                     .foregroundStyle(.white)
@@ -157,9 +157,9 @@ class ConsoleViewModel: ObservableObject {
     }
     
     func sendCommand() {
-        guard !command.isEmpty else { return }
-        WebSocketClient.shared.sendCommand(command)
-        command = ""
+        guard !inputCommand.isEmpty else { return }
+        WebSocketClient.shared.sendCommand(inputCommand)
+        inputCommand = ""
     }
     
     func sendPowerAction(_ signal: String) {
@@ -179,16 +179,6 @@ class ConsoleViewModel: ObservableObject {
     
     func disconnect() {
         WebSocketClient.shared.disconnect()
-    }
-    
-    func sendCommand() {
-        guard !inputCommand.isEmpty else { return }
-        WebSocketClient.shared.sendCommand(inputCommand)
-        inputCommand = ""
-    }
-    
-    func sendPowerAction(_ signal: String) {
-        wsClient.sendPowerAction(signal)
     }
     
     private func handleEvent(_ event: WebSocketEvent) {
