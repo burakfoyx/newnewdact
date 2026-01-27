@@ -216,3 +216,4 @@ class ConsoleViewModel: ObservableObject {
             break
         }
     }
+}
