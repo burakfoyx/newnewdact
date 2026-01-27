@@ -28,6 +28,17 @@ struct AuthenticationView: View {
                         LiquidGlassCard {
                             VStack(spacing: 20) {
                                 VStack(alignment: .leading) {
+                                    Text("Account Name")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    TextField("e.g. Hostinger", text: $viewModel.name)
+                                        .textContentType(.name)
+                                        .padding()
+                                        .background(.ultraThinMaterial)
+                                        .cornerRadius(12)
+                                }
+
+                                VStack(alignment: .leading) {
                                     Text("Panel URL")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)

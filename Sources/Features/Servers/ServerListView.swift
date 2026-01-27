@@ -63,6 +63,14 @@ struct ServerListView: View {
                 }
             }
             .navigationTitle("Servers")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: SettingsView()) {
+                         Image(systemName: "gearshape.fill")
+                            .foregroundStyle(.white)
+                    }
+                }
+            }
             .toolbarColorScheme(.dark, for: .navigationBar)
             .background(Color.black) // Fallback
             .task {

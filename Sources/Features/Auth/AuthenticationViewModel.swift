@@ -1,35 +1,31 @@
 import SwiftUI
 
 class AuthenticationViewModel: ObservableObject {
+    @Published var name: String = "My Panel"
     @Published var hostURL: String = ""
     @Published var apiKey: String = ""
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var isAuthenticated = false
-    
-    private let keychain = KeychainHelper.standard
-    private let accountKey = "current_session"
-    
-    init() {
-        loadCredentials()
-    }
+    @Published var isAuthenticated = false // Acts as "Success" trigger
     
     func login() async {
         guard !hostURL.isEmpty, !apiKey.isEmpty else {
-            errorMessage = "Please enter both Host URL and API Key"
+            errorMessage = "Please enter Host URL and API Key"
             return
         }
         
         await MainActor.run { isLoading = true; errorMessage = nil }
         
-        let client = PterodactylClient.shared
-        await client.configure(url: hostURL, key: apiKey)
+        // Validate connection first using a temporary configuration
+        let tempClient = PterodactylClient.shared // Ideally use a transient instance, but shared is fine since we configure it
+        await tempClient.configure(url: hostURL, key: apiKey)
         
         do {
-            let isValid = try await client.validateConnection()
+            let isValid = try await tempClient.validateConnection()
             if isValid {
-                saveCredentials()
                 await MainActor.run {
+                    AccountManager.shared.addAccount(name: name, url: hostURL, key: apiKey)
+                    activeAccount = AccountManager.shared.activeAccount // Force update (hacky, but ensures view refreshes)
                     isAuthenticated = true
                     isLoading = false
                 }
@@ -42,22 +38,6 @@ class AuthenticationViewModel: ObservableObject {
         }
     }
     
-    private func saveCredentials() {
-        // Save as a JSON blob or specific fields
-        let credentials = ["url": hostURL, "key": apiKey]
-        if let data = try? JSONEncoder().encode(credentials) {
-            try? keychain.save(data, account: accountKey)
-        }
-    }
-    
-    private func loadCredentials() {
-        if let data = keychain.read(account: accountKey),
-           let credentials = try? JSONDecoder().decode([String: String].self, from: data),
-           let cachedURL = credentials["url"],
-           let cachedKey = credentials["key"] {
-            self.hostURL = cachedURL
-            self.apiKey = cachedKey
-            // Optionally auto-login here
-        }
-    }
+    // Explicit reference to activeAccount for some views if needed, purely helper
+    private var activeAccount: Account?
 }

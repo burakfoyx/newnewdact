@@ -52,6 +52,7 @@ class FileManagerViewModel: ObservableObject {
 
 struct FileManagerView: View {
     @StateObject private var viewModel: FileManagerViewModel
+    @State private var selectedFileForEditing: FileAttributes?
     
     init(serverId: String) {
         _viewModel = StateObject(wrappedValue: FileManagerViewModel(serverId: serverId))
@@ -97,7 +98,7 @@ struct FileManagerView: View {
                                     if !file.isFile {
                                         viewModel.navigate(to: file.name)
                                     } else {
-                                        // Open file editor (Todo)
+                                        selectedFileForEditing = file
                                     }
                                 }
                         }
@@ -106,10 +107,19 @@ struct FileManagerView: View {
                 }
             }
         }
+        .sheet(item: $selectedFileForEditing) { file in
+            let fullPath = viewModel.currentPath == "/" ? file.name : "\(viewModel.currentPath)/\(file.name)"
+            FileEditorView(serverId: serverId, filePath: fullPath)
+        }
         .task {
             await viewModel.listFiles()
         }
     }
+}
+
+// Ensure FileAttributes conforms to Identifiable for sheet item
+extension FileAttributes: Identifiable {
+    public var id: String { name }
 }
 
 struct FileRow: View {

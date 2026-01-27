@@ -1,68 +1,94 @@
 import SwiftUI
 
 struct SettingsView: View {
-    let serverId: String
+    @ObservedObject var accountManager = AccountManager.shared
+    @State private var showLogin = false
     @Environment(\.dismiss) var dismiss
     
-    // In a real app we might fetch server details to edit them
-    // For now we just provide "Logout" or App Info
-    
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Server Info Card
-                LiquidGlassCard {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Server Information")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                        
-                        Divider().background(.white.opacity(0.3))
-                        
-                        InfoRow(label: "UUID", value: serverId)
-                        // In reality we would pass the whole Server object or fetch it
+        NavigationStack {
+            List {
+                Section("Active Account") {
+                    if let active = accountManager.activeAccount {
+                        AccountRow(account: active, isActive: true)
+                    } else {
+                        Text("No active account")
                     }
-                    .padding()
                 }
                 
-                // App Info
-                LiquidGlassCard {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("App Settings")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                         
-                        Divider().background(.white.opacity(0.3))
-                        
-                        Toggle("Face ID", isOn: .constant(true))
-                            .tint(.blue)
-                        
-                        Button(action: {
-                            // Logout Logic
-                            KeychainHelper.standard.delete(account: "current_session")
-                            // This needs to trigger a root state change. 
-                            // For now just clear key.
-                        }) {
-                             Text("Log Out")
-                                .foregroundStyle(.red)
-                                .fontWeight(.bold)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.red.opacity(0.1))
-                                .cornerRadius(8)
+                Section("All Accounts") {
+                    ForEach(accountManager.accounts) { account in
+                        if account.id != accountManager.activeAccount?.id {
+                            AccountRow(account: account, isActive: false)
+                                .onTapGesture {
+                                    accountManager.switchToAccount(id: account.id)
+                                }
                         }
                     }
-                    .padding()
+                    .onDelete { indexSet in
+                        indexSet.forEach { index in
+                            let account = accountManager.accounts[index]
+                            accountManager.removeAccount(id: account.id)
+                        }
+                    }
+                    
+                    Button {
+                        showLogin = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                            Text("Add Another Account")
+                        }
+                    }
                 }
                 
-                Text("XYIdactyl v1.0.0")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.3))
+                Section {
+                    Button(role: .destructive) {
+                        if let id = accountManager.activeAccount?.id {
+                            accountManager.removeAccount(id: id)
+                        }
+                    } label: {
+                        Text("Logout Active Account")
+                    }
+                }
+                
+                Section {
+                    Text("XYIdactyl v1.1.0")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
-            .padding()
+            .navigationTitle("Accounts")
+            .sheet(isPresented: $showLogin) {
+                AuthenticationView(isPresented: $showLogin)
+            }
         }
     }
 }
+
+struct AccountRow: View {
+    let account: Account
+    let isActive: Bool
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(account.name)
+                    .font(.headline)
+                Text(account.url)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            if isActive {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            }
+        }
+        .contentShape(Rectangle()) // Make tappable
+    }
+}
+
 
 struct InfoRow: View {
     let label: String

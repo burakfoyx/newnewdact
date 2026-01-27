@@ -1,54 +1,20 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var accountManager = AccountManager.shared
     @State private var showLogin = false
-    @State private var isAuthenticated = false
     
     var body: some View {
         ZStack {
-            if isAuthenticated {
+            if accountManager.activeAccount != nil {
                 ServerListView()
+                    .environmentObject(accountManager)
             } else {
                 LandingView(showLogin: $showLogin)
             }
         }
         .fullScreenCover(isPresented: $showLogin) {
             AuthenticationView(isPresented: $showLogin)
-                .onDisappear {
-                    // Check if we are authenticated after dismissing
-                    // In a real app we might use a shared EnvironmentObject for Auth State
-                    // For now, let's assume if we dismissed, we might be auth'd, or check Keychain
-                    /* 
-                       Logic Gap: AuthenticationView sets isPresented to false on success, 
-                       but doesn't communicate success back to ContentView directly unless we use bindings or EnvObject.
-                       Fix: Let's assume AuthenticationView saves to Keychain and we can check, 
-                       OR let's refactor to use an @EnvironmentObject. 
-                       For this quick iteration, I will check a shared state or callback.
-                    */
-                   checkAuth()
-                }
-        }
-        .onChange(of: showLogin) { _, isShown in
-            if !isShown {
-                 // Re-check auth
-                 checkAuth()
-            }
-        }
-    }
-    
-    func checkAuth() {
-        if let data = KeychainHelper.standard.read(account: "current_session"),
-           let credentials = try? JSONDecoder().decode([String: String].self, from: data),
-           let url = credentials["url"],
-           let key = credentials["key"] {
-            
-            // Configure the client
-            Task {
-                await PterodactylClient.shared.configure(url: url, key: key)
-                await MainActor.run {
-                    isAuthenticated = true
-                }
-            }
         }
     }
 }

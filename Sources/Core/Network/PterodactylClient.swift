@@ -165,6 +165,46 @@ actor PterodactylClient {
         return response.data.map { $0.attributes }
     }
     
+    func getFileContent(serverId: String, filePath: String) async throws -> String {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        var components = URLComponents(url: baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/contents"), resolvingAgainstBaseURL: true)!
+        components.queryItems = [URLQueryItem(name: "file", value: filePath)]
+        
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to read file")
+        }
+        
+        return String(data: data, encoding: .utf8) ?? ""
+    }
+    
+    func writeFileContent(serverId: String, filePath: String, content: String) async throws {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        // Use 'write' endpoint which usually takes raw body or specific file param
+        // Pterodactyl API: POST /files/write?file=...
+        var components = URLComponents(url: baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/write"), resolvingAgainstBaseURL: true)!
+        components.queryItems = [URLQueryItem(name: "file", value: filePath)]
+
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("text/plain", forHTTPHeaderField: "Content-Type") // Raw body usually
+        
+        request.httpBody = content.data(using: .utf8)
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to save file")
+        }
+    }
+
     // Placeholder to validate connection
     func validateConnection() async throws -> Bool {
         _ = try await fetchServers()
