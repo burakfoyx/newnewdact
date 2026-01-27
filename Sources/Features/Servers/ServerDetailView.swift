@@ -6,6 +6,9 @@ enum ServerTab: String, CaseIterable, Identifiable {
     case network = "Network"
     case backups = "Backups"
     case startup = "Startup"
+    case schedules = "Schedules"
+    case databases = "Databases"
+    case users = "Users"
     case settings = "Settings"
     
     var id: String { rawValue }
@@ -16,6 +19,9 @@ enum ServerTab: String, CaseIterable, Identifiable {
         case .network: return "network"
         case .backups: return "archivebox.fill"
         case .startup: return "play.laptopcomputer"
+        case .schedules: return "clock.fill"
+        case .databases: return "cylinder.split.1x2.fill"
+        case .users: return "person.2.fill"
         case .settings: return "gearshape.fill"
         }
     }
@@ -51,7 +57,7 @@ struct ServerDetailView: View {
                  .padding(.top)
                  
                   TabView(selection: $selectedTab) {
-                    ConsoleView(viewModel: consoleViewModel, limits: server.limits) // Pass limits to ConsoleView
+                    ConsoleView(viewModel: consoleViewModel, limits: server.limits)
                         .tag(ServerTab.console)
                     
                     FileManagerView(serverId: server.identifier)
@@ -65,23 +71,37 @@ struct ServerDetailView: View {
                         
                     StartupView(serverId: server.identifier)
                         .tag(ServerTab.startup)
+                        
+                    // Placeholders
+                    VStack {
+                         Image(systemName: "clock.fill")
+                            .font(.largeTitle)
+                         Text("Schedules Coming Soon")
+                    }
+                    .foregroundStyle(.white)
+                    .tag(ServerTab.schedules)
+                        
+                    VStack {
+                         Image(systemName: "cylinder.split.1x2.fill")
+                            .font(.largeTitle)
+                         Text("Databases Coming Soon")
+                    }
+                    .foregroundStyle(.white)
+                    .tag(ServerTab.databases)
+                        
+                    VStack {
+                         Image(systemName: "person.2.fill")
+                            .font(.largeTitle)
+                         Text("Users Coming Soon")
+                    }
+                    .foregroundStyle(.white)
+                    .tag(ServerTab.users)
                     
-                    SettingsView()
+                    ServerSettingsView(server: server)
                         .tag(ServerTab.settings)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(nil, value: selectedTab) // Disable tab slide animation if that's the issue
-                .mask(
-                    LinearGradient(
-                        stops: [
-                            .init(color: .black, location: 0),
-                            .init(color: .black, location: 0.9),
-                            .init(color: .clear, location: 1.0)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .animation(nil, value: selectedTab)
                 
                 // Bottom Tab Bar ...
             }
