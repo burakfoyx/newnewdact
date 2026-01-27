@@ -62,25 +62,25 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
             .eraseToAnyPublisher()
     }
     
-    func connect(url: URL, token: String) {
+    func connect(url: URL, token: String, origin: String? = nil) {
         disconnect()
         
         var request = URLRequest(url: url)
         request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        // Origin is required by Wings. Using the WSS URL itself often works, or we need the panel URL.
-        // If console is not displaying, this is the #1 suspect.
-        // Let's try to set a generic valid origin or the URL's host.
-        if let host = url.host {
+        
+        // Use provided origin (Panel URL) or fallback
+        if let origin = origin {
+            request.addValue(origin, forHTTPHeaderField: "Origin")
+        } else if let host = url.host {
             request.addValue("https://\(host)", forHTTPHeaderField: "Origin")
         } else {
              request.addValue(url.absoluteString, forHTTPHeaderField: "Origin")
-        } 
+        }
         
         webSocketTask = session.webSocketTask(with: request)
         webSocketTask?.resume()
         
-        // Authenticate immediately upon connection if needed, 
-        // usually Pterodactyl expects {"event":"auth","args":["token"]}
+        // Authenticate immediately
         sendAuth(token: token)
         
         receiveMessage()

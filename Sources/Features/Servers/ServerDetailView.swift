@@ -213,37 +213,44 @@ struct GlassProgressRing: View {
     let value: Double
     let total: Double
     let label: String
-    let color: Color
+    let color: Color // Base color, but we'll override for status
     
     var progress: Double {
         guard total > 0 else { return 0 }
         return min(max(value / total, 0), 1)
     }
     
+    var ringColor: Color {
+        let p = progress
+        if p >= 0.8 { return .red }
+        if p >= 0.5 { return .orange }
+        return .blue // Default/Base
+    }
+    
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
             ZStack {
                 Circle()
-                   .stroke(.white.opacity(0.1), lineWidth: 3)
+                   .stroke(.white.opacity(0.1), lineWidth: 4)
                 
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(
-                        AngularGradient(colors: [color.opacity(0.5), color], center: .center),
-                        style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                        AngularGradient(colors: [ringColor.opacity(0.6), ringColor], center: .center),
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
-                    .shadow(color: color.opacity(0.5), radius: 5)
+                    .shadow(color: ringColor.opacity(0.5), radius: 6)
                 
-                // Show percentage or minimal value? Percentage is safest for ring.
-                Text("\(Int(progress * 100))")
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                // Percentage
+                Text("\(Int(progress * 100))%")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
             }
-            .frame(width: 36, height: 36)
+            .frame(width: 50, height: 50)
             
             Text(label)
-                .font(.system(size: 9, weight: .medium))
+                .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.white.opacity(0.6))
         }
     }

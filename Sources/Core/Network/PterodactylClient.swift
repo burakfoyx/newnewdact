@@ -14,6 +14,8 @@ actor PterodactylClient {
     private var baseURL: URL?
     private var apiKey: String?
     
+    func getPanelURL() -> URL? { baseURL }
+    
     private init() {}
     
     func configure(url: String, key: String) {

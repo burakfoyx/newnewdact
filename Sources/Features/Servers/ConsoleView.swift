@@ -158,9 +158,15 @@ class ConsoleViewModel: ObservableObject {
     
     func connect() {
         Task {
-            if let details = try? await PterodactylClient.shared.fetchWebsocketDetails(serverId: serverId) {
-                WebSocketClient.shared.connect(url: URL(string: details.url)!, token: details.token)
-            }
+            // Need both socket details and origin
+            guard let details = try? await PterodactylClient.shared.fetchWebsocketDetails(serverId: serverId) else { return }
+            let panelURL = await PterodactylClient.shared.getPanelURL()
+            
+            WebSocketClient.shared.connect(
+                url: URL(string: details.url)!, 
+                token: details.token,
+                origin: panelURL?.absoluteString // Important: Wings checks Origin against Panel URL
+            )
         }
     }
     
