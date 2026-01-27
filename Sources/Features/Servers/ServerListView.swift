@@ -27,56 +27,56 @@ struct ServerListView: View {
     @StateObject private var viewModel = ServerListViewModel()
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background
-                LiquidBackgroundView()
-                
-                if viewModel.isLoading {
-                    ProgressView("Loading Servers...")
-                        .tint(.white)
-                } else if let error = viewModel.errorMessage {
-                    VStack {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.largeTitle)
-                            .foregroundStyle(.orange)
-                        Text(error)
-                            .multilineTextAlignment(.center)
-                            .padding()
-                        Button("Retry") {
-                            Task { await viewModel.loadServers() }
-                        }
-                        .buttonStyle(LiquidButtonStyle())
-                    }
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 20) {
-                            ForEach(viewModel.servers, id: \.uuid) { server in
-                                NavigationLink(destination: ServerDetailView(server: server)) {
-                                    ServerRow(server: server)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
+    var body: some View {
+        ZStack {
+            // Background
+            LiquidBackgroundView()
+            
+            if viewModel.isLoading {
+                ProgressView("Loading Servers...")
+                    .tint(.white)
+            } else if let error = viewModel.errorMessage {
+                VStack {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundStyle(.orange)
+                    Text(error)
+                        .multilineTextAlignment(.center)
                         .padding()
+                    Button("Retry") {
+                        Task { await viewModel.loadServers() }
                     }
+                    .buttonStyle(LiquidButtonStyle())
                 }
-            }
-            .navigationTitle("Servers")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: SettingsView()) {
-                         Image(systemName: "gearshape.fill")
-                            .foregroundStyle(.white)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 20) {
+                        ForEach(viewModel.servers, id: \.uuid) { server in
+                            NavigationLink(destination: ServerDetailView(server: server)) {
+                                ServerRow(server: server)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
                     }
+                    .padding()
                 }
-            }
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .background(Color.black) // Fallback
-            .task {
-                await viewModel.loadServers()
             }
         }
+        .navigationTitle("Servers")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                NavigationLink(destination: SettingsView()) {
+                     Image(systemName: "gearshape.fill")
+                        .foregroundStyle(.white)
+                }
+            }
+        }
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .background(Color.black) // Fallback
+        .task {
+            await viewModel.loadServers()
+        }
+    }
     }
 }
 

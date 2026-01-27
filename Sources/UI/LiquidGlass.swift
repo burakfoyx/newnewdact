@@ -166,10 +166,11 @@ struct LiquidBackgroundView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .drawingGroup() // Optimize rendering performance
             }
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 10).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: 15).repeatForever(autoreverses: true)) {
                 animate = true
             }
         }

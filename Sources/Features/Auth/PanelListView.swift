@@ -3,6 +3,7 @@ import SwiftUI
 struct PanelListView: View {
     @ObservedObject var accountManager = AccountManager.shared
     @State private var showAddPanel = false
+    @Binding var selectedTab: Int
     
     var body: some View {
         ZStack {
@@ -13,6 +14,8 @@ struct PanelListView: View {
                     ForEach(accountManager.accounts) { account in
                         Button(action: {
                             accountManager.switchToAccount(id: account.id)
+                            // Switch to Servers tab automatically
+                            selectedTab = 1
                         }) {
                             PanelRow(account: account, isActive: accountManager.activeAccount?.id == account.id)
                         }

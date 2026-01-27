@@ -4,6 +4,7 @@ import Combine
 
 struct ConsoleView: View {
     @ObservedObject var viewModel: ConsoleViewModel
+    var limits: ServerLimits?
     
     var body: some View {
         VStack(spacing: 0) {

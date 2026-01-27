@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var accountManager = AccountManager.shared
+    @State private var selectedTab = 0
     
     var body: some View {
         Group {
@@ -14,14 +14,15 @@ struct ContentView: View {
     }
     
     var authenticatedView: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             NavigationStack {
-                PanelListView()
+                PanelListView(selectedTab: $selectedTab)
                     .navigationTitle("Panels")
             }
             .tabItem {
                 Label("Panels", systemImage: "square.grid.2x2.fill")
             }
+            .tag(0)
             
             NavigationStack {
                 ServerListView() // Potentially filtered or different view
@@ -30,6 +31,7 @@ struct ContentView: View {
             .tabItem {
                 Label("Servers", systemImage: "server.rack")
             }
+            .tag(1)
             
             NavigationStack {
                 SettingsView()
@@ -38,6 +40,7 @@ struct ContentView: View {
             .tabItem {
                  Label("Settings", systemImage: "gearshape.fill")
             }
+            .tag(2)
         }
         .tint(accountManager.activeAccount?.theme.mainColor ?? .blue)
     }

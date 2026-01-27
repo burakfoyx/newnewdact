@@ -42,17 +42,15 @@ struct ServerDetailView: View {
                  // Header
                  GlassyNavBar(
                      title: server.name,
-                     stats: consoleViewModel.stats,
-                     limits: server.limits,
                      statusState: consoleViewModel.state,
                      onBack: { dismiss() },
                      onPowerAction: { action in consoleViewModel.sendPowerAction(action) }
                  )
-                 .padding()
-                 .padding()
+                 .padding(.horizontal)
+                 .padding(.top)
                  
                   TabView(selection: $selectedTab) {
-                    ConsoleView(viewModel: consoleViewModel) // Pass view model!
+                    ConsoleView(viewModel: consoleViewModel, limits: server.limits) // Pass limits to ConsoleView
                         .tag(ServerTab.console)
                     
                     FileManagerView(serverId: server.identifier)
@@ -111,11 +109,8 @@ extension View {
     }
 }
 
-// MARK: - Glassy Navbar optimized for "Liquid Glass" iOS 17+ style
 struct GlassyNavBar: View {
     let title: String
-    let stats: WebsocketResponse.Stats?
-    let limits: ServerLimits
     let statusState: String
     let onBack: () -> Void
     let onPowerAction: (String) -> Void
@@ -140,37 +135,11 @@ struct GlassyNavBar: View {
                     .glassEffect(in: Circle())
             }
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.white)
                     .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-                
-                HStack(spacing: 12) {
-                     // CPU Ring
-                     GlassProgressRing(
-                        value: stats?.cpu_absolute ?? 0,
-                        total: Double(limits.cpu ?? 100), 
-                        label: "CPU",
-                        color: .blue
-                     )
-                     
-                     // Memory Ring
-                     GlassProgressRing(
-                        value: Double(stats?.memory_bytes ?? 0) / 1024 / 1024,
-                        total: Double(limits.memory ?? 1024),
-                        label: "RAM",
-                        color: .purple
-                     )
-                     
-                     // Disk Ring
-                     GlassProgressRing(
-                        value: Double(stats?.disk_bytes ?? 0) / 1024 / 1024,
-                        total: Double(limits.disk ?? 1024),
-                        label: "DISK",
-                        color: .cyan
-                     )
-                }
             }
             
             Spacer()
@@ -208,6 +177,45 @@ struct GlassyNavBar: View {
         }
         .padding(14)
         .glassEffect(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+}
+
+struct GlassMetricsCard: View {
+    let stats: WebsocketResponse.Stats?
+    let limits: ServerLimits
+    
+    var body: some View {
+        HStack(spacing: 16) {
+             // CPU Ring
+             GlassProgressRing(
+                value: stats?.cpu_absolute ?? 0,
+                total: Double(limits.cpu ?? 100), 
+                label: "CPU",
+                color: .blue
+             )
+             
+             Spacer()
+             
+             // Memory Ring
+             GlassProgressRing(
+                value: Double(stats?.memory_bytes ?? 0) / 1024 / 1024,
+                total: Double(limits.memory ?? 1024),
+                label: "RAM",
+                color: .purple
+             )
+             
+             Spacer()
+             
+             // Disk Ring
+             GlassProgressRing(
+                value: Double(stats?.disk_bytes ?? 0) / 1024 / 1024,
+                total: Double(limits.disk ?? 1024),
+                label: "DISK",
+                color: .cyan
+             )
+        }
+        .padding(20)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24))
     }
 }
 
