@@ -41,5 +41,7 @@
 	</array>
     <key>NSFaceIDUsageDescription</key>
     <string>Use Face ID to securely unlock your server panel.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>This app needs to access your local network to connect to locally hosted Pterodactyl panels.</string>
 </dict>
 </plist>
