@@ -131,137 +131,26 @@ extension Shape {
 }
 
 // MARK: - Background View (Kept for compatibility)
+// MARK: - New Robust Background
 struct LiquidBackgroundView: View {
-    @State private var animate = false
-    @ObservedObject var accountManager = AccountManager.shared
-    
-    var colors: [Color] {
-        accountManager.activeAccount?.theme.gradientColors ?? AppTheme.blue.gradientColors
-    }
-    
-    var lowPowerMode: Bool {
-        accountManager.activeAccount?.lowPowerMode ?? false
-    }
+    // Keeping the name 'LiquidBackgroundView' to avoid refactoring all callsites
+    // but the actual implementation is a clean, robust, static gradient.
     
     var body: some View {
         ZStack {
-            // Space Background
+            // Deep Space Base - High Refresh, Optimized
             LinearGradient(
-                colors: [Color(red: 0.1, green: 0.05, blue: 0.25), Color(red: 0.05, green: 0.05, blue: 0.2)],
-                startPoint: .top, 
-                endPoint: .bottom
+                colors: [
+                    Color(red: 0.05, green: 0.02, blue: 0.10), // Deep Void
+                    Color(red: 0.15, green: 0.05, blue: 0.25), // Nebula Purple
+                    Color(red: 0.05, green: 0.10, blue: 0.30)  // Cosmic Blue
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
             
-            // Stars Layer
-            StarsView()
-                .opacity(0.9)
-                .rotationEffect(Angle(degrees: animate && !lowPowerMode ? 360 : 0))
-                .animation(lowPowerMode ? nil : .linear(duration: 240).repeatForever(autoreverses: false), value: animate)
-            
-            // Nebula/Clouds Layer
-            NebulaClouds(colors: colors, animate: animate && !lowPowerMode)
-        }
-        .ignoresSafeArea()
-        .onAppear {
-             // Only start animation loop if not unnecessary
-             if !lowPowerMode {
-                 DispatchQueue.main.async {
-                     animate = true
-                 }
-             }
-        }
-    }
-}
-
-struct StarsView: View {
-    // Generate static stars deterministically to avoid refresh flicker
-    let stars: [(CGFloat, CGFloat, CGFloat)] = (0..<50).map { _ in
-        (CGFloat.random(in: 0...1), CGFloat.random(in: 0...1), CGFloat.random(in: 1...3))
-    }
-    
-    var body: some View {
-        GeometryReader { proxy in
-            ForEach(0..<stars.count, id: \.self) { i in
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: stars[i].2, height: stars[i].2)
-                    .position(
-                        x: stars[i].0 * proxy.size.width,
-                        y: stars[i].1 * proxy.size.height
-                    )
-                    .shadow(color: .white, radius: 1.5) // Light bloom
-            }
-        }
-    }
-}
-
-struct NebulaClouds: View {
-    let colors: [Color]
-    let animate: Bool
-    
-    var diversifiedColors: [Color] {
-        var base = colors
-        if base.isEmpty { base = [.blue, .purple] }
-        // Ensure at least 4 colors by adding variations
-        if base.count < 3 {
-             base.append(base[0].opacity(0.6))
-             base.append(Color.cyan.opacity(0.3))
-        }
-        if base.count < 4 {
-             base.append(Color.indigo.opacity(0.4))
-        }
-        // If still somehow short, Cycle
-        while base.count < 4 {
-            base.append(base[0])
-        }
-        return base
-    }
-
-    var body: some View {
-        let palette = diversifiedColors
-        
-        GeometryReader { proxy in
-            ZStack {
-                // Cloud 1 - Large Ellipse
-                Ellipse()
-                    .fill(palette[0].opacity(0.45))
-                    .frame(width: 500, height: 350)
-                    .blur(radius: 90)
-                    .position(x: proxy.size.width * 0.3, y: proxy.size.height * 0.3)
-                    .offset(x: animate ? -30 : 20, y: animate ? -20 : 10)
-                    .rotationEffect(Angle(degrees: animate ? 10 : -10))
-                    .animation(animate ? .easeInOut(duration: 18).repeatForever(autoreverses: true) : nil, value: animate)
-                
-                // Cloud 2 - Circle
-                Circle()
-                    .fill(palette[1].opacity(0.40))
-                    .frame(width: 400, height: 400)
-                    .blur(radius: 70)
-                    .position(x: proxy.size.width * 0.8, y: proxy.size.height * 0.7)
-                    .offset(x: animate ? 40 : -40, y: animate ? 30 : -20)
-                    .animation(animate ? .easeInOut(duration: 22).repeatForever(autoreverses: true) : nil, value: animate)
-                
-                // Cloud 3 - Vertical Ellipse
-                Ellipse()
-                    .fill(palette[2].opacity(0.35))
-                    .frame(width: 300, height: 500)
-                    .blur(radius: 80)
-                    .position(x: proxy.size.width * 0.1, y: proxy.size.height * 0.8)
-                    .offset(x: animate ? 20 : -10, y: animate ? -40 : 20)
-                    .rotationEffect(Angle(degrees: animate ? -15 : 5))
-                    .animation(animate ? .easeInOut(duration: 25).repeatForever(autoreverses: true) : nil, value: animate)
-                
-                // Cloud 4 - Accent
-                Circle()
-                    .fill(palette[3].opacity(0.5))
-                    .frame(width: 250, height: 250)
-                    .blur(radius: 50)
-                    .position(x: proxy.size.width * 0.6, y: proxy.size.height * 0.5)
-                    .offset(x: animate ? -50 : 50, y: animate ? 50 : -50)
-                    .animation(animate ? .easeInOut(duration: 20).repeatForever(autoreverses: true) : nil, value: animate)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Subtle noise/grain could be added here if needed, but keeping it clean for now.
         }
     }
 }
