@@ -70,6 +70,13 @@ struct ContentView: View {
             appearance.configureWithTransparentBackground()
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance
+            
+            // Trigger Local Network Permission on view appear
+            Task {
+                let url = URL(string: "http://192.168.0.1")!
+                let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 1)
+                let _ = try? await URLSession.shared.data(for: request)
+            }
         }
     }
 }
