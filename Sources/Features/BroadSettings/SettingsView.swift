@@ -47,6 +47,40 @@ struct SettingsView: View {
                         }
                     }
                     
+                    Section("Nebula Theme") {
+                        if let active = accountManager.activeAccount {
+                            ForEach(AppTheme.allCases) { theme in
+                                Button {
+                                    var updated = active
+                                    updated.theme = theme
+                                    accountManager.updateAccount(updated)
+                                } label: {
+                                    HStack {
+                                        // Color preview circles
+                                        HStack(spacing: -8) {
+                                            ForEach(0..<min(3, theme.gradientColors.count), id: \.self) { i in
+                                                Circle()
+                                                    .fill(theme.gradientColors[i])
+                                                    .frame(width: 24, height: 24)
+                                                    .overlay(Circle().stroke(.white.opacity(0.3), lineWidth: 1))
+                                            }
+                                        }
+                                        
+                                        Text(theme.rawValue)
+                                            .foregroundStyle(.white)
+                                        
+                                        Spacer()
+                                        
+                                        if active.theme == theme {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundStyle(.green)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
                     Section {
                         Button(role: .destructive) {
                             if let id = accountManager.activeAccount?.id {

@@ -42,14 +42,16 @@ struct ServerDetailView: View {
     
     var body: some View {
         ZStack {
-            // Background handled globally
+            // Background
+            LiquidBackgroundView()
+                .ignoresSafeArea()
             
             VStack(spacing: 0) {
                  // Header
                  GlassyNavBar(
                      title: server.name,
                      statusState: consoleViewModel.state,
-                     selectedTab: $selectedTab, // Added
+                     selectedTab: $selectedTab,
                      onBack: { dismiss() },
                      onPowerAction: { action in consoleViewModel.sendPowerAction(action) }
                  )
