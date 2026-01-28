@@ -6,40 +6,45 @@ struct PanelListView: View {
     @Binding var selectedTab: Int
     
     var body: some View {
-        ZStack {
-            ScrollView {
-                LazyVStack(spacing: 20) {
-                    ForEach(accountManager.accounts) { account in
-                        Button(action: {
-                            accountManager.switchToAccount(id: account.id)
-                            selectedTab = 1
-                        }) {
-                            PanelRow(account: account, isActive: accountManager.activeAccount?.id == account.id)
+        NavigationStack {
+            ZStack {
+                Color.clear // Transparent base
+                
+                ScrollView {
+                    LazyVStack(spacing: 20) {
+                        ForEach(accountManager.accounts) { account in
+                            Button(action: {
+                                accountManager.switchToAccount(id: account.id)
+                                selectedTab = 2 // Switch to Servers tab
+                            }) {
+                                PanelRow(account: account, isActive: accountManager.activeAccount?.id == account.id)
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .buttonStyle(PlainButtonStyle())
                     }
+                    .padding()
                 }
-                .padding()
-            }
-            
-            VStack {
-                 Spacer()
-                 HStack {
+                .scrollContentBackground(.hidden)
+                
+                VStack {
                      Spacer()
-                     Button(action: { showAddPanel = true }) {
-                         Image(systemName: "plus")
-                             .font(.title2.bold())
-                             .foregroundStyle(.white)
-                             .frame(width: 56, height: 56)
-                             .glassEffect(.regular.interactive(), in: Circle())
+                     HStack {
+                         Spacer()
+                         Button(action: { showAddPanel = true }) {
+                             Image(systemName: "plus")
+                                 .font(.title2.bold())
+                                 .foregroundStyle(.white)
+                                 .frame(width: 56, height: 56)
+                                 .glassEffect(.regular.interactive(), in: Circle())
+                         }
+                         .padding()
                      }
-                     .padding()
-                 }
+                }
             }
+            .navigationTitle("Panels")
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .navigationBar)
         }
-        .background(Color.clear)
-        .navigationTitle("Panels") // This title might be hidden if we hide nav bar, but TabView uses it?
-        // Actually TabView titles are independent.
         .sheet(isPresented: $showAddPanel) {
             AuthenticationView(isPresented: $showAddPanel)
         }

@@ -95,12 +95,14 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
     }
     
     func sendCommand(_ command: String) {
+        // Pterodactyl Wings expects "send command" event
         let payload: [String: Any] = [
-            "event": "send",
+            "event": "send command",
             "args": [command]
         ]
         if let data = try? JSONSerialization.data(withJSONObject: payload),
            let message = String(data: data, encoding: .utf8) {
+            print("WebSocket sending: \(message)")
             sendString(message)
         }
     }
@@ -110,14 +112,25 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
          sendString(message)
     }
     
+    func requestLogs() {
+        // Request console history
+        let message = "{\"event\":\"send logs\",\"args\":[null]}"
+        print("WebSocket requesting logs: \(message)")
+        sendString(message)
+    }
+    
     private func sendAuth(token: String) {
         let message = "{\"event\":\"auth\",\"args\":[\"\(token)\"]}"
         sendString(message)
     }
     
     private func sendString(_ message: String) {
-        let message = URLSessionWebSocketTask.Message.string(message)
-        webSocketTask?.send(message) { error in
+        guard let task = webSocketTask else {
+            print("WebSocket Error: No active connection")
+            return
+        }
+        let wsMessage = URLSessionWebSocketTask.Message.string(message)
+        task.send(wsMessage) { error in
             if let error = error {
                 print("WebSocket sending error: \(error)")
             }
@@ -167,8 +180,8 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
         case "auth success":
             isConnected = true
             eventSubject.send(.connected)
-            // Explicitly request logs for history
-            sendString("{\"event\":\"send logs\",\"args\":[null]}")
+            // Request console history
+            requestLogs()
         case "console output":
             eventSubject.send(.consoleOutput(content))
         case "stats":

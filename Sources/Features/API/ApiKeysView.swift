@@ -51,42 +51,49 @@ struct ApiKeysView: View {
     @StateObject private var viewModel = ApiKeysViewModel()
     
     var body: some View {
-        ZStack {
-            if viewModel.isLoading && viewModel.apiKeys.isEmpty {
-                ProgressView()
-                    .tint(.white)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(viewModel.apiKeys, id: \.identifier) { key in
-                            ApiKeyRow(key: key) {
-                                Task { await viewModel.deleteKey(identifier: key.identifier) }
+        NavigationStack {
+            ZStack {
+                Color.clear // Transparent base
+                
+                if viewModel.isLoading && viewModel.apiKeys.isEmpty {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            ForEach(viewModel.apiKeys, id: \.identifier) { key in
+                                ApiKeyRow(key: key) {
+                                    Task { await viewModel.deleteKey(identifier: key.identifier) }
+                                }
                             }
                         }
+                        .padding()
                     }
-                    .padding()
+                    .scrollContentBackground(.hidden)
+                    .refreshable {
+                        await viewModel.fetchKeys()
+                    }
                 }
-                .refreshable {
-                    await viewModel.fetchKeys()
-                }
-            }
-            
-            VStack {
-                 Spacer()
-                 HStack {
+                
+                VStack {
                      Spacer()
-                     Button(action: { viewModel.showCreateSheet = true }) {
-                         Image(systemName: "plus")
-                             .font(.title2.bold())
-                             .foregroundStyle(.white)
-                             .frame(width: 56, height: 56)
-                             .glassEffect(.regular.interactive(), in: Circle())
+                     HStack {
+                         Spacer()
+                         Button(action: { viewModel.showCreateSheet = true }) {
+                             Image(systemName: "plus")
+                                 .font(.title2.bold())
+                                 .foregroundStyle(.white)
+                                 .frame(width: 56, height: 56)
+                                 .glassEffect(.regular.interactive(), in: Circle())
+                         }
+                         .padding()
                      }
-                     .padding()
-                 }
+                }
             }
+            .navigationTitle("API Keys")
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .navigationBar)
         }
-        .background(Color.clear)
         .sheet(isPresented: $viewModel.showCreateSheet) {
             NavigationStack {
                 Form {
