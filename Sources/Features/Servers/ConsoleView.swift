@@ -27,6 +27,7 @@ struct ConsoleView: View {
                     .padding(.bottom, 60) // Extra padding for fade area
                 }
                 .scrollDismissesKeyboard(.interactively)
+                .background(Color.clear)
                 .onChange(of: viewModel.logs.count) {
                     if let last = viewModel.logs.last {
                          withAnimation {
@@ -82,6 +83,7 @@ struct ConsoleView: View {
                 .padding(.bottom, 8)
             }
         }
+        .background(Color.clear)
         .navigationTitle("Console")
         .navigationBarTitleDisplayMode(.inline)
         // Toolbar removed to avoid duplication with ServerDetailView header

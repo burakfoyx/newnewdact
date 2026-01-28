@@ -60,8 +60,10 @@ struct ContentView: View {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
                 .tag(3)
+                .tag(3)
             }
             .tint(accountManager.activeAccount?.theme.mainColor ?? .blue)
+            .background(Color.clear) // Ensure TabView is transparent
         }
         .onAppear {
             let appearance = UITabBarAppearance()
