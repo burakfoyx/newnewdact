@@ -168,58 +168,68 @@ struct LiquidBackgroundView: View {
     }
 }
 
-// MARK: - Bloomy Moving Stars
+// MARK: - Bloomy Moving Stars (CPU Optimized)
 struct StarsView: View {
     let animate: Bool
     
-    // Pre-generated star positions for performance
-    private let stars: [(x: CGFloat, y: CGFloat, size: CGFloat, twinkleDelay: Double)] = (0..<60).map { _ in
+    // Reduced star count for better performance
+    private static let starData: [(x: CGFloat, y: CGFloat, size: CGFloat)] = (0..<30).map { _ in
         (
             CGFloat.random(in: 0...1),
             CGFloat.random(in: 0...1),
-            CGFloat.random(in: 1...3),
-            Double.random(in: 0...3)
+            CGFloat.random(in: 1.5...3)
         )
     }
     
     var body: some View {
         GeometryReader { proxy in
-            ForEach(0..<stars.count, id: \.self) { i in
-                let star = stars[i]
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: star.size, height: star.size)
-                    .shadow(color: .white.opacity(0.8), radius: star.size * 2)
-                    .shadow(color: .white.opacity(0.4), radius: star.size * 4)
-                    .position(
-                        x: star.x * proxy.size.width,
-                        y: star.y * proxy.size.height
+            Canvas { context, size in
+                // Use Canvas for efficient batch rendering
+                for star in Self.starData {
+                    let position = CGPoint(x: star.x * size.width, y: star.y * size.height)
+                    
+                    // Draw bloom (simple circle with opacity)
+                    let bloomRect = CGRect(
+                        x: position.x - star.size * 3,
+                        y: position.y - star.size * 3,
+                        width: star.size * 6,
+                        height: star.size * 6
                     )
-                    .opacity(animate ? Double.random(in: 0.5...1.0) : 0.7)
-                    .animation(
-                        animate ? .easeInOut(duration: Double.random(in: 1.5...3.0))
-                            .repeatForever(autoreverses: true)
-                            .delay(star.twinkleDelay) : nil,
-                        value: animate
+                    context.fill(
+                        Circle().path(in: bloomRect),
+                        with: .color(.white.opacity(0.15))
                     )
+                    
+                    // Draw star core
+                    let starRect = CGRect(
+                        x: position.x - star.size / 2,
+                        y: position.y - star.size / 2,
+                        width: star.size,
+                        height: star.size
+                    )
+                    context.fill(
+                        Circle().path(in: starRect),
+                        with: .color(.white.opacity(0.9))
+                    )
+                }
             }
         }
-        .opacity(0.9)
-        // Slow rotation for star field movement
+        .opacity(0.85)
+        // Very slow rotation for subtle star field movement (10 minutes per rotation)
         .rotationEffect(Angle(degrees: animate ? 360 : 0))
-        .animation(animate ? .linear(duration: 300).repeatForever(autoreverses: false) : nil, value: animate)
+        .animation(animate ? .linear(duration: 600).repeatForever(autoreverses: false) : nil, value: animate)
     }
 }
 
-// MARK: - Nebula Clouds
+// MARK: - Nebula Clouds (CPU Optimized)
 struct NebulaClouds: View {
     let colors: [Color]
     let animate: Bool
     
     private var palette: [Color] {
         var base = colors
-        if base.count < 4 {
-            base.append(contentsOf: [.cyan.opacity(0.3), .indigo.opacity(0.4), .purple.opacity(0.3)])
+        if base.count < 3 {
+            base.append(contentsOf: [.indigo.opacity(0.4), .purple.opacity(0.3)])
         }
         return base
     }
@@ -227,73 +237,56 @@ struct NebulaClouds: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                // Cloud 1 - Large Ellipse
+                // Cloud 1 - Large Ellipse (reduced blur, slower animation)
                 Ellipse()
                     .fill(
                         RadialGradient(
                             colors: [palette[0], palette[0].opacity(0)],
                             center: .center,
                             startRadius: 0,
-                            endRadius: 250
+                            endRadius: 200
                         )
                     )
-                    .frame(width: 500, height: 350)
-                    .blur(radius: 60)
-                    .position(x: proxy.size.width * 0.25, y: proxy.size.height * 0.3)
-                    .offset(x: animate ? -40 : 30, y: animate ? -30 : 20)
-                    .rotationEffect(Angle(degrees: animate ? 15 : -15))
-                    .animation(animate ? .easeInOut(duration: 20).repeatForever(autoreverses: true) : nil, value: animate)
+                    .frame(width: 450, height: 300)
+                    .blur(radius: 40)
+                    .position(x: proxy.size.width * 0.25, y: proxy.size.height * 0.35)
+                    .offset(x: animate ? -20 : 20, y: animate ? -15 : 15)
+                    .animation(animate ? .easeInOut(duration: 45).repeatForever(autoreverses: true) : nil, value: animate)
                 
-                // Cloud 2 - Circle
+                // Cloud 2 - Circle (reduced blur, slower animation)
                 Circle()
                     .fill(
                         RadialGradient(
                             colors: [palette[1 % palette.count], palette[1 % palette.count].opacity(0)],
                             center: .center,
                             startRadius: 0,
-                            endRadius: 200
+                            endRadius: 180
                         )
                     )
-                    .frame(width: 400, height: 400)
-                    .blur(radius: 50)
-                    .position(x: proxy.size.width * 0.8, y: proxy.size.height * 0.65)
-                    .offset(x: animate ? 50 : -50, y: animate ? 40 : -30)
-                    .animation(animate ? .easeInOut(duration: 25).repeatForever(autoreverses: true) : nil, value: animate)
+                    .frame(width: 350, height: 350)
+                    .blur(radius: 35)
+                    .position(x: proxy.size.width * 0.75, y: proxy.size.height * 0.6)
+                    .offset(x: animate ? 25 : -25, y: animate ? 20 : -20)
+                    .animation(animate ? .easeInOut(duration: 55).repeatForever(autoreverses: true) : nil, value: animate)
                 
-                // Cloud 3 - Vertical Ellipse
+                // Cloud 3 - Accent (reduced blur, slower animation)
                 Ellipse()
                     .fill(
                         RadialGradient(
                             colors: [palette[2 % palette.count], palette[2 % palette.count].opacity(0)],
                             center: .center,
                             startRadius: 0,
-                            endRadius: 220
+                            endRadius: 160
                         )
                     )
-                    .frame(width: 280, height: 450)
-                    .blur(radius: 55)
-                    .position(x: proxy.size.width * 0.1, y: proxy.size.height * 0.75)
-                    .offset(x: animate ? 25 : -15, y: animate ? -50 : 30)
-                    .rotationEffect(Angle(degrees: animate ? -20 : 10))
-                    .animation(animate ? .easeInOut(duration: 28).repeatForever(autoreverses: true) : nil, value: animate)
-                
-                // Cloud 4 - Accent Glow
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [palette[0].opacity(0.6), palette[0].opacity(0)],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 150
-                        )
-                    )
-                    .frame(width: 300, height: 300)
-                    .blur(radius: 40)
-                    .position(x: proxy.size.width * 0.55, y: proxy.size.height * 0.45)
-                    .offset(x: animate ? -60 : 60, y: animate ? 60 : -60)
-                    .animation(animate ? .easeInOut(duration: 22).repeatForever(autoreverses: true) : nil, value: animate)
+                    .frame(width: 300, height: 400)
+                    .blur(radius: 35)
+                    .position(x: proxy.size.width * 0.15, y: proxy.size.height * 0.7)
+                    .offset(x: animate ? 15 : -10, y: animate ? -25 : 15)
+                    .animation(animate ? .easeInOut(duration: 60).repeatForever(autoreverses: true) : nil, value: animate)
             }
         }
+        .drawingGroup() // Flatten to single layer for GPU efficiency
     }
 }
 
