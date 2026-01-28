@@ -167,6 +167,8 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
         case "auth success":
             isConnected = true
             eventSubject.send(.connected)
+            // Explicitly request logs for history
+            sendString("{\"event\":\"send logs\",\"args\":[null]}")
         case "console output":
             eventSubject.send(.consoleOutput(content))
         case "stats":

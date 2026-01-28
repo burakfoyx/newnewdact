@@ -12,27 +12,29 @@ struct PanelListView: View {
                     ForEach(accountManager.accounts) { account in
                         Button(action: {
                             accountManager.switchToAccount(id: account.id)
-                            // Switch to Servers tab automatically
                             selectedTab = 1
                         }) {
                             PanelRow(account: account, isActive: accountManager.activeAccount?.id == account.id)
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
-                    
-                    Button(action: { showAddPanel = true }) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                            Text("Connect New Panel")
-                        }
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .padding()
-                        .glassEffect(.regular, in: Capsule())
-                    }
-                    .padding(.top)
                 }
                 .padding()
+            }
+            
+            VStack {
+                 Spacer()
+                 HStack {
+                     Spacer()
+                     Button(action: { showAddPanel = true }) {
+                         Image(systemName: "plus")
+                             .font(.title2.bold())
+                             .foregroundStyle(.white)
+                             .frame(width: 56, height: 56)
+                             .glassEffect(.regular.interactive(), in: Circle())
+                     }
+                     .padding()
+                 }
             }
         }
         .background(Color.clear)

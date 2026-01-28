@@ -79,10 +79,8 @@ struct ApiKeysView: View {
                          Image(systemName: "plus")
                              .font(.title2.bold())
                              .foregroundStyle(.white)
-                             .padding()
-                             .background(Color.blue)
-                             .clipShape(Circle())
-                             .shadow(radius: 5)
+                             .frame(width: 56, height: 56)
+                             .glassEffect(.regular.interactive(), in: Circle())
                      }
                      .padding()
                  }
