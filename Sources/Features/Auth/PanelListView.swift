@@ -8,14 +8,16 @@ struct PanelListView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.clear // Transparent base
+                // Background - same approach as AuthenticationView
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
                 
                 ScrollView {
                     LazyVStack(spacing: 20) {
                         ForEach(accountManager.accounts) { account in
                             Button(action: {
                                 accountManager.switchToAccount(id: account.id)
-                                selectedTab = 2 // Switch to Servers tab
+                                selectedTab = 2
                             }) {
                                 PanelRow(account: account, isActive: accountManager.activeAccount?.id == account.id)
                             }

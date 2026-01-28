@@ -7,66 +7,64 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                Section("Active Account") {
-                    if let active = accountManager.activeAccount {
-                        AccountRow(account: active, isActive: true)
-                    } else {
-                        Text("No active account")
-                    }
-                }
+            ZStack {
+                // Background
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
                 
-                Section("All Accounts") {
-                    ForEach(accountManager.accounts) { account in
-                        if account.id != accountManager.activeAccount?.id {
-                            AccountRow(account: account, isActive: false)
-                                .onTapGesture {
-                                    accountManager.switchToAccount(id: account.id)
-                                }
-                        }
-                    }
-                    .onDelete { indexSet in
-                        indexSet.forEach { index in
-                            let account = accountManager.accounts[index]
-                            accountManager.removeAccount(id: account.id)
+                List {
+                    Section("Active Account") {
+                        if let active = accountManager.activeAccount {
+                            AccountRow(account: active, isActive: true)
+                        } else {
+                            Text("No active account")
                         }
                     }
                     
-                    Button {
-                        showLogin = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                            Text("Add Another Account")
+                    Section("All Accounts") {
+                        ForEach(accountManager.accounts) { account in
+                            if account.id != accountManager.activeAccount?.id {
+                                AccountRow(account: account, isActive: false)
+                                    .onTapGesture {
+                                        accountManager.switchToAccount(id: account.id)
+                                    }
+                            }
+                        }
+                        .onDelete { indexSet in
+                            indexSet.forEach { index in
+                                let account = accountManager.accounts[index]
+                                accountManager.removeAccount(id: account.id)
+                            }
+                        }
+                        
+                        Button {
+                            showLogin = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add Another Account")
+                            }
                         }
                     }
-                }
-                
-                // Appearance section removed as per "remove theme stuff" request
-                /*
-                Section("Appearance") {
-                   ...
-                }
-                */
-                
-                Section {
-                    Button(role: .destructive) {
-                        if let id = accountManager.activeAccount?.id {
-                            accountManager.removeAccount(id: id)
+                    
+                    Section {
+                        Button(role: .destructive) {
+                            if let id = accountManager.activeAccount?.id {
+                                accountManager.removeAccount(id: id)
+                            }
+                        } label: {
+                            Text("Logout Active Account")
                         }
-                    } label: {
-                        Text("Logout Active Account")
+                    }
+                    
+                    Section {
+                        Text("XYIdactyl v1.1.0")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
-                
-                Section {
-                    Text("XYIdactyl v1.1.0")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                .scrollContentBackground(.hidden)
             }
-            .scrollContentBackground(.hidden)
-            .background(Color.clear)
             .navigationTitle("Settings")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(.hidden, for: .navigationBar)

@@ -51,8 +51,9 @@ struct ServerListView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Transparent - background comes from ContentView
-                Color.clear
+                // Background
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
                 
                 if viewModel.isLoading {
                     ProgressView("Loading Servers...")

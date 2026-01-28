@@ -1,4 +1,5 @@
 import SwiftUI
+import Darwin
 
 struct ContentView: View {
     @StateObject private var accountManager = AccountManager.shared
@@ -89,11 +90,26 @@ struct ContentView: View {
     }
     
     private func triggerLocalNetworkPermission() {
-        // Fire-and-forget network request to trigger permission dialog
-        let url = URL(string: "http://192.168.0.1")!
-        var request = URLRequest(url: url)
-        request.timeoutInterval = 0.5
-        URLSession.shared.dataTask(with: request).resume()
+        // Use BSD sockets for reliable local network permission trigger
+        // This creates a TCP connection to local network which reliably triggers the permission dialog
+        
+        DispatchQueue.global(qos: .background).async {
+            let socket = socket(AF_INET, SOCK_STREAM, 0)
+            guard socket >= 0 else { return }
+            
+            var addr = sockaddr_in()
+            addr.sin_family = sa_family_t(AF_INET)
+            addr.sin_port = CFSwapInt16HostToBig(80)
+            addr.sin_addr.s_addr = inet_addr("192.168.0.1")
+            
+            let addrPtr = withUnsafePointer(to: &addr) {
+                $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { $0 }
+            }
+            
+            // This connect attempt will trigger the Local Network permission
+            _ = Darwin.connect(socket, addrPtr, socklen_t(MemoryLayout<sockaddr_in>.size))
+            close(socket)
+        }
     }
 }
 
