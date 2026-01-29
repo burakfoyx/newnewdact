@@ -236,8 +236,7 @@ struct GlassyNavBar: View {
             }
         }
         .padding(14)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 }
 
@@ -276,7 +275,7 @@ struct GlassMetricsCard: View {
              )
         }
         .padding(20)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24))
+        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 24))
     }
 }
 

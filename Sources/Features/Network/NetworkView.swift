@@ -67,7 +67,7 @@ struct AllocationRow: View {
             }
         }
         .padding()
-        .liquidGlass(variant: .frosted, cornerRadius: 16)
+        .liquidGlass(variant: .clear, cornerRadius: 16)
     }
 }
 

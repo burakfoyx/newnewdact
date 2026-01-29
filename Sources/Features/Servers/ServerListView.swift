@@ -181,18 +181,6 @@ struct ServerRow: View {
             Spacer()
         }
         .padding(12) 
-        .background(.ultraThinMaterial) // Lightweight blurred background
-        .background(
-             LinearGradient(
-                colors: [statusColor.opacity(0.25), statusColor.opacity(0.05)],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                 .stroke(.white.opacity(0.1), lineWidth: 1)
-        )
+        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }

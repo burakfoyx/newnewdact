@@ -89,6 +89,6 @@ struct BackupRow: View {
             }
         }
         .padding()
-        .liquidGlass(variant: .frosted)
+        .liquidGlass(variant: .clear)
     }
 }

@@ -85,6 +85,6 @@ struct StartupVariableRow: View {
                 .foregroundStyle(.white)
         }
         .padding()
-        .liquidGlass(variant: .frosted)
+        .liquidGlass(variant: .clear)
     }
 }

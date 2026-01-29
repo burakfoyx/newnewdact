@@ -168,11 +168,6 @@ struct ApiKeyRow: View {
             }
         }
         .padding()
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-             RoundedRectangle(cornerRadius: 16)
-                 .stroke(.white.opacity(0.1), lineWidth: 1)
-        )
+        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
     }
 }

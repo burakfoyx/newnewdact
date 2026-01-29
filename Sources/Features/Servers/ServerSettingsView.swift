@@ -22,7 +22,7 @@ struct ServerSettingsView: View {
                     InfoRow(label: "Description", value: server.description)
                 }
                 .padding()
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
                 
                 // SFTP Card
                 VStack(spacing: 12) {
@@ -48,7 +48,7 @@ struct ServerSettingsView: View {
                     }
                 }
                 .padding()
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
                 
                 // Limits Card
                 VStack(spacing: 12) {
@@ -65,7 +65,7 @@ struct ServerSettingsView: View {
                     InfoRow(label: "Swap", value: "\(server.limits.swap ?? 0) MB")
                 }
                 .padding()
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
             }
             .padding()
             .padding(.bottom, 50)

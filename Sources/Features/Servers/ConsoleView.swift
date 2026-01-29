@@ -78,7 +78,7 @@ struct ConsoleView: View {
                 }
                 .padding(6)
                 .padding(.horizontal, 6)
-                .glassEffect(.regular, in: Capsule())
+                .glassEffect(.clear, in: Capsule())
                 .padding(.horizontal)
                 .padding(.bottom, 8)
             }
