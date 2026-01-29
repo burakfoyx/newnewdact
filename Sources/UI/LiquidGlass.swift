@@ -1,149 +1,74 @@
 import SwiftUI
 
-// MARK: - Liquid Glass API Simulation
-// Mimicking the "iOS 26" style API requested by the User.
+// MARK: - iOS 26 Native Liquid Glass
+// Using the native SwiftUI glassEffect API introduced in iOS 26
 
-// MARK: - Configuration Objects
-
-public struct Glass {
-    var variant: GlassStyle = .regular
-    var tintColor: Color? = nil
-    var isInteractive: Bool = false
-    
-    enum GlassStyle {
-        case clear      // Apple's .clear - most transparent, minimal blur
-        case regular    // Apple's .regular - balanced
-        case thick      // More opaque
-        case identity   // No effect
-    }
-    
-    public static let clear = Glass(variant: .clear)
-    public static let regular = Glass(variant: .regular)
-    public static let thick = Glass(variant: .thick)
-    public static let identity = Glass(variant: .identity)
-    
-    // Convenience aliases
-    public static let thin = Glass.clear
-    
-    public func tint(_ color: Color) -> Glass {
-        var copy = self
-        copy.tintColor = color
-        return copy
-    }
-    
-    public func interactive(_ isActive: Bool = true) -> Glass {
-        var copy = self
-        copy.isInteractive = isActive
-        return copy
-    }
-    
-    init(variant: GlassStyle = .regular) {
-        self.variant = variant
-    }
-}
-
-// MARK: - View Modifiers
+// MARK: - View Extension for Native Glass Effect
 
 extension View {
-    public func glassEffect(_ config: Glass = .regular, in shape: some Shape = Capsule()) -> some View {
-        self.modifier(LiquidGlassEffectModifier(config: config, shape: shape))
+    /// Apply native iOS 26 Liquid Glass effect with .clear variant (most transparent, edge bending)
+    @ViewBuilder
+    public func liquidGlassEffect(in shape: some Shape = RoundedRectangle(cornerRadius: 20, style: .continuous)) -> some View {
+        // Use the native iOS 26 glassEffect modifier with .clear variant
+        self.glassEffect(.clear, in: shape)
     }
     
-    public func glassEffect() -> some View {
-        self.modifier(LiquidGlassEffectModifier(config: .regular, shape: Capsule()))
+    /// Apply native iOS 26 Liquid Glass effect with regular variant
+    @ViewBuilder
+    public func liquidGlassRegular(in shape: some Shape = RoundedRectangle(cornerRadius: 20, style: .continuous)) -> some View {
+        self.glassEffect(.regular, in: shape)
     }
 }
 
-struct LiquidGlassEffectModifier<CShape: Shape>: ViewModifier {
-    let config: Glass
-    let shape: CShape
-    
-    func body(content: Content) -> some View {
-        switch config.variant {
-        case .identity:
-            // No effect
-            content
-            
+// MARK: - Legacy liquidGlass modifier (now uses native API)
+
+extension View {
+    /// Legacy modifier that now uses native iOS 26 glassEffect
+    public func liquidGlass(variant: GlassVariant = .clear, cornerRadius: CGFloat = 24) -> some View {
+        switch variant {
         case .clear:
-            // Apple's clear liquid glass - very transparent, minimal elements
-            content
-                .background(
-                    ZStack {
-                        // Ultra-subtle blur
-                        shape.fill(.ultraThinMaterial)
-                            .opacity(0.4)
-                        
-                        // Very subtle tint if provided
-                        if let tint = config.tintColor {
-                            shape.fill(tint.opacity(0.03))
-                        }
-                    }
-                )
-                .clipShape(shape)
-                // Very subtle edge highlight only
-                .overlay(
-                    shape.stroke(
-                        Color.white.opacity(0.2),
-                        lineWidth: 0.5
-                    )
-                )
-            
-        case .regular:
-            // Balanced glass - visible but not heavy
-            content
-                .background(
-                    ZStack {
-                        shape.fill(.thinMaterial)
-                            .opacity(0.7)
-                        
-                        if let tint = config.tintColor {
-                            shape.fill(tint.opacity(0.05))
-                        }
-                    }
-                )
-                .clipShape(shape)
-                .overlay(
-                    shape.stroke(
-                        LinearGradient(
-                            colors: [
-                                .white.opacity(0.35),
-                                .white.opacity(0.1)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.5
-                    )
-                )
-            
-        case .thick:
-            // More opaque glass
-            content
-                .background(
-                    ZStack {
-                        shape.fill(.regularMaterial)
-                        
-                        if let tint = config.tintColor {
-                            shape.fill(tint.opacity(0.08))
-                        }
-                    }
-                )
-                .clipShape(shape)
-                .overlay(
-                    shape.stroke(
-                        LinearGradient(
-                            colors: [
-                                .white.opacity(0.5),
-                                .white.opacity(0.15)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 0.5
-                    )
-                )
-                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+            self.glassEffect(.clear, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        case .frosted:
+            self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        case .heavy:
+            self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         }
+    }
+}
+
+public enum GlassVariant {
+    case clear      // Very transparent - Apple's .clear with edge bending
+    case frosted    // Balanced - Apple's .regular  
+    case heavy      // Most opaque
+}
+
+// MARK: - LiquidGlassCard (uses native glass)
+
+public struct LiquidGlassCard<Content: View>: View {
+    let content: Content
+    
+    public init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    public var body: some View {
+        content
+            .padding()
+            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+}
+
+// MARK: - LiquidButtonStyle (uses native glass)
+
+public struct LiquidButtonStyle: ButtonStyle {
+    public init() {}
+    
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding()
+            .glassEffect(.regular.interactive(), in: Capsule())
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.spring(response: 0.3), value: configuration.isPressed)
     }
 }
 
@@ -159,41 +84,20 @@ public struct GlassEffectContainer<Content: View>: View {
     }
     
     public var body: some View {
-        // In a real implementation this might use Canvas or similar for morphing.
-        // For simulation, we just return the content, assuming the user arranges them.
-        // The "morphing" visual effect is complex to sim without Metal/Canvas.
-        // We will provide a wrapper that creates a unified glass look background if needed,
-        // but the API example shows modifiers on children.
+        // Native GlassEffectContainer will merge overlapping glass shapes
         content
+            .glassEffectContainer(spacing: spacing)
     }
 }
 
 // MARK: - Other Types
 
 public struct GlassEffectTransition {
-    // Placeholder
+    // Placeholder for native transition
 }
 
-public struct GlassButtonStyle: ButtonStyle {
-    public func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding()
-            .glassEffect(.regular.interactive())
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.spring(response: 0.3), value: configuration.isPressed)
-    }
-}
-
-extension ButtonStyle where Self == GlassButtonStyle {
-    public static var glass: GlassButtonStyle { GlassButtonStyle() }
-}
-
-extension Shape {
-    // Helper to match .rect(cornerRadius:) syntax if using native or creating shim
-    // SwiftUI already has .rect in newer versions, assuming user is on such version or we assume standard RoundedRectangle
-    static func rect(cornerRadius: CGFloat) -> RoundedRectangle {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-    }
+extension ButtonStyle where Self == LiquidButtonStyle {
+    public static var glass: LiquidButtonStyle { LiquidButtonStyle() }
 }
 
 // MARK: - Animated Nebula Background
@@ -353,54 +257,5 @@ struct NebulaClouds: View {
             }
         }
         .drawingGroup() // Flatten to single layer for GPU efficiency
-    }
-}
-
-// MARK: - Legacy Compatibility (Restoring missing types)
-
-public enum GlassVariant {
-    case clear      // Very transparent - Apple's .clear
-    case frosted    // Balanced - Apple's .regular
-    case heavy      // Most opaque - Apple's .thick
-    
-    var glass: Glass {
-        switch self {
-        case .clear: return .clear
-        case .frosted: return .regular
-        case .heavy: return .thick
-        }
-    }
-}
-
-extension View {
-    // Restoring the old modifier signature used by other views
-    public func liquidGlass(variant: GlassVariant = .clear, cornerRadius: CGFloat = 24) -> some View {
-        self.glassEffect(variant.glass, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-    }
-}
-
-public struct LiquidGlassCard<Content: View>: View {
-    let content: Content
-    
-    public init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-    
-    public var body: some View {
-        content
-            .padding()
-            .liquidGlass(variant: .clear, cornerRadius: 24)
-    }
-}
-
-public struct LiquidButtonStyle: ButtonStyle {
-    public init() {}
-    
-    public func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding()
-            .glassEffect(.regular.interactive())
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.spring(response: 0.3), value: configuration.isPressed)
     }
 }
