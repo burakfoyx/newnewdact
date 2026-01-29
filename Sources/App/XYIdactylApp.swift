@@ -3,11 +3,33 @@ import SwiftUI
 @main
 struct XYIdactylApp: App {
     init() {
-        // Attempt to trigger Local Network permission early if the user is going to use a local IP
-        // by making a dummy outgoing request to a private IP range.
-        let url = URL(string: "http://192.168.0.1")!
-        let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 1)
-        URLSession.shared.dataTask(with: request).resume()
+        triggerNetworkPermissionIfNeeded()
+    }
+    
+    private func triggerNetworkPermissionIfNeeded() {
+        let hasLaunchedKey = "hasLaunchedBefore"
+        let hasLaunched = UserDefaults.standard.bool(forKey: hasLaunchedKey)
+        
+        if !hasLaunched {
+            // First launch - trigger Local Network permission popup
+            // by making a dummy request to a private IP range
+            let urls = [
+                "http://192.168.0.1",
+                "http://192.168.1.1", 
+                "http://10.0.0.1"
+            ]
+            
+            for urlString in urls {
+                if let url = URL(string: urlString) {
+                    var request = URLRequest(url: url)
+                    request.timeoutInterval = 0.5
+                    URLSession.shared.dataTask(with: request) { _, _, _ in }.resume()
+                }
+            }
+            
+            // Mark as launched
+            UserDefaults.standard.set(true, forKey: hasLaunchedKey)
+        }
     }
 
     var body: some Scene {
