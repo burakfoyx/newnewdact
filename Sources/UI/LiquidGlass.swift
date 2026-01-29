@@ -9,10 +9,14 @@ public struct Glass {
     var variant: Material = .regular
     var tintColor: Color? = nil
     var isInteractive: Bool = false
+    var opacity: Double = 1.0
     
-    public static let regular = Glass(variant: .ultraThinMaterial)
-    public static let thick = Glass(variant: .regularMaterial)
-    public static let thin = Glass(variant: .thinMaterial)
+    // Clear = very transparent, just a hint of glass
+    public static let thin = Glass(variant: .ultraThinMaterial, opacity: 0.6)
+    // Regular = balanced glass effect
+    public static let regular = Glass(variant: .thinMaterial, opacity: 0.85)
+    // Thick = more opaque, stronger blur
+    public static let thick = Glass(variant: .regularMaterial, opacity: 1.0)
     
     public func tint(_ color: Color) -> Glass {
         var copy = self
@@ -24,6 +28,11 @@ public struct Glass {
         var copy = self
         copy.isInteractive = isActive
         return copy
+    }
+    
+    init(variant: Material = .regular, opacity: Double = 1.0) {
+        self.variant = variant
+        self.opacity = opacity
     }
 }
 
@@ -48,6 +57,7 @@ struct LiquidGlassEffectModifier<CShape: Shape>: ViewModifier {
         content
             .background(
                 config.variant
+                    .opacity(config.opacity)
             )
             .background(
                 config.tintColor?.opacity(0.05) ?? Color.clear
@@ -293,15 +303,15 @@ struct NebulaClouds: View {
 // MARK: - Legacy Compatibility (Restoring missing types)
 
 public enum GlassVariant {
-    case clear
-    case frosted
-    case heavy
+    case clear      // Very transparent
+    case frosted    // Balanced
+    case heavy      // Most opaque
     
-    var material: Material {
+    var glass: Glass {
         switch self {
-        case .clear: return .ultraThinMaterial
-        case .frosted: return .regularMaterial
-        case .heavy: return .thickMaterial
+        case .clear: return .thin
+        case .frosted: return .regular
+        case .heavy: return .thick
         }
     }
 }
@@ -309,7 +319,7 @@ public enum GlassVariant {
 extension View {
     // Restoring the old modifier signature used by other views
     public func liquidGlass(variant: GlassVariant = .clear, cornerRadius: CGFloat = 24) -> some View {
-        self.glassEffect(Glass(variant: variant.material), in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        self.glassEffect(variant.glass, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }
 
