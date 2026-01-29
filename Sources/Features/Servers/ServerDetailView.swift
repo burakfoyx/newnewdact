@@ -184,7 +184,7 @@ struct GlassyNavBar: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
-                .glassEffect(.thick, in: Capsule())
+                .glassEffect(.regular, in: Capsule())
                 
                 // Power Action
                 Menu {

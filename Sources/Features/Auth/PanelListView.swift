@@ -83,7 +83,7 @@ struct PanelRow: View {
                 }
             }
             .padding()
-            .glassEffect(isActive ? .regular : .thin, in: RoundedRectangle(cornerRadius: 16))
+            .glassEffect(isActive ? .regular : .clear, in: RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(isActive ? Color.blue.opacity(0.5) : Color.clear, lineWidth: 1)

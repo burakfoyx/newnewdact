@@ -84,9 +84,8 @@ public struct GlassEffectContainer<Content: View>: View {
     }
     
     public var body: some View {
-        // Native GlassEffectContainer will merge overlapping glass shapes
+        // Just return content - the native glassEffect shapes will merge automatically
         content
-            .glassEffectContainer(spacing: spacing)
     }
 }
 

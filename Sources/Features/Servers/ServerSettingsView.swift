@@ -44,7 +44,7 @@ struct ServerSettingsView: View {
                             .font(.subheadline)
                             .foregroundStyle(.white)
                             .padding(8)
-                            .glassEffect(.thin, in: Capsule())
+                            .glassEffect(.clear, in: Capsule())
                     }
                 }
                 .padding()
