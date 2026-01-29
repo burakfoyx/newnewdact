@@ -6,17 +6,24 @@ import SwiftUI
 // MARK: - Configuration Objects
 
 public struct Glass {
-    var variant: Material = .regular
+    var variant: GlassStyle = .regular
     var tintColor: Color? = nil
     var isInteractive: Bool = false
-    var opacity: Double = 1.0
     
-    // Clear = very transparent, just a hint of glass
-    public static let thin = Glass(variant: .ultraThinMaterial, opacity: 0.6)
-    // Regular = balanced glass effect
-    public static let regular = Glass(variant: .thinMaterial, opacity: 0.85)
-    // Thick = more opaque, stronger blur
-    public static let thick = Glass(variant: .regularMaterial, opacity: 1.0)
+    enum GlassStyle {
+        case clear      // Apple's .clear - most transparent, minimal blur
+        case regular    // Apple's .regular - balanced
+        case thick      // More opaque
+        case identity   // No effect
+    }
+    
+    public static let clear = Glass(variant: .clear)
+    public static let regular = Glass(variant: .regular)
+    public static let thick = Glass(variant: .thick)
+    public static let identity = Glass(variant: .identity)
+    
+    // Convenience aliases
+    public static let thin = Glass.clear
     
     public func tint(_ color: Color) -> Glass {
         var copy = self
@@ -30,9 +37,8 @@ public struct Glass {
         return copy
     }
     
-    init(variant: Material = .regular, opacity: Double = 1.0) {
+    init(variant: GlassStyle = .regular) {
         self.variant = variant
-        self.opacity = opacity
     }
 }
 
@@ -43,7 +49,6 @@ extension View {
         self.modifier(LiquidGlassEffectModifier(config: config, shape: shape))
     }
     
-    // Overload for default shape (Capsule) to match example .glassEffect()
     public func glassEffect() -> some View {
         self.modifier(LiquidGlassEffectModifier(config: .regular, shape: Capsule()))
     }
@@ -54,40 +59,91 @@ struct LiquidGlassEffectModifier<CShape: Shape>: ViewModifier {
     let shape: CShape
     
     func body(content: Content) -> some View {
-        content
-            .background(
-                config.variant
-                    .opacity(config.opacity)
-            )
-            .background(
-                config.tintColor?.opacity(0.05) ?? Color.clear
-            )
-            .clipShape(shape)
-            .overlay(
-                // Glass bending / edge refraction imitation with stronger borders
-                shape.stroke(
-                    LinearGradient(
-                        colors: [
-                            .white.opacity(0.6),
-                            .white.opacity(0.1),
-                            .clear,
-                            .white.opacity(0.2)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 0.5
+        switch config.variant {
+        case .identity:
+            // No effect
+            content
+            
+        case .clear:
+            // Apple's clear liquid glass - very transparent, minimal elements
+            content
+                .background(
+                    ZStack {
+                        // Ultra-subtle blur
+                        shape.fill(.ultraThinMaterial)
+                            .opacity(0.4)
+                        
+                        // Very subtle tint if provided
+                        if let tint = config.tintColor {
+                            shape.fill(tint.opacity(0.03))
+                        }
+                    }
                 )
-            )
-            // Inner light/reflection for depth
-            .overlay(
-                shape.stroke(Color.white.opacity(0.1), lineWidth: 1)
-                     .padding(1)
-                     .mask(shape)
-            )
-            // Reduced shadow opacity to avoid "black box" look, per user request
-            .shadow(color: config.tintColor?.opacity(0.1) ?? .black.opacity(0.05), radius: 8, x: 0, y: 4)
-            .scaleEffect(config.isInteractive ? 1.0 : 1.0)
+                .clipShape(shape)
+                // Very subtle edge highlight only
+                .overlay(
+                    shape.stroke(
+                        Color.white.opacity(0.2),
+                        lineWidth: 0.5
+                    )
+                )
+            
+        case .regular:
+            // Balanced glass - visible but not heavy
+            content
+                .background(
+                    ZStack {
+                        shape.fill(.thinMaterial)
+                            .opacity(0.7)
+                        
+                        if let tint = config.tintColor {
+                            shape.fill(tint.opacity(0.05))
+                        }
+                    }
+                )
+                .clipShape(shape)
+                .overlay(
+                    shape.stroke(
+                        LinearGradient(
+                            colors: [
+                                .white.opacity(0.35),
+                                .white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.5
+                    )
+                )
+            
+        case .thick:
+            // More opaque glass
+            content
+                .background(
+                    ZStack {
+                        shape.fill(.regularMaterial)
+                        
+                        if let tint = config.tintColor {
+                            shape.fill(tint.opacity(0.08))
+                        }
+                    }
+                )
+                .clipShape(shape)
+                .overlay(
+                    shape.stroke(
+                        LinearGradient(
+                            colors: [
+                                .white.opacity(0.5),
+                                .white.opacity(0.15)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.5
+                    )
+                )
+                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        }
     }
 }
 
@@ -303,13 +359,13 @@ struct NebulaClouds: View {
 // MARK: - Legacy Compatibility (Restoring missing types)
 
 public enum GlassVariant {
-    case clear      // Very transparent
-    case frosted    // Balanced
-    case heavy      // Most opaque
+    case clear      // Very transparent - Apple's .clear
+    case frosted    // Balanced - Apple's .regular
+    case heavy      // Most opaque - Apple's .thick
     
     var glass: Glass {
         switch self {
-        case .clear: return .thin
+        case .clear: return .clear
         case .frosted: return .regular
         case .heavy: return .thick
         }
