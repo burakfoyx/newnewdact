@@ -321,4 +321,179 @@ actor PterodactylClient {
              throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to delete API key")
         }
     }
+    
+    // MARK: - Application API (Admin Only)
+    
+    /// Check if the API key has admin (Application API) access
+    func checkAdminAccess() async -> Bool {
+        guard let baseURL = baseURL, let apiKey = apiKey else { return false }
+        
+        let url = baseURL.appendingPathComponent("api/application/users")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            if let http = response as? HTTPURLResponse {
+                return (200...299).contains(http.statusCode)
+            }
+            return false
+        } catch {
+            return false
+        }
+    }
+    
+    /// Fetch available nodes for server creation (Application API)
+    func fetchNodes() async throws -> [NodeAttributes] {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/application/nodes")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to fetch nodes")
+        }
+        
+        let decoded = try JSONDecoder().decode(NodeListResponse.self, from: data)
+        return decoded.data.map { $0.attributes }
+    }
+    
+    /// Fetch eggs (game templates) for a nest (Application API)
+    func fetchEggs(nestId: Int) async throws -> [EggAttributes] {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/application/nests/\(nestId)/eggs")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to fetch eggs")
+        }
+        
+        let decoded = try JSONDecoder().decode(EggListResponse.self, from: data)
+        return decoded.data.map { $0.attributes }
+    }
+    
+    /// Fetch nests (categories) (Application API)
+    func fetchNests() async throws -> [NestAttributes] {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/application/nests")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to fetch nests")
+        }
+        
+        let decoded = try JSONDecoder().decode(NestListResponse.self, from: data)
+        return decoded.data.map { $0.attributes }
+    }
+    
+    /// Fetch available allocations for a node (Application API)
+    func fetchApplicationAllocations(nodeId: Int) async throws -> [ApplicationAllocation] {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        var components = URLComponents(url: baseURL.appendingPathComponent("api/application/nodes/\(nodeId)/allocations"), resolvingAgainstBaseURL: true)!
+        components.queryItems = [URLQueryItem(name: "filter[server_id]", value: "0")] // Only unassigned
+        
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to fetch allocations")
+        }
+        
+        let decoded = try JSONDecoder().decode(ApplicationAllocationResponse.self, from: data)
+        return decoded.data.map { $0.attributes }
+    }
+    
+    /// Create a new server (Application API)
+    func createServer(
+        name: String,
+        userId: Int,
+        eggId: Int,
+        dockerImage: String,
+        startup: String,
+        environment: [String: String],
+        limits: ServerLimits,
+        featureLimits: FeatureLimits,
+        allocationId: Int
+    ) async throws -> ServerAttributes {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/application/servers")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "name": name,
+            "user": userId,
+            "egg": eggId,
+            "docker_image": dockerImage,
+            "startup": startup,
+            "environment": environment,
+            "limits": [
+                "memory": limits.memory ?? 1024,
+                "swap": limits.swap ?? 0,
+                "disk": limits.disk ?? 5120,
+                "io": limits.io ?? 500,
+                "cpu": limits.cpu ?? 100
+            ],
+            "feature_limits": [
+                "databases": featureLimits.databases,
+                "backups": featureLimits.backups
+            ],
+            "allocation": [
+                "default": allocationId
+            ]
+        ]
+        
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to create server")
+        }
+        
+        let decoded = try JSONDecoder().decode(ServerData.self, from: data)
+        return decoded.attributes
+    }
+    
+    /// Fetch current user info to get user ID  
+    func fetchCurrentUser() async throws -> UserInfo {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/client/account")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to fetch user info")
+        }
+        
+        let decoded = try JSONDecoder().decode(UserInfoResponse.self, from: data)
+        return decoded.attributes
+    }
 }

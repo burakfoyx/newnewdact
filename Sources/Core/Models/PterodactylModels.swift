@@ -251,3 +251,124 @@ struct ApiKeyAttributes: Codable {
         case createdAt = "created_at"
     }
 }
+
+// MARK: - Application API Models (Admin Only)
+
+// Node Models
+struct NodeListResponse: Codable {
+    let object: String
+    let data: [NodeData]
+}
+
+struct NodeData: Codable {
+    let attributes: NodeAttributes
+}
+
+struct NodeAttributes: Codable, Identifiable {
+    let id: Int
+    let name: String
+    let description: String?
+    let locationId: Int
+    let fqdn: String
+    let scheme: String
+    let memory: Int
+    let memoryOverallocate: Int
+    let disk: Int
+    let diskOverallocate: Int
+    let uploadSize: Int
+    let daemonListen: Int
+    let daemonSftp: Int
+    let maintenanceMode: Bool
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, description, fqdn, scheme, memory, disk
+        case locationId = "location_id"
+        case memoryOverallocate = "memory_overallocate"
+        case diskOverallocate = "disk_overallocate"
+        case uploadSize = "upload_size"
+        case daemonListen = "daemon_listen"
+        case daemonSftp = "daemon_sftp"
+        case maintenanceMode = "maintenance_mode"
+    }
+}
+
+// Nest Models
+struct NestListResponse: Codable {
+    let object: String
+    let data: [NestData]
+}
+
+struct NestData: Codable {
+    let attributes: NestAttributes
+}
+
+struct NestAttributes: Codable, Identifiable {
+    let id: Int
+    let uuid: String
+    let author: String
+    let name: String
+    let description: String?
+}
+
+// Egg Models
+struct EggListResponse: Codable {
+    let object: String
+    let data: [EggData]
+}
+
+struct EggData: Codable {
+    let attributes: EggAttributes
+}
+
+struct EggAttributes: Codable, Identifiable {
+    let id: Int
+    let uuid: String
+    let name: String
+    let description: String?
+    let dockerImage: String
+    let startup: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id, uuid, name, description, startup
+        case dockerImage = "docker_image"
+    }
+}
+
+// Application Allocation Models
+struct ApplicationAllocationResponse: Codable {
+    let object: String
+    let data: [ApplicationAllocationData]
+}
+
+struct ApplicationAllocationData: Codable {
+    let attributes: ApplicationAllocation
+}
+
+struct ApplicationAllocation: Codable, Identifiable {
+    let id: Int
+    let ip: String
+    let alias: String?
+    let port: Int
+    let notes: String?
+    let assigned: Bool
+}
+
+// User Info Response (Client API)
+struct UserInfoResponse: Codable {
+    let attributes: UserInfo
+}
+
+struct UserInfo: Codable {
+    let id: Int
+    let admin: Bool
+    let username: String
+    let email: String
+    let firstName: String
+    let lastName: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id, admin, username, email
+        case firstName = "first_name"
+        case lastName = "last_name"
+    }
+}

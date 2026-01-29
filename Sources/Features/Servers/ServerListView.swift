@@ -47,6 +47,12 @@ class ServerListViewModel: ObservableObject {
 
 struct ServerListView: View {
     @StateObject private var viewModel = ServerListViewModel()
+    @ObservedObject private var accountManager = AccountManager.shared
+    @State private var showCreateSheet = false
+    
+    private var hasAdminAccess: Bool {
+        accountManager.activeAccount?.hasAdminAccess ?? false
+    }
     
     var body: some View {
         NavigationStack {
@@ -82,8 +88,28 @@ struct ServerListView: View {
                             }
                         }
                         .padding()
+                        .padding(.bottom, hasAdminAccess ? 80 : 0) // Make room for FAB
                     }
                     .scrollContentBackground(.hidden)
+                }
+                
+                // Floating Action Button for Admin Users
+                if hasAdminAccess && !viewModel.isLoading {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Button(action: { showCreateSheet = true }) {
+                                Image(systemName: "plus")
+                                    .font(.title2.bold())
+                                    .foregroundStyle(.white)
+                                    .frame(width: 56, height: 56)
+                                    .glassEffect(.clear.interactive(), in: Circle())
+                                    .shadow(color: .purple.opacity(0.5), radius: 10)
+                            }
+                            .padding()
+                        }
+                    }
                 }
             }
             .navigationTitle("Servers")
@@ -93,6 +119,15 @@ struct ServerListView: View {
         .task {
             if viewModel.servers.isEmpty {
                 await viewModel.loadServers()
+            }
+        }
+        .sheet(isPresented: $showCreateSheet) {
+            CreateServerView()
+        }
+        .onChange(of: showCreateSheet) { _, isPresented in
+            if !isPresented {
+                // Refresh servers after creating
+                Task { await viewModel.loadServers() }
             }
         }
     }

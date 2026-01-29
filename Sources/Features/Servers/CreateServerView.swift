@@ -1,0 +1,403 @@
+import SwiftUI
+
+struct CreateServerView: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel = CreateServerViewModel()
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Server Name
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("Server Name", systemImage: "server.rack")
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                            
+                            TextField("My Minecraft Server", text: $viewModel.serverName)
+                                .padding()
+                                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                        }
+                        
+                        // Node Selection
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("Node", systemImage: "cpu")
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                            
+                            if viewModel.isLoadingNodes {
+                                HStack {
+                                    ProgressView().tint(.white)
+                                    Text("Loading nodes...")
+                                        .foregroundStyle(.white.opacity(0.7))
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                            } else {
+                                Menu {
+                                    ForEach(viewModel.nodes) { node in
+                                        Button(node.name) {
+                                            viewModel.selectedNode = node
+                                        }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text(viewModel.selectedNode?.name ?? "Select Node")
+                                            .foregroundStyle(.white)
+                                        Spacer()
+                                        Image(systemName: "chevron.down")
+                                            .foregroundStyle(.white.opacity(0.5))
+                                    }
+                                    .padding()
+                                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                }
+                            }
+                        }
+                        
+                        // Nest (Category) Selection
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("Category", systemImage: "folder")
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                            
+                            if viewModel.isLoadingNests {
+                                HStack {
+                                    ProgressView().tint(.white)
+                                    Text("Loading categories...")
+                                        .foregroundStyle(.white.opacity(0.7))
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                            } else {
+                                Menu {
+                                    ForEach(viewModel.nests) { nest in
+                                        Button(nest.name) {
+                                            viewModel.selectedNest = nest
+                                        }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text(viewModel.selectedNest?.name ?? "Select Category")
+                                            .foregroundStyle(.white)
+                                        Spacer()
+                                        Image(systemName: "chevron.down")
+                                            .foregroundStyle(.white.opacity(0.5))
+                                    }
+                                    .padding()
+                                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                }
+                            }
+                        }
+                        
+                        // Egg (Template) Selection
+                        if viewModel.selectedNest != nil {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label("Template", systemImage: "doc.text")
+                                    .font(.headline)
+                                    .foregroundStyle(.white)
+                                
+                                if viewModel.isLoadingEggs {
+                                    HStack {
+                                        ProgressView().tint(.white)
+                                        Text("Loading templates...")
+                                            .foregroundStyle(.white.opacity(0.7))
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                } else {
+                                    Menu {
+                                        ForEach(viewModel.eggs) { egg in
+                                            Button(egg.name) {
+                                                viewModel.selectedEgg = egg
+                                            }
+                                        }
+                                    } label: {
+                                        HStack {
+                                            Text(viewModel.selectedEgg?.name ?? "Select Template")
+                                                .foregroundStyle(.white)
+                                            Spacer()
+                                            Image(systemName: "chevron.down")
+                                                .foregroundStyle(.white.opacity(0.5))
+                                        }
+                                        .padding()
+                                        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Resources Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Resources", systemImage: "gauge")
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                            
+                            // Memory
+                            ResourceSlider(
+                                title: "Memory",
+                                value: $viewModel.memory,
+                                range: 128...16384,
+                                step: 128,
+                                unit: "MB",
+                                icon: "memorychip"
+                            )
+                            
+                            // Disk
+                            ResourceSlider(
+                                title: "Disk",
+                                value: $viewModel.disk,
+                                range: 512...102400,
+                                step: 512,
+                                unit: "MB",
+                                icon: "internaldrive"
+                            )
+                            
+                            // CPU
+                            ResourceSlider(
+                                title: "CPU",
+                                value: $viewModel.cpu,
+                                range: 10...400,
+                                step: 10,
+                                unit: "%",
+                                icon: "cpu"
+                            )
+                        }
+                        .padding()
+                        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+                        
+                        // Error
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .foregroundStyle(.red)
+                                .font(.caption)
+                                .padding()
+                        }
+                        
+                        // Create Button
+                        Button(action: {
+                            Task { await viewModel.createServer() }
+                        }) {
+                            if viewModel.isCreating {
+                                HStack {
+                                    ProgressView().tint(.white)
+                                    Text("Creating Server...")
+                                        .foregroundStyle(.white)
+                                }
+                            } else {
+                                Label("Create Server", systemImage: "plus.circle.fill")
+                                    .fontWeight(.bold)
+                                    .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .buttonStyle(LiquidButtonStyle())
+                        .disabled(!viewModel.canCreate || viewModel.isCreating)
+                        .opacity(viewModel.canCreate ? 1.0 : 0.5)
+                    }
+                    .padding()
+                    .padding(.bottom, 50)
+                }
+            }
+            .navigationTitle("Create Server")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundStyle(.white)
+                }
+            }
+            .onChange(of: viewModel.serverCreated) { _, created in
+                if created { dismiss() }
+            }
+            .task {
+                await viewModel.loadInitialData()
+            }
+        }
+    }
+}
+
+// MARK: - Resource Slider
+
+struct ResourceSlider: View {
+    let title: String
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let step: Double
+    let unit: String
+    let icon: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundStyle(.blue)
+                Text(title)
+                    .foregroundStyle(.white)
+                Spacer()
+                Text("\(Int(value)) \(unit)")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+            }
+            
+            Slider(value: $value, in: range, step: step)
+                .tint(.blue)
+        }
+    }
+}
+
+// MARK: - ViewModel
+
+class CreateServerViewModel: ObservableObject {
+    @Published var serverName = ""
+    @Published var nodes: [NodeAttributes] = []
+    @Published var nests: [NestAttributes] = []
+    @Published var eggs: [EggAttributes] = []
+    @Published var selectedNode: NodeAttributes?
+    @Published var selectedNest: NestAttributes? {
+        didSet {
+            if let nest = selectedNest {
+                Task { await loadEggs(for: nest.id) }
+            }
+        }
+    }
+    @Published var selectedEgg: EggAttributes?
+    @Published var memory: Double = 1024
+    @Published var disk: Double = 5120
+    @Published var cpu: Double = 100
+    @Published var isLoadingNodes = false
+    @Published var isLoadingNests = false
+    @Published var isLoadingEggs = false
+    @Published var isCreating = false
+    @Published var errorMessage: String?
+    @Published var serverCreated = false
+    
+    var canCreate: Bool {
+        !serverName.isEmpty && 
+        selectedNode != nil && 
+        selectedEgg != nil
+    }
+    
+    func loadInitialData() async {
+        await loadNodes()
+        await loadNests()
+    }
+    
+    func loadNodes() async {
+        await MainActor.run { isLoadingNodes = true }
+        do {
+            let fetched = try await PterodactylClient.shared.fetchNodes()
+            await MainActor.run {
+                nodes = fetched
+                isLoadingNodes = false
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = "Failed to load nodes: \(error.localizedDescription)"
+                isLoadingNodes = false
+            }
+        }
+    }
+    
+    func loadNests() async {
+        await MainActor.run { isLoadingNests = true }
+        do {
+            let fetched = try await PterodactylClient.shared.fetchNests()
+            await MainActor.run {
+                nests = fetched
+                isLoadingNests = false
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = "Failed to load categories: \(error.localizedDescription)"
+                isLoadingNests = false
+            }
+        }
+    }
+    
+    func loadEggs(for nestId: Int) async {
+        await MainActor.run { 
+            isLoadingEggs = true 
+            eggs = []
+            selectedEgg = nil
+        }
+        do {
+            let fetched = try await PterodactylClient.shared.fetchEggs(nestId: nestId)
+            await MainActor.run {
+                eggs = fetched
+                isLoadingEggs = false
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = "Failed to load templates: \(error.localizedDescription)"
+                isLoadingEggs = false
+            }
+        }
+    }
+    
+    func createServer() async {
+        guard let node = selectedNode,
+              let egg = selectedEgg else { return }
+        
+        await MainActor.run { 
+            isCreating = true
+            errorMessage = nil
+        }
+        
+        do {
+            // Get allocations for the node
+            let allocations = try await PterodactylClient.shared.fetchApplicationAllocations(nodeId: node.id)
+            guard let allocation = allocations.first(where: { !$0.assigned }) else {
+                await MainActor.run {
+                    errorMessage = "No available allocations on this node"
+                    isCreating = false
+                }
+                return
+            }
+            
+            // Get current user
+            let user = try await PterodactylClient.shared.fetchCurrentUser()
+            
+            // Create server
+            let limits = ServerLimits(
+                memory: Int(memory),
+                swap: 0,
+                disk: Int(disk),
+                io: 500,
+                cpu: Int(cpu),
+                threads: nil
+            )
+            
+            let featureLimits = FeatureLimits(databases: 0, allocations: 1, backups: 3)
+            
+            _ = try await PterodactylClient.shared.createServer(
+                name: serverName,
+                userId: user.id,
+                eggId: egg.id,
+                dockerImage: egg.dockerImage,
+                startup: egg.startup,
+                environment: [:], // Would need to fetch egg variables for real implementation
+                limits: limits,
+                featureLimits: featureLimits,
+                allocationId: allocation.id
+            )
+            
+            await MainActor.run {
+                isCreating = false
+                serverCreated = true
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = "Failed to create server: \(error.localizedDescription)"
+                isCreating = false
+            }
+        }
+    }
+}

@@ -8,6 +8,7 @@ struct Account: Codable, Identifiable, Hashable {
     let apiKey: String
     var theme: AppTheme = .blue // Default theme
     var lowPowerMode: Bool = false
+    var hasAdminAccess: Bool = false // Can create servers via Application API
 }
 
 class AccountManager: ObservableObject {
@@ -34,8 +35,9 @@ class AccountManager: ObservableObject {
         loadAccounts()
     }
     
-    func addAccount(name: String, url: String, key: String) {
-        let newAccount = Account(name: name, url: url, apiKey: key)
+    func addAccount(name: String, url: String, key: String, hasAdminAccess: Bool = false) {
+        var newAccount = Account(name: name, url: url, apiKey: key)
+        newAccount.hasAdminAccess = hasAdminAccess
         accounts.append(newAccount)
         saveAccounts()
         
