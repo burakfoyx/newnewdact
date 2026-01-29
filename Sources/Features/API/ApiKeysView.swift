@@ -86,7 +86,7 @@ struct ApiKeysView: View {
                                  .font(.title2.bold())
                                  .foregroundStyle(.white)
                                  .frame(width: 56, height: 56)
-                                 .glassEffect(.regular.interactive(), in: Circle())
+                                 .glassEffect(.clear.interactive(), in: Circle())
                          }
                          .padding()
                      }

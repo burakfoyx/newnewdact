@@ -24,15 +24,10 @@ extension View {
 
 extension View {
     /// Legacy modifier that now uses native iOS 26 glassEffect
+    /// All variants now use .clear for maximum transparency without tint
     public func liquidGlass(variant: GlassVariant = .clear, cornerRadius: CGFloat = 24) -> some View {
-        switch variant {
-        case .clear:
-            self.glassEffect(.clear, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        case .frosted:
-            self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        case .heavy:
-            self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        }
+        // All variants use .clear for consistent transparent look without tint
+        self.glassEffect(.clear, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }
 
@@ -66,7 +61,7 @@ public struct LiquidButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding()
-            .glassEffect(.regular.interactive(), in: Capsule())
+            .glassEffect(.clear.interactive(), in: Capsule())
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.spring(response: 0.3), value: configuration.isPressed)
     }

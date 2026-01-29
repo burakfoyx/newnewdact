@@ -37,7 +37,7 @@ struct PanelListView: View {
                                  .font(.title2.bold())
                                  .foregroundStyle(.white)
                                  .frame(width: 56, height: 56)
-                                 .glassEffect(.regular.interactive(), in: Circle())
+                                 .glassEffect(.clear.interactive(), in: Circle())
                          }
                          .padding()
                      }
@@ -83,7 +83,7 @@ struct PanelRow: View {
                 }
             }
             .padding()
-            .glassEffect(isActive ? .regular : .clear, in: RoundedRectangle(cornerRadius: 16))
+            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(isActive ? Color.blue.opacity(0.5) : Color.clear, lineWidth: 1)

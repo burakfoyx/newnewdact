@@ -184,7 +184,7 @@ struct GlassyNavBar: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
-                .glassEffect(.regular, in: Capsule())
+                .glassEffect(.clear, in: Capsule())
                 
                 // Power Action
                 Menu {
@@ -198,7 +198,7 @@ struct GlassyNavBar: View {
                         .foregroundStyle(.white)
                         .padding(8)
                         .glassEffect(
-                            .regular.tint(Color.red),
+                            .clear,
                             in: Circle()
                         )
                 }
