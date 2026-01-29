@@ -182,5 +182,14 @@ struct ServerRow: View {
         }
         .padding(12) 
         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        // Subtle status gradient overlay (doesn't affect glass transparency)
+        .overlay(
+            LinearGradient(
+                colors: [statusColor.opacity(0.15), statusColor.opacity(0.02)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        )
     }
 }
