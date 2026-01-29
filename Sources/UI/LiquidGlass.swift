@@ -308,7 +308,7 @@ public enum GlassVariant {
 
 extension View {
     // Restoring the old modifier signature used by other views
-    public func liquidGlass(variant: GlassVariant = .frosted, cornerRadius: CGFloat = 24) -> some View {
+    public func liquidGlass(variant: GlassVariant = .clear, cornerRadius: CGFloat = 24) -> some View {
         self.glassEffect(Glass(variant: variant.material), in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }
@@ -323,7 +323,7 @@ public struct LiquidGlassCard<Content: View>: View {
     public var body: some View {
         content
             .padding()
-            .liquidGlass(variant: .frosted, cornerRadius: 24)
+            .liquidGlass(variant: .clear, cornerRadius: 24)
     }
 }
 
