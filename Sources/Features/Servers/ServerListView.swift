@@ -241,16 +241,28 @@ struct ServerRow: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        // Subtle status gradient overlay
-        .overlay(
-            LinearGradient(
-                colors: [statusColor.opacity(0.15), statusColor.opacity(0.02)],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .allowsHitTesting(false)
-        )
+        // Small status indicator on left edge only (status color -> transparent)
+        .overlay(alignment: .leading) {
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [statusColor.opacity(0.4), .clear],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(width: 60) // Only 60pt wide on the left
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 16,
+                        bottomLeadingRadius: 16,
+                        bottomTrailingRadius: 0,
+                        topTrailingRadius: 0,
+                        style: .continuous
+                    )
+                )
+                .allowsHitTesting(false)
+        }
         .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }

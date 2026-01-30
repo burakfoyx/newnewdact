@@ -4,17 +4,32 @@ import AVKit
 // MARK: - Video Background Player
 struct VideoBackgroundView: UIViewRepresentable {
     let videoName: String
+    @Binding var isVideoReady: Bool
     
     func makeUIView(context: Context) -> UIView {
         let containerView = UIView()
         containerView.backgroundColor = .clear
         
-        guard let path = Bundle.main.path(forResource: videoName, ofType: "mp4") else {
-            print("Video not found: \(videoName).mp4")
+        // Try multiple ways to find the video
+        var videoURL: URL?
+        
+        // Method 1: Direct bundle URL
+        if let url = Bundle.main.url(forResource: videoName, withExtension: "mp4") {
+            videoURL = url
+        }
+        // Method 2: Path-based lookup
+        else if let path = Bundle.main.path(forResource: videoName, ofType: "mp4") {
+            videoURL = URL(fileURLWithPath: path)
+        }
+        
+        guard let url = videoURL else {
+            print("❌ Video not found: \(videoName).mp4")
             return containerView
         }
         
-        let player = AVPlayer(url: URL(fileURLWithPath: path))
+        print("✅ Video found at: \(url)")
+        
+        let player = AVPlayer(url: url)
         player.isMuted = true
         player.actionAtItemEnd = .none
         
@@ -34,11 +49,15 @@ struct VideoBackgroundView: UIViewRepresentable {
             player.play()
         }
         
+        // Observe when video is ready to play
+        player.currentItem?.addObserver(context.coordinator, forKeyPath: "status", options: [.new], context: nil)
+        
         player.play()
         
         // Store player in coordinator to keep it alive
         context.coordinator.player = player
         context.coordinator.playerLayer = playerLayer
+        context.coordinator.isVideoReady = $isVideoReady
         
         return containerView
     }
@@ -51,8 +70,23 @@ struct VideoBackgroundView: UIViewRepresentable {
         Coordinator()
     }
     
-    class Coordinator {
+    class Coordinator: NSObject {
         var player: AVPlayer?
         var playerLayer: AVPlayerLayer?
+        var isVideoReady: Binding<Bool>?
+        
+        override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+            if keyPath == "status", let item = object as? AVPlayerItem {
+                if item.status == .readyToPlay {
+                    DispatchQueue.main.async {
+                        self.isVideoReady?.wrappedValue = true
+                    }
+                }
+            }
+        }
+        
+        deinit {
+            player?.currentItem?.removeObserver(self, forKeyPath: "status")
+        }
     }
 }

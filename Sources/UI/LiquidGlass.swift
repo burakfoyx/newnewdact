@@ -101,28 +101,113 @@ extension ButtonStyle where Self == LiquidButtonStyle {
     public static var glass: LiquidButtonStyle { LiquidButtonStyle() }
 }
 
-// MARK: - Video Background with Fade-In
+// MARK: - Video Background with Fade-In and Fallback
 struct LiquidBackgroundView: View {
+    @ObservedObject private var accountManager = AccountManager.shared
     @State private var opacity: Double = 0
+    @State private var isVideoReady: Bool = false
+    
+    private var nebulaColors: [Color] {
+        accountManager.activeAccount?.theme.gradientColors ?? AppTheme.purple.gradientColors
+    }
     
     var body: some View {
         ZStack {
-            // Deep black base (visible during fade-in)
-            Color.black
+            // Fallback nebula background (always present)
+            FallbackNebulaBackground(colors: nebulaColors)
                 .ignoresSafeArea()
             
-            // Video background
-            VideoBackgroundView(videoName: "bg_loop")
+            // Video background (overlays nebula when ready)
+            VideoBackgroundView(videoName: "bg_loop", isVideoReady: $isVideoReady)
                 .ignoresSafeArea()
-                .opacity(opacity)
+                .opacity(isVideoReady ? opacity : 0)
         }
         .ignoresSafeArea()
         .onAppear {
-            // Smooth fast fade-in on app launch
+            // Fade in
             withAnimation(.easeOut(duration: 0.5)) {
                 opacity = 1
             }
         }
+        .onChange(of: isVideoReady) { _, ready in
+            if ready {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    opacity = 1
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Fallback Static Nebula (when video unavailable)
+struct FallbackNebulaBackground: View {
+    let colors: [Color]
+    
+    var body: some View {
+        ZStack {
+            // Deep Space Base
+            LinearGradient(
+                colors: [
+                    Color(red: 0.02, green: 0.02, blue: 0.08),
+                    Color(red: 0.08, green: 0.04, blue: 0.15),
+                    Color(red: 0.04, green: 0.06, blue: 0.18)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            
+            // Static nebula clouds
+            GeometryReader { proxy in
+                ZStack {
+                    Ellipse()
+                        .fill(
+                            RadialGradient(
+                                colors: [colors.first ?? .purple, (colors.first ?? .purple).opacity(0)],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 200
+                            )
+                        )
+                        .frame(width: 450, height: 300)
+                        .blur(radius: 40)
+                        .position(x: proxy.size.width * 0.25, y: proxy.size.height * 0.35)
+                    
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [colors[safe: 1] ?? .indigo, (colors[safe: 1] ?? .indigo).opacity(0)],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 180
+                            )
+                        )
+                        .frame(width: 350, height: 350)
+                        .blur(radius: 35)
+                        .position(x: proxy.size.width * 0.75, y: proxy.size.height * 0.6)
+                    
+                    Ellipse()
+                        .fill(
+                            RadialGradient(
+                                colors: [colors[safe: 2] ?? .blue, (colors[safe: 2] ?? .blue).opacity(0)],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 160
+                            )
+                        )
+                        .frame(width: 300, height: 400)
+                        .blur(radius: 35)
+                        .position(x: proxy.size.width * 0.15, y: proxy.size.height * 0.7)
+                }
+            }
+            .drawingGroup()
+        }
+    }
+}
+
+// Safe array access
+extension Array {
+    subscript(safe index: Int) -> Element? {
+        return indices.contains(index) ? self[index] : nil
     }
 }
 
