@@ -142,16 +142,6 @@ struct PanelRowItem: View {
                 }
                 
                 Spacer()
-                
-                // Theme indicator
-                Circle()
-                    .fill(LinearGradient(
-                        colors: account.theme.gradientColors,
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ))
-                    .frame(width: 24, height: 24)
-                    .overlay(Circle().stroke(.white.opacity(0.3), lineWidth: 1))
             }
             .padding()
             .frame(maxWidth: .infinity)
