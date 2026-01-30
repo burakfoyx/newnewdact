@@ -10,7 +10,7 @@ struct PanelListView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background - same approach as AuthenticationView
+                // Background
                 LiquidBackgroundView()
                     .ignoresSafeArea()
                 
@@ -39,26 +39,29 @@ struct PanelListView: View {
                     }
                     .padding()
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 16) {
-                            ForEach(accountManager.accounts) { account in
-                                PanelCard(
-                                    account: account,
-                                    isActive: accountManager.activeAccount?.id == account.id,
-                                    onSelect: {
-                                        accountManager.switchToAccount(id: account.id)
-                                        selectedTab = 2
-                                    },
-                                    onDelete: {
-                                        panelToDelete = account
-                                        showDeleteConfirmation = true
-                                    }
-                                )
+                    List {
+                        ForEach(accountManager.accounts) { account in
+                            PanelRowItem(
+                                account: account,
+                                isActive: accountManager.activeAccount?.id == account.id,
+                                onSelect: {
+                                    accountManager.switchToAccount(id: account.id)
+                                    selectedTab = 2
+                                }
+                            )
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        }
+                        .onDelete { indexSet in
+                            for index in indexSet {
+                                let account = accountManager.accounts[index]
+                                panelToDelete = account
+                                showDeleteConfirmation = true
                             }
                         }
-                        .padding()
-                        .padding(.bottom, 80) // Room for FAB
                     }
+                    .listStyle(.plain)
                     .scrollContentBackground(.hidden)
                     
                     // Floating Add Button
@@ -81,6 +84,12 @@ struct PanelListView: View {
             .navigationTitle("Panels")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                if !accountManager.accounts.isEmpty {
+                    EditButton()
+                        .foregroundStyle(.white)
+                }
+            }
         }
         .sheet(isPresented: $showAddPanel) {
             AuthenticationView(isPresented: $showAddPanel)
@@ -100,125 +109,69 @@ struct PanelListView: View {
     }
 }
 
-// MARK: - Panel Card with Swipe Actions
+// MARK: - Panel Row Item
 
-struct PanelCard: View {
+struct PanelRowItem: View {
     let account: Account
     let isActive: Bool
     let onSelect: () -> Void
-    let onDelete: () -> Void
-    
-    @State private var offset: CGFloat = 0
-    @State private var isSwiping = false
-    
-    private let deleteThreshold: CGFloat = -80
     
     var body: some View {
-        ZStack(alignment: .trailing) {
-            // Delete background
+        Button(action: onSelect) {
             HStack {
-                Spacer()
-                Button(action: onDelete) {
-                    Image(systemName: "trash.fill")
-                        .font(.title2)
-                        .foregroundStyle(.white)
-                        .frame(width: 60, height: 60)
-                }
-                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.red.opacity(0.5), lineWidth: 1)
-                )
-            }
-            .opacity(offset < -20 ? 1 : 0)
-            
-            // Main card
-            Button(action: {
-                if offset == 0 {
-                    onSelect()
-                } else {
-                    withAnimation(.spring(response: 0.3)) {
-                        offset = 0
-                    }
-                }
-            }) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 8) {
-                            Text(account.name)
-                                .font(.title3.weight(.bold))
-                                .foregroundStyle(.white)
-                            
-                            if account.hasAdminAccess {
-                                Text("ADMIN")
-                                    .font(.caption2.bold())
-                                    .foregroundStyle(.purple)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.purple.opacity(0.2))
-                                    .clipShape(Capsule())
-                            }
-                        }
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        Text(account.name)
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(.white)
                         
-                        Text(account.url)
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.6))
+                        if account.hasAdminAccess {
+                            Text("ADMIN")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.purple)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.purple.opacity(0.2))
+                                .clipShape(Capsule())
+                        }
                     }
                     
-                    Spacer()
-                    
-                    // Theme indicator
-                    Circle()
-                        .fill(LinearGradient(
-                            colors: account.theme.gradientColors,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ))
-                        .frame(width: 24, height: 24)
-                        .overlay(Circle().stroke(.white.opacity(0.3), lineWidth: 1))
-                    
-                    if isActive {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.green)
-                            .shadow(color: .green.opacity(0.5), radius: 5)
-                    } else {
-                        Image(systemName: "arrow.right.circle")
-                            .font(.title2)
-                            .foregroundStyle(.white.opacity(0.3))
-                    }
+                    Text(account.url)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.6))
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(isActive ? Color.blue.opacity(0.5) : Color.clear, lineWidth: 1)
-                )
+                
+                Spacer()
+                
+                // Theme indicator
+                Circle()
+                    .fill(LinearGradient(
+                        colors: account.theme.gradientColors,
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
+                    .frame(width: 24, height: 24)
+                    .overlay(Circle().stroke(.white.opacity(0.3), lineWidth: 1))
             }
-            .buttonStyle(PlainButtonStyle())
-            .offset(x: offset)
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        let translation = value.translation.width
-                        if translation < 0 {
-                            offset = max(translation, -100)
-                        } else if offset < 0 {
-                            offset = min(0, offset + translation)
-                        }
-                    }
-                    .onEnded { value in
-                        withAnimation(.spring(response: 0.3)) {
-                            if offset < deleteThreshold {
-                                offset = -80
-                            } else {
-                                offset = 0
-                            }
-                        }
-                    }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.clear)
+                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+                    .shadow(
+                        color: isActive ? Color.blue.opacity(0.6) : Color.clear,
+                        radius: isActive ? 12 : 0
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(
+                        isActive ? Color.blue.opacity(0.8) : Color.white.opacity(0.1),
+                        lineWidth: isActive ? 2 : 1
+                    )
             )
         }
-        .contentShape(Rectangle())
+        .buttonStyle(PlainButtonStyle())
     }
 }
