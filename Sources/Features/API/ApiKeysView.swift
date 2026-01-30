@@ -167,7 +167,9 @@ struct ApiKeyRow: View {
                     .clipShape(Circle())
             }
         }
-        .padding()
+        .padding(16)
+        .frame(maxWidth: .infinity)
         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+        .contentShape(RoundedRectangle(cornerRadius: 16))
     }
 }

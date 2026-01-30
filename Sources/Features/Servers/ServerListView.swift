@@ -62,13 +62,14 @@ struct ServerListView: View {
     @StateObject private var viewModel = ServerListViewModel()
     @ObservedObject private var accountManager = AccountManager.shared
     @State private var showCreateSheet = false
+    @State private var navigationPath = NavigationPath()
     
     private var hasAdminAccess: Bool {
         accountManager.activeAccount?.hasAdminAccess ?? false
     }
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 // Background
                 LiquidBackgroundView()
@@ -144,8 +145,9 @@ struct ServerListView: View {
             }
         }
         .onChange(of: accountManager.activeAccount?.id) { oldId, newId in
-            // Account changed - reload servers
+            // Account changed - reset navigation and reload servers
             if oldId != newId {
+                navigationPath = NavigationPath() // Pop all detail views
                 viewModel.clear()
                 Task { await viewModel.loadServers() }
                 viewModel.currentAccountId = newId
@@ -236,8 +238,10 @@ struct ServerRow: View {
             
             Spacer()
         }
-        .padding(12) 
+        .padding(16)
+        .frame(maxWidth: .infinity)
         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         // Subtle status gradient overlay (doesn't affect glass transparency)
         .overlay(
             LinearGradient(
@@ -246,6 +250,7 @@ struct ServerRow: View {
                 endPoint: .trailing
             )
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .allowsHitTesting(false) // Don't block taps
         )
     }
 }

@@ -143,16 +143,12 @@ struct PanelRowItem: View {
                 
                 Spacer()
             }
-            .padding()
+            .padding(16)
             .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.clear)
-                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
-                    .shadow(
-                        color: isActive ? Color.blue.opacity(0.6) : Color.clear,
-                        radius: isActive ? 12 : 0
-                    )
+            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+            .shadow(
+                color: isActive ? Color.blue.opacity(0.6) : Color.clear,
+                radius: isActive ? 12 : 0
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
@@ -160,7 +156,9 @@ struct PanelRowItem: View {
                         isActive ? Color.blue.opacity(0.8) : Color.white.opacity(0.1),
                         lineWidth: isActive ? 2 : 1
                     )
+                    .allowsHitTesting(false)
             )
+            .contentShape(RoundedRectangle(cornerRadius: 16))
         }
         .buttonStyle(PlainButtonStyle())
     }
