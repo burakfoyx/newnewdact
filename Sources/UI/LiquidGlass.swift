@@ -117,7 +117,9 @@ struct LiquidBackgroundView: View {
                 .ignoresSafeArea()
                 .opacity(isVideoReady ? opacity : 0)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea()
+        .background(Color.black) // Ensure black base
         .onAppear {
             // Fade in
             withAnimation(.easeOut(duration: 0.5)) {
@@ -138,12 +140,12 @@ struct LiquidBackgroundView: View {
 struct StaticNebulaBackground: View {
     var body: some View {
         ZStack {
-            // Deep Space Base
+            // Deep Space Base - Brightened slightly for visibility debugging
             LinearGradient(
                 colors: [
-                    Color(red: 0.02, green: 0.02, blue: 0.08),
-                    Color(red: 0.08, green: 0.04, blue: 0.15),
-                    Color(red: 0.04, green: 0.06, blue: 0.18)
+                    Color(red: 0.05, green: 0.05, blue: 0.15),
+                    Color(red: 0.15, green: 0.08, blue: 0.25),
+                    Color(red: 0.08, green: 0.10, blue: 0.30)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
