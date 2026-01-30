@@ -35,7 +35,7 @@ struct VideoBackgroundView: UIViewRepresentable {
         
         let playerLayer = AVPlayerLayer(player: player)
         playerLayer.videoGravity = .resizeAspectFill
-        playerLayer.frame = UIScreen.main.bounds
+        // Frame will be set in updateUIView
         
         containerView.layer.addSublayer(playerLayer)
         
@@ -63,6 +63,7 @@ struct VideoBackgroundView: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: UIView, context: Context) {
+        // Update frame to match the view's bounds (iOS 26 compatible)
         context.coordinator.playerLayer?.frame = uiView.bounds
     }
     
