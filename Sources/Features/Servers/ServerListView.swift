@@ -240,16 +240,7 @@ struct ServerRow: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.ultraThinMaterial.opacity(0.3))
-        )
         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                .allowsHitTesting(false)
-        )
         // Subtle status gradient overlay
         .overlay(
             LinearGradient(
