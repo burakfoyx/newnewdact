@@ -101,20 +101,15 @@ extension ButtonStyle where Self == LiquidButtonStyle {
     public static var glass: LiquidButtonStyle { LiquidButtonStyle() }
 }
 
-// MARK: - Video Background with Fade-In and Fallback
+// MARK: - Video Background with Fade-In
 struct LiquidBackgroundView: View {
-    @ObservedObject private var accountManager = AccountManager.shared
     @State private var opacity: Double = 0
     @State private var isVideoReady: Bool = false
-    
-    private var nebulaColors: [Color] {
-        accountManager.activeAccount?.theme.gradientColors ?? AppTheme.purple.gradientColors
-    }
     
     var body: some View {
         ZStack {
             // Fallback nebula background (always present)
-            FallbackNebulaBackground(colors: nebulaColors)
+            StaticNebulaBackground()
                 .ignoresSafeArea()
             
             // Video background (overlays nebula when ready)
@@ -139,10 +134,8 @@ struct LiquidBackgroundView: View {
     }
 }
 
-// MARK: - Fallback Static Nebula (when video unavailable)
-struct FallbackNebulaBackground: View {
-    let colors: [Color]
-    
+// MARK: - Static Nebula Background (fallback when video unavailable)
+struct StaticNebulaBackground: View {
     var body: some View {
         ZStack {
             // Deep Space Base
@@ -162,7 +155,7 @@ struct FallbackNebulaBackground: View {
                     Ellipse()
                         .fill(
                             RadialGradient(
-                                colors: [colors.first ?? .purple, (colors.first ?? .purple).opacity(0)],
+                                colors: [Color.purple.opacity(0.5), Color.purple.opacity(0)],
                                 center: .center,
                                 startRadius: 0,
                                 endRadius: 200
@@ -175,7 +168,7 @@ struct FallbackNebulaBackground: View {
                     Circle()
                         .fill(
                             RadialGradient(
-                                colors: [colors[safe: 1] ?? .indigo, (colors[safe: 1] ?? .indigo).opacity(0)],
+                                colors: [Color.indigo.opacity(0.4), Color.indigo.opacity(0)],
                                 center: .center,
                                 startRadius: 0,
                                 endRadius: 180
@@ -188,7 +181,7 @@ struct FallbackNebulaBackground: View {
                     Ellipse()
                         .fill(
                             RadialGradient(
-                                colors: [colors[safe: 2] ?? .blue, (colors[safe: 2] ?? .blue).opacity(0)],
+                                colors: [Color.blue.opacity(0.3), Color.blue.opacity(0)],
                                 center: .center,
                                 startRadius: 0,
                                 endRadius: 160
@@ -201,134 +194,5 @@ struct FallbackNebulaBackground: View {
             }
             .drawingGroup()
         }
-    }
-}
-
-// Safe array access
-extension Array {
-    subscript(safe index: Int) -> Element? {
-        return indices.contains(index) ? self[index] : nil
-    }
-}
-
-// MARK: - Bloomy Moving Stars (CPU Optimized)
-struct StarsView: View {
-    let animate: Bool
-    
-    // Reduced star count for better performance
-    private static let starData: [(x: CGFloat, y: CGFloat, size: CGFloat)] = (0..<30).map { _ in
-        (
-            CGFloat.random(in: 0...1),
-            CGFloat.random(in: 0...1),
-            CGFloat.random(in: 1.5...3)
-        )
-    }
-    
-    var body: some View {
-        GeometryReader { proxy in
-            Canvas { context, size in
-                // Use Canvas for efficient batch rendering
-                for star in Self.starData {
-                    let position = CGPoint(x: star.x * size.width, y: star.y * size.height)
-                    
-                    // Draw bloom (simple circle with opacity)
-                    let bloomRect = CGRect(
-                        x: position.x - star.size * 3,
-                        y: position.y - star.size * 3,
-                        width: star.size * 6,
-                        height: star.size * 6
-                    )
-                    context.fill(
-                        Circle().path(in: bloomRect),
-                        with: .color(.white.opacity(0.15))
-                    )
-                    
-                    // Draw star core
-                    let starRect = CGRect(
-                        x: position.x - star.size / 2,
-                        y: position.y - star.size / 2,
-                        width: star.size,
-                        height: star.size
-                    )
-                    context.fill(
-                        Circle().path(in: starRect),
-                        with: .color(.white.opacity(0.9))
-                    )
-                }
-            }
-        }
-        .opacity(0.85)
-        // Very slow rotation for subtle star field movement (10 minutes per rotation)
-        .rotationEffect(Angle(degrees: animate ? 360 : 0))
-        .animation(animate ? .linear(duration: 600).repeatForever(autoreverses: false) : nil, value: animate)
-    }
-}
-
-// MARK: - Nebula Clouds (CPU Optimized)
-struct NebulaClouds: View {
-    let colors: [Color]
-    let animate: Bool
-    
-    private var palette: [Color] {
-        var base = colors
-        if base.count < 3 {
-            base.append(contentsOf: [.indigo.opacity(0.4), .purple.opacity(0.3)])
-        }
-        return base
-    }
-    
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                // Cloud 1 - Large Ellipse (reduced blur, slower animation)
-                Ellipse()
-                    .fill(
-                        RadialGradient(
-                            colors: [palette[0], palette[0].opacity(0)],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 200
-                        )
-                    )
-                    .frame(width: 450, height: 300)
-                    .blur(radius: 40)
-                    .position(x: proxy.size.width * 0.25, y: proxy.size.height * 0.35)
-                    .offset(x: animate ? -20 : 20, y: animate ? -15 : 15)
-                    .animation(animate ? .easeInOut(duration: 45).repeatForever(autoreverses: true) : nil, value: animate)
-                
-                // Cloud 2 - Circle (reduced blur, slower animation)
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [palette[1 % palette.count], palette[1 % palette.count].opacity(0)],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 180
-                        )
-                    )
-                    .frame(width: 350, height: 350)
-                    .blur(radius: 35)
-                    .position(x: proxy.size.width * 0.75, y: proxy.size.height * 0.6)
-                    .offset(x: animate ? 25 : -25, y: animate ? 20 : -20)
-                    .animation(animate ? .easeInOut(duration: 55).repeatForever(autoreverses: true) : nil, value: animate)
-                
-                // Cloud 3 - Accent (reduced blur, slower animation)
-                Ellipse()
-                    .fill(
-                        RadialGradient(
-                            colors: [palette[2 % palette.count], palette[2 % palette.count].opacity(0)],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 160
-                        )
-                    )
-                    .frame(width: 300, height: 400)
-                    .blur(radius: 35)
-                    .position(x: proxy.size.width * 0.15, y: proxy.size.height * 0.7)
-                    .offset(x: animate ? 15 : -10, y: animate ? -25 : 15)
-                    .animation(animate ? .easeInOut(duration: 60).repeatForever(autoreverses: true) : nil, value: animate)
-            }
-        }
-        .drawingGroup() // Flatten to single layer for GPU efficiency
     }
 }

@@ -10,9 +10,6 @@ struct PanelListView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
-                LiquidBackgroundView()
-                    .ignoresSafeArea()
                 
                 if accountManager.accounts.isEmpty {
                     // Empty state
