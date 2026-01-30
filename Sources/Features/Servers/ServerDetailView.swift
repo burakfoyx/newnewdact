@@ -42,6 +42,8 @@ struct ServerDetailView: View {
     
     var body: some View {
         ZStack {
+            LiquidBackgroundView()
+                .ignoresSafeArea()
             
             VStack(spacing: 0) {
                  // Header

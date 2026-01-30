@@ -53,6 +53,8 @@ struct ApiKeysView: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
                 
                 if viewModel.isLoading && viewModel.apiKeys.isEmpty {
                     ProgressView()

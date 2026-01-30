@@ -71,6 +71,8 @@ struct ServerListView: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack {
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
                 
                 if viewModel.isLoading {
                     ProgressView("Loading Servers...")
