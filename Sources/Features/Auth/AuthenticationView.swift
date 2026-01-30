@@ -12,7 +12,7 @@ struct AuthenticationView: View {
                 LiquidBackgroundView()
                     .ignoresSafeArea()
                     .onTapGesture {
-                        isFieldFocused = false
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
                 
                 if viewModel.keyCheckState != .idle && viewModel.keyCheckState != .failed("") {
@@ -108,7 +108,7 @@ struct AuthenticationView: View {
                     HStack {
                         Spacer()
                         Button("Done") {
-                            isFieldFocused = false
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                         }
                     }
                 }

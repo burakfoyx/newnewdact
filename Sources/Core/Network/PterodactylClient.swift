@@ -368,8 +368,10 @@ actor PterodactylClient {
     func fetchEggs(nestId: Int) async throws -> [EggAttributes] {
         guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
         
-        let url = baseURL.appendingPathComponent("api/application/nests/\(nestId)/eggs")
-        var request = URLRequest(url: url)
+        var components = URLComponents(url: baseURL.appendingPathComponent("api/application/nests/\(nestId)/eggs"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "include", value: "variables")]
+        
+        var request = URLRequest(url: components.url!)
         request.httpMethod = "GET"
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Accept")

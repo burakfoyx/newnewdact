@@ -239,10 +239,18 @@ struct ServerRow: View {
             Spacer()
         }
         .padding(16)
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(.ultraThinMaterial.opacity(0.3))
+        )
         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        // Subtle status gradient overlay (doesn't affect glass transparency)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .allowsHitTesting(false)
+        )
+        // Subtle status gradient overlay
         .overlay(
             LinearGradient(
                 colors: [statusColor.opacity(0.15), statusColor.opacity(0.02)],
@@ -250,7 +258,8 @@ struct ServerRow: View {
                 endPoint: .trailing
             )
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .allowsHitTesting(false) // Don't block taps
+            .allowsHitTesting(false)
         )
+        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }

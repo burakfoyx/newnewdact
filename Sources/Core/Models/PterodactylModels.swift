@@ -327,10 +327,48 @@ struct EggAttributes: Codable, Identifiable {
     let description: String?
     let dockerImage: String
     let startup: String
+    let relationships: EggRelationships?
     
     enum CodingKeys: String, CodingKey {
-        case id, uuid, name, description, startup
+        case id, uuid, name, description, startup, relationships
         case dockerImage = "docker_image"
+    }
+    
+    /// Get default environment variables from egg variables
+    var defaultEnvironment: [String: String] {
+        guard let variables = relationships?.variables?.data else { return [:] }
+        var env: [String: String] = [:]
+        for variable in variables {
+            env[variable.attributes.envVariable] = variable.attributes.defaultValue
+        }
+        return env
+    }
+}
+
+struct EggRelationships: Codable {
+    let variables: EggVariableList?
+}
+
+struct EggVariableList: Codable {
+    let data: [EggVariableData]
+}
+
+struct EggVariableData: Codable {
+    let attributes: EggVariable
+}
+
+struct EggVariable: Codable {
+    let id: Int
+    let name: String
+    let description: String?
+    let envVariable: String
+    let defaultValue: String
+    let rules: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, description, rules
+        case envVariable = "env_variable"
+        case defaultValue = "default_value"
     }
 }
 

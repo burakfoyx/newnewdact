@@ -521,7 +521,7 @@ class CreateServerViewModel: ObservableObject {
                 eggId: egg.id,
                 dockerImage: egg.dockerImage,
                 startup: egg.startup,
-                environment: [:], // Would need to fetch egg variables for real implementation
+                environment: egg.defaultEnvironment, // Use default env vars from egg
                 limits: limits,
                 featureLimits: featureLimits,
                 allocationId: allocation.id
