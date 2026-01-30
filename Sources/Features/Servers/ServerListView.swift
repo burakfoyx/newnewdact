@@ -5,9 +5,22 @@ class ServerListViewModel: ObservableObject {
     @Published var serverStats: [String: ServerStats] = [:]
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var currentAccountId: UUID?
+    
+    func clear() {
+        servers = []
+        serverStats = [:]
+        errorMessage = nil
+    }
     
     func loadServers() async {
-        await MainActor.run { isLoading = true }
+        await MainActor.run { 
+            isLoading = true
+            // Clear old servers before loading new ones
+            servers = []
+            serverStats = [:]
+            errorMessage = nil
+        }
         do {
             let fetchedServers = try await PterodactylClient.shared.fetchServers()
             await MainActor.run {
@@ -117,9 +130,9 @@ struct ServerListView: View {
             .toolbarBackground(.hidden, for: .navigationBar)
         }
         .task {
-            if viewModel.servers.isEmpty {
-                await viewModel.loadServers()
-            }
+            // Always load on appear
+            await viewModel.loadServers()
+            viewModel.currentAccountId = accountManager.activeAccount?.id
         }
         .sheet(isPresented: $showCreateSheet) {
             CreateServerView()
@@ -128,6 +141,14 @@ struct ServerListView: View {
             if !isPresented {
                 // Refresh servers after creating
                 Task { await viewModel.loadServers() }
+            }
+        }
+        .onChange(of: accountManager.activeAccount?.id) { oldId, newId in
+            // Account changed - reload servers
+            if oldId != newId {
+                viewModel.clear()
+                Task { await viewModel.loadServers() }
+                viewModel.currentAccountId = newId
             }
         }
     }
