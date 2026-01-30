@@ -121,16 +121,23 @@ struct LiquidBackgroundView: View {
         .ignoresSafeArea()
         .background(Color.black) // Ensure black base
         .onAppear {
-            // Fade in
-            withAnimation(.easeOut(duration: 0.5)) {
+            // Check if global player is already running to avoid fade-in flicker
+            if VideoPlayerManager.shared.player.currentItem?.status == .readyToPlay {
+                isVideoReady = true
                 opacity = 1
+            } else {
+                // First load fade-in
+                withAnimation(.easeOut(duration: 0.5)) {
+                    opacity = 1
+                }
             }
         }
         .onChange(of: isVideoReady) { _, ready in
-            if ready {
-                withAnimation(.easeOut(duration: 0.3)) {
-                    opacity = 1
-                }
+             // Ensure opacity works if it wasn't ready initially but became ready
+            if ready && opacity < 1 {
+                 withAnimation(.easeOut(duration: 0.3)) {
+                     opacity = 1
+                 }
             }
         }
     }

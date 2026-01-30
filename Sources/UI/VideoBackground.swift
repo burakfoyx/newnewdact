@@ -1,6 +1,56 @@
 import SwiftUI
 import AVKit
 
+// MARK: - Video Player Manager (Singleton)
+class VideoPlayerManager: ObservableObject {
+    static let shared = VideoPlayerManager()
+    let player: AVPlayer
+    private var isInitialized = false
+    
+    // Store loop observer to prevent duplicates if specific logic needed, 
+    // but NotificationCenter handles multiple observers fine (we only add one in setup).
+    private var loopObserver: NSObjectProtocol?
+    
+    private init() {
+        self.player = AVPlayer()
+        self.player.isMuted = true
+        self.player.actionAtItemEnd = .none
+    }
+    
+    func setup(videoName: String) {
+        if isInitialized { return }
+        
+        var videoURL: URL?
+        if let url = Bundle.main.url(forResource: videoName, withExtension: "mp4") {
+            videoURL = url
+        } else if let path = Bundle.main.path(forResource: videoName, ofType: "mp4") {
+            videoURL = URL(fileURLWithPath: path)
+        }
+        
+        guard let url = videoURL else {
+            print("❌ Shared Video not found: \(videoName).mp4")
+            return
+        }
+        
+        print("✅ Initialize Shared Video: \(url)")
+        let item = AVPlayerItem(url: url)
+        player.replaceCurrentItem(with: item)
+        
+        // Setup Loop (Only once)
+        loopObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: item,
+            queue: .main
+        ) { [weak self] _ in
+            self?.player.seek(to: .zero)
+            self?.player.play()
+        }
+        
+        player.play()
+        isInitialized = true
+    }
+}
+
 // MARK: - Video Background Player
 struct VideoBackgroundView: UIViewRepresentable {
     let videoName: String
@@ -10,60 +60,39 @@ struct VideoBackgroundView: UIViewRepresentable {
         let containerView = UIView()
         containerView.backgroundColor = .clear
         
-        // Try multiple ways to find the video
-        var videoURL: URL?
+        // Setup shared player
+        VideoPlayerManager.shared.setup(videoName: videoName)
+        let player = VideoPlayerManager.shared.player
         
-        // Method 1: Direct bundle URL
-        if let url = Bundle.main.url(forResource: videoName, withExtension: "mp4") {
-            videoURL = url
-        }
-        // Method 2: Path-based lookup
-        else if let path = Bundle.main.path(forResource: videoName, ofType: "mp4") {
-            videoURL = URL(fileURLWithPath: path)
-        }
-        
-        guard let url = videoURL else {
-            print("❌ Video not found: \(videoName).mp4")
-            return containerView
-        }
-        
-        print("✅ Video found at: \(url)")
-        
-        let player = AVPlayer(url: url)
-        player.isMuted = true
-        player.actionAtItemEnd = .none
-        
+        // Create Layer
         let playerLayer = AVPlayerLayer(player: player)
         playerLayer.videoGravity = .resizeAspectFill
-        // Frame will be set in updateUIView
-        
         containerView.layer.addSublayer(playerLayer)
         
-        // Loop the video
-        NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
-            object: player.currentItem,
-            queue: .main
-        ) { _ in
-            player.seek(to: .zero)
-            player.play()
+        context.coordinator.playerLayer = playerLayer
+        
+        // Check Ready State
+        if let item = player.currentItem, item.status == .readyToPlay {
+            // Already ready
+            DispatchQueue.main.async {
+                isVideoReady = true
+            }
+        } else if let item = player.currentItem {
+            // Observe
+            item.addObserver(context.coordinator, forKeyPath: "status", options: [.new], context: nil)
+            context.coordinator.observedItem = item
+            context.coordinator.isVideoReady = $isVideoReady
         }
         
-        // Observe when video is ready to play
-        player.currentItem?.addObserver(context.coordinator, forKeyPath: "status", options: [.new], context: nil)
-        
-        player.play()
-        
-        // Store player in coordinator to keep it alive
-        context.coordinator.player = player
-        context.coordinator.playerLayer = playerLayer
-        context.coordinator.isVideoReady = $isVideoReady
+        // Ensure playing
+        if player.timeControlStatus != .playing {
+            player.play()
+        }
         
         return containerView
     }
     
     func updateUIView(_ uiView: UIView, context: Context) {
-        // Update frame to match the view's bounds (iOS 26 compatible)
         context.coordinator.playerLayer?.frame = uiView.bounds
     }
     
@@ -72,9 +101,9 @@ struct VideoBackgroundView: UIViewRepresentable {
     }
     
     class Coordinator: NSObject {
-        var player: AVPlayer?
         var playerLayer: AVPlayerLayer?
         var isVideoReady: Binding<Bool>?
+        weak var observedItem: AVPlayerItem?
         
         override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
             if keyPath == "status", let item = object as? AVPlayerItem {
@@ -82,12 +111,17 @@ struct VideoBackgroundView: UIViewRepresentable {
                     DispatchQueue.main.async {
                         self.isVideoReady?.wrappedValue = true
                     }
+                    // Remove observer once ready to avoid redundant calls or crash
+                    item.removeObserver(self, forKeyPath: "status")
+                    self.observedItem = nil
                 }
             }
         }
         
         deinit {
-            player?.currentItem?.removeObserver(self, forKeyPath: "status")
+            if let item = observedItem {
+                item.removeObserver(self, forKeyPath: "status")
+            }
         }
     }
 }
