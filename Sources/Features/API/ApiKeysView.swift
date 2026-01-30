@@ -89,10 +89,13 @@ struct ApiKeysView: View {
                      }
                 }
             }
+            .background(Color.clear)
             .navigationTitle("API Keys")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(.hidden, for: .navigationBar)
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.clear)
         .sheet(isPresented: $viewModel.showCreateSheet) {
             NavigationStack {
                 Form {

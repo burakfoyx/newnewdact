@@ -37,6 +37,7 @@ struct ContentView: View {
                         Label("Panels", systemImage: "rectangle.stack.fill")
                     }
                     .tag(0)
+                    .toolbarBackground(.hidden, for: .tabBar)
                 
                 // Tab 1: API
                 ApiKeysView()
@@ -44,6 +45,7 @@ struct ContentView: View {
                         Label("API", systemImage: "key.fill")
                     }
                     .tag(1)
+                    .toolbarBackground(.hidden, for: .tabBar)
                 
                 // Tab 2: Servers
                 ServerListView()
@@ -51,6 +53,7 @@ struct ContentView: View {
                         Label("Servers", systemImage: "server.rack")
                     }
                     .tag(2)
+                    .toolbarBackground(.hidden, for: .tabBar)
                 
                 // Tab 3: Settings
                 SettingsView()
@@ -58,8 +61,10 @@ struct ContentView: View {
                         Label("Settings", systemImage: "gearshape.fill")
                     }
                     .tag(3)
+                    .toolbarBackground(.hidden, for: .tabBar)
             }
             .tint(.blue)
+            .background(Color.clear)
         }
     }
     

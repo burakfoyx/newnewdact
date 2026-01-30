@@ -78,6 +78,7 @@ struct PanelListView: View {
                     }
                 }
             }
+            .background(Color.clear)
             .navigationTitle("Panels")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(.hidden, for: .navigationBar)
@@ -88,6 +89,8 @@ struct PanelListView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.clear)
         .sheet(isPresented: $showAddPanel) {
             AuthenticationView(isPresented: $showAddPanel)
         }

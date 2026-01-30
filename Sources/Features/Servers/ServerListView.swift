@@ -123,10 +123,13 @@ struct ServerListView: View {
                     }
                 }
             }
+            .background(Color.clear)
             .navigationTitle("Servers")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(.hidden, for: .navigationBar)
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.clear)
         .task {
             // Always load on appear
             await viewModel.loadServers()
