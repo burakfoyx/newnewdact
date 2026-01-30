@@ -60,8 +60,15 @@ public struct LiquidButtonStyle: ButtonStyle {
     
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .padding()
+            .padding(.vertical, 16)
+            .padding(.horizontal, 24)
+            .frame(maxWidth: .infinity)
+            .background(
+                Capsule()
+                    .fill(.clear)
+            )
             .glassEffect(.clear.interactive(), in: Capsule())
+            .contentShape(Capsule()) // Makes entire button area tappable
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.spring(response: 0.3), value: configuration.isPressed)
     }

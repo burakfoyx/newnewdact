@@ -3,12 +3,20 @@ import SwiftUI
 struct CreateServerView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = CreateServerViewModel()
+    @FocusState private var focusedField: Field?
+    
+    enum Field: Hashable {
+        case serverName, memory, disk, cpu
+    }
     
     var body: some View {
         NavigationStack {
             ZStack {
                 LiquidBackgroundView()
                     .ignoresSafeArea()
+                    .onTapGesture {
+                        focusedField = nil // Dismiss keyboard
+                    }
                 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -19,6 +27,7 @@ struct CreateServerView: View {
                                 .foregroundStyle(.white)
                             
                             TextField("My Minecraft Server", text: $viewModel.serverName)
+                                .focused($focusedField, equals: .serverName)
                                 .padding()
                                 .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
                         }
@@ -33,6 +42,16 @@ struct CreateServerView: View {
                                 HStack {
                                     ProgressView().tint(.white)
                                     Text("Loading nodes...")
+                                        .foregroundStyle(.white.opacity(0.7))
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                            } else if viewModel.nodes.isEmpty {
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .foregroundStyle(.orange)
+                                    Text("No nodes available")
                                         .foregroundStyle(.white.opacity(0.7))
                                 }
                                 .padding()
@@ -54,7 +73,9 @@ struct CreateServerView: View {
                                             .foregroundStyle(.white.opacity(0.5))
                                     }
                                     .padding()
+                                    .frame(maxWidth: .infinity)
                                     .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                    .contentShape(RoundedRectangle(cornerRadius: 12))
                                 }
                             }
                         }
@@ -69,6 +90,16 @@ struct CreateServerView: View {
                                 HStack {
                                     ProgressView().tint(.white)
                                     Text("Loading categories...")
+                                        .foregroundStyle(.white.opacity(0.7))
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                            } else if viewModel.nests.isEmpty {
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .foregroundStyle(.orange)
+                                    Text("No categories available")
                                         .foregroundStyle(.white.opacity(0.7))
                                 }
                                 .padding()
@@ -90,7 +121,9 @@ struct CreateServerView: View {
                                             .foregroundStyle(.white.opacity(0.5))
                                     }
                                     .padding()
+                                    .frame(maxWidth: .infinity)
                                     .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                    .contentShape(RoundedRectangle(cornerRadius: 12))
                                 }
                             }
                         }
@@ -106,6 +139,16 @@ struct CreateServerView: View {
                                     HStack {
                                         ProgressView().tint(.white)
                                         Text("Loading templates...")
+                                            .foregroundStyle(.white.opacity(0.7))
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                } else if viewModel.eggs.isEmpty {
+                                    HStack {
+                                        Image(systemName: "exclamationmark.triangle")
+                                            .foregroundStyle(.orange)
+                                        Text("No templates available")
                                             .foregroundStyle(.white.opacity(0.7))
                                     }
                                     .padding()
@@ -127,7 +170,9 @@ struct CreateServerView: View {
                                                 .foregroundStyle(.white.opacity(0.5))
                                         }
                                         .padding()
+                                        .frame(maxWidth: .infinity)
                                         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                        .contentShape(RoundedRectangle(cornerRadius: 12))
                                     }
                                 }
                             }
@@ -140,33 +185,39 @@ struct CreateServerView: View {
                                 .foregroundStyle(.white)
                             
                             // Memory
-                            ResourceSlider(
+                            ResourceInputSlider(
                                 title: "Memory",
                                 value: $viewModel.memory,
                                 range: 128...16384,
                                 step: 128,
                                 unit: "MB",
-                                icon: "memorychip"
+                                icon: "memorychip",
+                                focusedField: $focusedField,
+                                field: .memory
                             )
                             
                             // Disk
-                            ResourceSlider(
+                            ResourceInputSlider(
                                 title: "Disk",
                                 value: $viewModel.disk,
                                 range: 512...102400,
                                 step: 512,
                                 unit: "MB",
-                                icon: "internaldrive"
+                                icon: "internaldrive",
+                                focusedField: $focusedField,
+                                field: .disk
                             )
                             
                             // CPU
-                            ResourceSlider(
+                            ResourceInputSlider(
                                 title: "CPU",
                                 value: $viewModel.cpu,
                                 range: 10...400,
                                 step: 10,
                                 unit: "%",
-                                icon: "cpu"
+                                icon: "cpu",
+                                focusedField: $focusedField,
+                                field: .cpu
                             )
                         }
                         .padding()
@@ -174,14 +225,21 @@ struct CreateServerView: View {
                         
                         // Error
                         if let error = viewModel.errorMessage {
-                            Text(error)
-                                .foregroundStyle(.red)
-                                .font(.caption)
-                                .padding()
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.red)
+                                Text(error)
+                                    .foregroundStyle(.red)
+                                    .font(.caption)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
                         }
                         
                         // Create Button
                         Button(action: {
+                            focusedField = nil // Dismiss keyboard first
                             Task { await viewModel.createServer() }
                         }) {
                             if viewModel.isCreating {
@@ -193,7 +251,6 @@ struct CreateServerView: View {
                             } else {
                                 Label("Create Server", systemImage: "plus.circle.fill")
                                     .fontWeight(.bold)
-                                    .frame(maxWidth: .infinity)
                             }
                         }
                         .buttonStyle(LiquidButtonStyle())
@@ -203,6 +260,7 @@ struct CreateServerView: View {
                     .padding()
                     .padding(.bottom, 50)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
             .navigationTitle("Create Server")
             .navigationBarTitleDisplayMode(.inline)
@@ -212,6 +270,15 @@ struct CreateServerView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                         .foregroundStyle(.white)
+                }
+                
+                ToolbarItem(placement: .keyboard) {
+                    HStack {
+                        Spacer()
+                        Button("Done") {
+                            focusedField = nil
+                        }
+                    }
                 }
             }
             .onChange(of: viewModel.serverCreated) { _, created in
@@ -224,15 +291,20 @@ struct CreateServerView: View {
     }
 }
 
-// MARK: - Resource Slider
+// MARK: - Resource Input Slider (with tappable text input)
 
-struct ResourceSlider: View {
+struct ResourceInputSlider: View {
     let title: String
     @Binding var value: Double
     let range: ClosedRange<Double>
     let step: Double
     let unit: String
     let icon: String
+    var focusedField: FocusState<CreateServerView.Field?>.Binding
+    let field: CreateServerView.Field
+    
+    @State private var textValue: String = ""
+    @State private var isEditing = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -242,14 +314,65 @@ struct ResourceSlider: View {
                 Text(title)
                     .foregroundStyle(.white)
                 Spacer()
-                Text("\(Int(value)) \(unit)")
+                
+                if isEditing {
+                    HStack(spacing: 4) {
+                        TextField("", text: $textValue)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                            .focused(focusedField, equals: field)
+                            .onSubmit {
+                                applyTextValue()
+                            }
+                        Text(unit)
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
                     .font(.headline)
                     .foregroundStyle(.white)
+                } else {
+                    Button(action: {
+                        textValue = String(Int(value))
+                        isEditing = true
+                        focusedField.wrappedValue = field
+                    }) {
+                        Text("\(Int(value)) \(unit)")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 8))
+                    }
+                }
             }
             
             Slider(value: $value, in: range, step: step)
                 .tint(.blue)
+                .onChange(of: value) { _, newValue in
+                    if !isEditing {
+                        textValue = String(Int(newValue))
+                    }
+                }
         }
+        .onChange(of: focusedField.wrappedValue) { _, newFocus in
+            if newFocus != field && isEditing {
+                applyTextValue()
+                isEditing = false
+            }
+        }
+        .onAppear {
+            textValue = String(Int(value))
+        }
+    }
+    
+    private func applyTextValue() {
+        if let intValue = Int(textValue) {
+            let clamped = min(max(Double(intValue), range.lowerBound), range.upperBound)
+            let stepped = (clamped / step).rounded() * step
+            value = stepped
+            textValue = String(Int(stepped))
+        }
+        isEditing = false
     }
 }
 
@@ -298,6 +421,11 @@ class CreateServerViewModel: ObservableObject {
                 nodes = fetched
                 isLoadingNodes = false
             }
+        } catch let error as PterodactylError {
+            await MainActor.run {
+                errorMessage = formatError(error, context: "nodes")
+                isLoadingNodes = false
+            }
         } catch {
             await MainActor.run {
                 errorMessage = "Failed to load nodes: \(error.localizedDescription)"
@@ -312,6 +440,11 @@ class CreateServerViewModel: ObservableObject {
             let fetched = try await PterodactylClient.shared.fetchNests()
             await MainActor.run {
                 nests = fetched
+                isLoadingNests = false
+            }
+        } catch let error as PterodactylError {
+            await MainActor.run {
+                errorMessage = formatError(error, context: "categories")
                 isLoadingNests = false
             }
         } catch {
@@ -332,6 +465,11 @@ class CreateServerViewModel: ObservableObject {
             let fetched = try await PterodactylClient.shared.fetchEggs(nestId: nestId)
             await MainActor.run {
                 eggs = fetched
+                isLoadingEggs = false
+            }
+        } catch let error as PterodactylError {
+            await MainActor.run {
+                errorMessage = formatError(error, context: "templates")
                 isLoadingEggs = false
             }
         } catch {
@@ -356,7 +494,7 @@ class CreateServerViewModel: ObservableObject {
             let allocations = try await PterodactylClient.shared.fetchApplicationAllocations(nodeId: node.id)
             guard let allocation = allocations.first(where: { !$0.assigned }) else {
                 await MainActor.run {
-                    errorMessage = "No available allocations on this node"
+                    errorMessage = "No available allocations on this node. Please create allocations in the panel first."
                     isCreating = false
                 }
                 return
@@ -393,11 +531,41 @@ class CreateServerViewModel: ObservableObject {
                 isCreating = false
                 serverCreated = true
             }
+        } catch let error as PterodactylError {
+            await MainActor.run {
+                errorMessage = formatError(error, context: "server creation")
+                isCreating = false
+            }
         } catch {
             await MainActor.run {
                 errorMessage = "Failed to create server: \(error.localizedDescription)"
                 isCreating = false
             }
+        }
+    }
+    
+    private func formatError(_ error: PterodactylError, context: String) -> String {
+        switch error {
+        case .apiError(let code, let message):
+            if code == 0 {
+                return "Network error during \(context). Please check your connection."
+            } else if code == 403 {
+                return "Access denied. Your API key doesn't have permission for \(context)."
+            } else if code == 404 {
+                return "Resource not found during \(context)."
+            } else if code == 422 {
+                return "Invalid data for \(context). \(message)"
+            } else {
+                return "Error \(code) during \(context): \(message)"
+            }
+        case .unauthorized:
+            return "Unauthorized. Please check your API key."
+        case .invalidURL:
+            return "Invalid panel URL."
+        case .networkError(let underlyingError):
+            return "Network error: \(underlyingError.localizedDescription)"
+        case .serializationError:
+            return "Failed to parse response from server."
         }
     }
 }

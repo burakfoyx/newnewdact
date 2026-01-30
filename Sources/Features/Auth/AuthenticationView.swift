@@ -3,13 +3,17 @@ import SwiftUI
 struct AuthenticationView: View {
     @StateObject private var viewModel = AuthenticationViewModel()
     @Binding var isPresented: Bool
+    @FocusState private var isFieldFocused: Bool
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
+                // Background - tap to dismiss keyboard
                 LiquidBackgroundView()
                     .ignoresSafeArea()
+                    .onTapGesture {
+                        isFieldFocused = false
+                    }
                 
                 if viewModel.keyCheckState != .idle && viewModel.keyCheckState != .failed("") {
                     // Permission Check Animation Overlay
@@ -39,6 +43,7 @@ struct AuthenticationView: View {
                                             .foregroundStyle(.secondary)
                                         TextField("e.g. Hostinger", text: $viewModel.name)
                                             .textContentType(.name)
+                                            .focused($isFieldFocused)
                                             .padding()
                                             .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
                                     }
@@ -51,6 +56,7 @@ struct AuthenticationView: View {
                                             .textContentType(.URL)
                                             .keyboardType(.URL)
                                             .textInputAutocapitalization(.never)
+                                            .focused($isFieldFocused)
                                             .padding()
                                             .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
                                     }
@@ -61,6 +67,7 @@ struct AuthenticationView: View {
                                             .foregroundStyle(.secondary)
                                         SecureField("ptlc_...", text: $viewModel.apiKey)
                                             .textContentType(.password)
+                                            .focused($isFieldFocused)
                                             .padding()
                                             .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
                                     }
@@ -72,6 +79,7 @@ struct AuthenticationView: View {
                                     }
                                     
                                     Button(action: {
+                                        isFieldFocused = false // Dismiss keyboard
                                         Task { await viewModel.login() }
                                     }) {
                                         if viewModel.isLoading {
@@ -80,7 +88,6 @@ struct AuthenticationView: View {
                                         } else {
                                             Text("Authenticate")
                                                 .fontWeight(.bold)
-                                                .frame(maxWidth: .infinity)
                                         }
                                     }
                                     .buttonStyle(LiquidButtonStyle())
@@ -92,9 +99,20 @@ struct AuthenticationView: View {
                             .padding(.horizontal)
                         }
                     }
+                    .scrollDismissesKeyboard(.interactively)
                 }
             }
             .animation(.spring(response: 0.5), value: viewModel.keyCheckState)
+            .toolbar {
+                ToolbarItem(placement: .keyboard) {
+                    HStack {
+                        Spacer()
+                        Button("Done") {
+                            isFieldFocused = false
+                        }
+                    }
+                }
+            }
             .onChange(of: viewModel.isAuthenticated) { _, authenticated in
                  if authenticated {
                      isPresented = false
