@@ -101,39 +101,26 @@ extension ButtonStyle where Self == LiquidButtonStyle {
     public static var glass: LiquidButtonStyle { LiquidButtonStyle() }
 }
 
-// MARK: - Animated Nebula Background
+// MARK: - Video Background with Fade-In
 struct LiquidBackgroundView: View {
-    @ObservedObject private var accountManager = AccountManager.shared
-    @State private var animate = false
-    
-    private var nebulaColors: [Color] {
-        accountManager.activeAccount?.theme.gradientColors ?? AppTheme.purple.gradientColors
-    }
+    @State private var opacity: Double = 0
     
     var body: some View {
         ZStack {
-            // Deep Space Base
-            LinearGradient(
-                colors: [
-                    Color(red: 0.02, green: 0.02, blue: 0.08),
-                    Color(red: 0.08, green: 0.04, blue: 0.15),
-                    Color(red: 0.04, green: 0.06, blue: 0.18)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Deep black base (visible during fade-in)
+            Color.black
+                .ignoresSafeArea()
             
-            // Stars Layer
-            StarsView(animate: animate)
-            
-            // Nebula Clouds Layer
-            NebulaClouds(colors: nebulaColors, animate: animate)
+            // Video background
+            VideoBackgroundView(videoName: "bg_loop")
+                .ignoresSafeArea()
+                .opacity(opacity)
         }
         .ignoresSafeArea()
         .onAppear {
-            withAnimation(.linear(duration: 0.5)) {
-                animate = true
+            // Smooth fast fade-in on app launch
+            withAnimation(.easeOut(duration: 0.5)) {
+                opacity = 1
             }
         }
     }

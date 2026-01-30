@@ -6,7 +6,10 @@ targets:
     type: application
     platform: iOS
     deploymentTarget: "26.0"
-    sources: [Sources]
+    sources: 
+      - Sources
+    resources:
+      - Sources/Resources
     settings:
       base:
         INFOPLIST_FILE: Sources/Info.plist
