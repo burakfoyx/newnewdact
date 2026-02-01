@@ -92,10 +92,10 @@ extension ButtonStyle where Self == LiquidButtonStyle {
 // MARK: - Background Style Enum
 
 enum BackgroundStyle: String, CaseIterable, Identifiable {
-    case darkBlueBlurred = "dark blue blurred"
-    case darkBlueNoBlur = "dark blue  no blur"
-    case nebulaBlurred = "nebula blurred"
-    case nebulaNoBlur = "nebula no blur"
+    case darkBlueBlurred = "Dark Blue Blurred"
+    case darkBlueNoBlur = "Dark Blue No Blur"
+    case nebulaBlurred = "Nebula  Blurred"
+    case nebulaNoBlur = "Nebula No Blur"
     
     var id: String { rawValue }
     
