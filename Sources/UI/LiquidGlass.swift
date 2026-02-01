@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - iOS 26 Native Liquid Glass
 // Using the native SwiftUI glassEffect API introduced in iOS 26
@@ -137,11 +138,23 @@ struct AppBackgroundView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            Image(settings.selectedBackground.rawValue)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: geometry.size.width, height: geometry.size.height)
-                .clipped()
+            if let uiImage = UIImage(named: settings.selectedBackground.rawValue) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+            } else {
+                // Fallback gradient if image not found
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.05, green: 0.05, blue: 0.15),
+                        Color(red: 0.10, green: 0.06, blue: 0.20)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
         }
         .ignoresSafeArea()
     }
