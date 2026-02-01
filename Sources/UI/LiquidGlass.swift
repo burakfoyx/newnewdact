@@ -101,107 +101,36 @@ extension ButtonStyle where Self == LiquidButtonStyle {
     public static var glass: LiquidButtonStyle { LiquidButtonStyle() }
 }
 
-// MARK: - Video Background with Fade-In
-struct LiquidBackgroundView: View {
-    @State private var opacity: Double = 0
-    @State private var isVideoReady: Bool = false
+// MARK: - App Background View (Static Image Based)
+// Ready for 3-4 background images to be added
+
+struct AppBackgroundView: View {
+    // TODO: Add your background images to Assets.xcassets with names like:
+    // - "bg_1", "bg_2", "bg_3", "bg_4"
+    // Then uncomment and use the image name
     
     var body: some View {
         ZStack {
-            // Fallback nebula background (always present)
-            StaticNebulaBackground()
-                .ignoresSafeArea()
-            
-            // Video background (overlays nebula when ready)
-            VideoBackgroundView(videoName: "bg_loop", isVideoReady: $isVideoReady)
-                .ignoresSafeArea()
-                .opacity(isVideoReady ? opacity : 0)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .ignoresSafeArea()
-        .background(Color.black) // Ensure black base
-        .onAppear {
-            // Check if global player is already running to avoid fade-in flicker
-            if VideoPlayerManager.shared.player.currentItem?.status == .readyToPlay {
-                isVideoReady = true
-                opacity = 1
-            } else {
-                // First load fade-in
-                withAnimation(.easeOut(duration: 0.5)) {
-                    opacity = 1
-                }
-            }
-        }
-        .onChange(of: isVideoReady) { _, ready in
-             // Ensure opacity works if it wasn't ready initially but became ready
-            if ready && opacity < 1 {
-                 withAnimation(.easeOut(duration: 0.3)) {
-                     opacity = 1
-                 }
-            }
-        }
-    }
-}
-
-// MARK: - Static Nebula Background (fallback when video unavailable)
-struct StaticNebulaBackground: View {
-    var body: some View {
-        ZStack {
-            // Deep Space Base - Brightened slightly for visibility debugging
+            // Placeholder gradient until images are added
             LinearGradient(
                 colors: [
-                    Color(red: 0.05, green: 0.05, blue: 0.15),
-                    Color(red: 0.15, green: 0.08, blue: 0.25),
-                    Color(red: 0.08, green: 0.10, blue: 0.30)
+                    Color(red: 0.05, green: 0.05, blue: 0.12),
+                    Color(red: 0.10, green: 0.06, blue: 0.18),
+                    Color(red: 0.06, green: 0.08, blue: 0.15)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             
-            // Static nebula clouds
-            GeometryReader { proxy in
-                ZStack {
-                    Ellipse()
-                        .fill(
-                            RadialGradient(
-                                colors: [Color.purple.opacity(0.5), Color.purple.opacity(0)],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 200
-                            )
-                        )
-                        .frame(width: 450, height: 300)
-                        .blur(radius: 40)
-                        .position(x: proxy.size.width * 0.25, y: proxy.size.height * 0.35)
-                    
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [Color.indigo.opacity(0.4), Color.indigo.opacity(0)],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 180
-                            )
-                        )
-                        .frame(width: 350, height: 350)
-                        .blur(radius: 35)
-                        .position(x: proxy.size.width * 0.75, y: proxy.size.height * 0.6)
-                    
-                    Ellipse()
-                        .fill(
-                            RadialGradient(
-                                colors: [Color.blue.opacity(0.3), Color.blue.opacity(0)],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 160
-                            )
-                        )
-                        .frame(width: 300, height: 400)
-                        .blur(radius: 35)
-                        .position(x: proxy.size.width * 0.15, y: proxy.size.height * 0.7)
-                }
-            }
-            .drawingGroup()
+            // When you add images, replace the gradient above with:
+            // Image("bg_1")
+            //     .resizable()
+            //     .aspectRatio(contentMode: .fill)
         }
+        .ignoresSafeArea()
     }
 }
+
+// MARK: - Legacy Compatibility Alias
+// This allows existing code to work without changes until you're ready to update references
+typealias LiquidBackgroundView = AppBackgroundView
