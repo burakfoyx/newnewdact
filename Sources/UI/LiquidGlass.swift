@@ -9,7 +9,6 @@ extension View {
     /// Apply native iOS 26 Liquid Glass effect with .clear variant (most transparent, edge bending)
     @ViewBuilder
     public func liquidGlassEffect(in shape: some Shape = RoundedRectangle(cornerRadius: 20, style: .continuous)) -> some View {
-        // Use the native iOS 26 glassEffect modifier with .clear variant
         self.glassEffect(.clear, in: shape)
     }
     
@@ -23,21 +22,18 @@ extension View {
 // MARK: - Legacy liquidGlass modifier (now uses native API)
 
 extension View {
-    /// Legacy modifier that now uses native iOS 26 glassEffect
-    /// All variants now use .clear for maximum transparency without tint
     public func liquidGlass(variant: GlassVariant = .clear, cornerRadius: CGFloat = 24) -> some View {
-        // All variants use .clear for consistent transparent look without tint
         self.glassEffect(.clear, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }
 
 public enum GlassVariant {
-    case clear      // Very transparent - Apple's .clear with edge bending
-    case frosted    // Balanced - Apple's .regular  
-    case heavy      // Most opaque
+    case clear
+    case frosted
+    case heavy
 }
 
-// MARK: - LiquidGlassCard (uses native glass)
+// MARK: - LiquidGlassCard
 
 public struct LiquidGlassCard<Content: View>: View {
     let content: Content
@@ -53,7 +49,7 @@ public struct LiquidGlassCard<Content: View>: View {
     }
 }
 
-// MARK: - LiquidButtonStyle (uses native glass)
+// MARK: - LiquidButtonStyle
 
 public struct LiquidButtonStyle: ButtonStyle {
     public init() {}
@@ -63,12 +59,9 @@ public struct LiquidButtonStyle: ButtonStyle {
             .padding(.vertical, 16)
             .padding(.horizontal, 24)
             .frame(maxWidth: .infinity)
-            .background(
-                Capsule()
-                    .fill(.clear)
-            )
+            .background(Capsule().fill(.clear))
             .glassEffect(.clear.interactive(), in: Capsule())
-            .contentShape(Capsule()) // Makes entire button area tappable
+            .contentShape(Capsule())
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.spring(response: 0.3), value: configuration.isPressed)
     }
@@ -86,51 +79,69 @@ public struct GlassEffectContainer<Content: View>: View {
     }
     
     public var body: some View {
-        // Just return content - the native glassEffect shapes will merge automatically
         content
     }
 }
 
-// MARK: - Other Types
-
-public struct GlassEffectTransition {
-    // Placeholder for native transition
-}
+public struct GlassEffectTransition {}
 
 extension ButtonStyle where Self == LiquidButtonStyle {
     public static var glass: LiquidButtonStyle { LiquidButtonStyle() }
 }
 
-// MARK: - App Background View (Static Image Based)
-// Ready for 3-4 background images to be added
+// MARK: - Background Style Enum
 
-struct AppBackgroundView: View {
-    // TODO: Add your background images to Assets.xcassets with names like:
-    // - "bg_1", "bg_2", "bg_3", "bg_4"
-    // Then uncomment and use the image name
+enum BackgroundStyle: String, CaseIterable, Identifiable {
+    case darkBlueBlurred = "dark blue blurred"
+    case darkBlueNoBlur = "dark blue  no blur"
+    case nebulaBlurred = "nebula blurred"
+    case nebulaNoBlur = "nebula no blur"
     
-    var body: some View {
-        ZStack {
-            // Placeholder gradient until images are added
-            LinearGradient(
-                colors: [
-                    Color(red: 0.05, green: 0.05, blue: 0.12),
-                    Color(red: 0.10, green: 0.06, blue: 0.18),
-                    Color(red: 0.06, green: 0.08, blue: 0.15)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            
-            // When you add images, replace the gradient above with:
-            // Image("bg_1")
-            //     .resizable()
-            //     .aspectRatio(contentMode: .fill)
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .darkBlueBlurred: return "Dark Blue (Blurred)"
+        case .darkBlueNoBlur: return "Dark Blue"
+        case .nebulaBlurred: return "Nebula (Blurred)"
+        case .nebulaNoBlur: return "Nebula"
         }
-        .ignoresSafeArea()
     }
 }
 
-// MARK: - Legacy Compatibility Alias
-// This allows existing code to work without changes until you're ready to update references
+// MARK: - Background Settings Manager
+
+class BackgroundSettings: ObservableObject {
+    static let shared = BackgroundSettings()
+    
+    @Published var selectedBackground: BackgroundStyle {
+        didSet {
+            UserDefaults.standard.set(selectedBackground.rawValue, forKey: "selectedBackground")
+        }
+    }
+    
+    private init() {
+        if let stored = UserDefaults.standard.string(forKey: "selectedBackground"),
+           let style = BackgroundStyle(rawValue: stored) {
+            selectedBackground = style
+        } else {
+            selectedBackground = .darkBlueBlurred
+        }
+    }
+}
+
+// MARK: - App Background View
+
+struct AppBackgroundView: View {
+    @ObservedObject private var settings = BackgroundSettings.shared
+    
+    var body: some View {
+        Image(settings.selectedBackground.rawValue)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .ignoresSafeArea()
+    }
+}
+
+// MARK: - Legacy Compatibility
 typealias LiquidBackgroundView = AppBackgroundView

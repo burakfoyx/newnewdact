@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @ObservedObject private var backgroundSettings = BackgroundSettings.shared
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -8,6 +10,36 @@ struct SettingsView: View {
                     .ignoresSafeArea()
                 
                 List {
+                    // Background Selection
+                    Section("Appearance") {
+                        ForEach(BackgroundStyle.allCases) { style in
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    backgroundSettings.selectedBackground = style
+                                }
+                            } label: {
+                                HStack {
+                                    // Preview thumbnail
+                                    Image(style.rawValue)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 50, height: 35)
+                                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                                    
+                                    Text(style.displayName)
+                                        .foregroundStyle(.primary)
+                                    
+                                    Spacer()
+                                    
+                                    if backgroundSettings.selectedBackground == style {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.blue)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
                     Section("About") {
                         HStack {
                             Text("Version")
