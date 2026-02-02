@@ -151,29 +151,20 @@ struct BackupView: View {
                 .padding()
                 .padding(.bottom, 80) // Space for FAB
             }
+            }
             .refreshable {
                 await viewModel.loadBackups()
             }
-            
-            // FAB for Create
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Button {
-                        showingCreateSheet = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.title2.bold())
-                            .foregroundStyle(.white)
-                            .frame(width: 56, height: 56)
-                            .background(Color.blue)
-                            .clipShape(Circle())
-                            .shadow(radius: 4)
-                    }
-                    .padding()
-                }
-            }
+        }
+        .toolbar {
+             ToolbarItem(placement: .primaryAction) {
+                 Button {
+                     showingCreateSheet = true
+                 } label: {
+                     Image(systemName: "plus")
+                 }
+             }
+        }
         }
         .task {
             await viewModel.loadBackups()

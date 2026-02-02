@@ -24,7 +24,7 @@ struct ConsoleView: View {
                         }
                     }
                     .padding()
-                    .padding(.bottom, 60) // Extra padding for fade area
+                    .padding(.bottom, 100) // Extra padding to prevent overlap with input area
                 }
                 .scrollDismissesKeyboard(.interactively)
                 .background(Color.clear)
@@ -86,11 +86,14 @@ struct ConsoleView: View {
         .background(Color.clear)
         .navigationTitle("Console")
         .navigationBarTitleDisplayMode(.inline)
-        // Toolbar removed to avoid duplication with ServerDetailView header
+        .ignoresSafeArea(edges: []) // Reset if needed, or just standard
+        .toolbar(.hidden, for: .tabBar) // Hide Tab Bar
         .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true // Keep screen awake
             viewModel.connect()
         }
         .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false // Allow sleep
             viewModel.disconnect()
         }
     }

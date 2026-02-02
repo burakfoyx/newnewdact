@@ -82,7 +82,7 @@ struct FileEditorView: View {
                             .font(.system(.body, design: .monospaced))
                             .scrollContentBackground(.hidden) // Required for dark background
                             .background(Color.black)
-                            .foregroundStyle(.green) // Classic terminal look
+                            .foregroundStyle(.white) // Classic terminal look
                             .padding(4)
                     }
                 }
@@ -103,7 +103,12 @@ struct FileEditorView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
-                        Task { await viewModel.saveContent() }
+                        Task { 
+                            await viewModel.saveContent()
+                            if viewModel.errorMessage == nil {
+                                dismiss()
+                            }
+                        }
                     }
                     .bold()
                 }

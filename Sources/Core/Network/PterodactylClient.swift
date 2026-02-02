@@ -618,4 +618,28 @@ actor PterodactylClient {
         let decoded = try JSONDecoder().decode(UserInfoResponse.self, from: data)
         return decoded.attributes
     }
+    func updateStartupVariable(serverId: String, key: String, value: String) async throws -> StartupVariable {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/startup/variable")
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: String] = [
+            "key": key,
+            "value": value
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to update variable")
+        }
+        
+        let decoded = try JSONDecoder().decode(StartupData.self, from: data)
+        return decoded.attributes
+    }
 }
