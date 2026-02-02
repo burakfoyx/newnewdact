@@ -5,3 +5,6 @@
 *.xcworkspace
 xcuserdata/
 DerivedData/
+
+# Local files (not tracked)
+ROADMAP.md
