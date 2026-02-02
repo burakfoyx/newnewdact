@@ -151,10 +151,9 @@ struct BackupView: View {
                 .padding()
                 .padding(.bottom, 80) // Space for FAB
             }
-            }
-            .refreshable {
-                await viewModel.loadBackups()
-            }
+        }
+        .refreshable {
+            await viewModel.loadBackups()
         }
         .toolbar {
              ToolbarItem(placement: .primaryAction) {
@@ -164,7 +163,6 @@ struct BackupView: View {
                      Image(systemName: "plus")
                  }
              }
-        }
         }
         .task {
             await viewModel.loadBackups()
