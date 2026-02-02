@@ -174,22 +174,31 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
             return
         }
         
-        let content = (args.first as? String) ?? ""
-        
         switch event {
         case "auth success":
             isConnected = true
             eventSubject.send(.connected)
-            // Request console history
+            // Request console history immediately upon auth
             requestLogs()
         case "console output":
-            let cleanContent = filterAnsiCodes(content)
-            eventSubject.send(.consoleOutput(cleanContent))
+            // Handle both single string and array of strings (history often comes as array)
+            if let lines = args as? [String] {
+                for line in lines {
+                    let clean = filterAnsiCodes(line)
+                    eventSubject.send(.consoleOutput(clean))
+                }
+            } else if let line = args.first as? String {
+                let clean = filterAnsiCodes(line)
+                eventSubject.send(.consoleOutput(clean))
+            }
         case "stats":
+            let content = (args.first as? String) ?? ""
             eventSubject.send(.stats(content))
         case "status":
+            let content = (args.first as? String) ?? ""
             eventSubject.send(.status(content))
         case "install output":
+            let content = (args.first as? String) ?? ""
             eventSubject.send(.installOutput(content))
         default:
             break
@@ -197,7 +206,8 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
     }
     
     private func filterAnsiCodes(_ text: String) -> String {
-        let ansiPattern = "\\u001B\\[[0-9;]*[a-zA-Z]"
+        // More robust ANSI regex
+        let ansiPattern = #"\\u001B\[[0-9;]*[a-zA-Z]"#
         if let regex = try? NSRegularExpression(pattern: ansiPattern, options: []) {
             let range = NSRange(text.startIndex..<text.endIndex, in: text)
             return regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "")
