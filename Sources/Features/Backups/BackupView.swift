@@ -29,7 +29,7 @@ class BackupViewModel: ObservableObject {
     func createBackup(name: String) async {
         await MainActor.run { isLoading = true }
         do {
-            let newBackup = try await PterodactylClient.shared.createBackup(serverId: serverId, name: name.isEmpty ? nil : name)
+            _ = try await PterodactylClient.shared.createBackup(serverId: serverId, name: name.isEmpty ? nil : name)
             await MainActor.run {
                 // Prepend to list optimistically or reload?
                 // Reload is safer for status
@@ -233,7 +233,7 @@ struct BackupRow: View {
                         .background(Color.white.opacity(0.1))
                         .cornerRadius(4)
                     
-                    Text(formatBytes(backup.bytes))
+                    Text(formatBytes(Int64(backup.bytes)))
                         .font(.caption)
                     
                      Text("•")
