@@ -238,7 +238,7 @@ struct BackupRow: View {
                     
                      Text("•")
                     
-                    Text(backup.createdAt.formatted(date: .abbreviated, time: .shortened))
+                    Text(formatDate(backup.createdAt))
                         .font(.caption)
                 }
                 .foregroundStyle(.white.opacity(0.6))
@@ -263,5 +263,17 @@ struct BackupRow: View {
         formatter.allowedUnits = [.useMB, .useGB]
         formatter.countStyle = .file
         return formatter.string(fromByteCount: bytes)
+    }
+
+    func formatDate(_ dateString: String) -> String {
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = isoFormatter.date(from: dateString) {
+             let formatter = DateFormatter()
+             formatter.dateStyle = .medium
+             formatter.timeStyle = .short
+             return formatter.string(from: date)
+        }
+        return dateString
     }
 }

@@ -32,7 +32,6 @@ class NetworkViewModel: ObservableObject {
 
 struct NetworkView: View {
     @StateObject private var viewModel: NetworkViewModel
-    @Environment(\.clipboard) var clipboard
     
     init(serverId: String) {
         _viewModel = StateObject(wrappedValue: NetworkViewModel(serverId: serverId))
