@@ -194,7 +194,7 @@ class ConsoleViewModel: ObservableObject {
         switch event {
         case .consoleOutput(let log):
             self.logs.append(log)
-            if logs.count > 100 { logs.removeFirst() }
+            if logs.count > 1000 { logs.removeFirst() }
             
         case .stats(let statsJson):
              if let statsData = statsJson.data(using: .utf8),

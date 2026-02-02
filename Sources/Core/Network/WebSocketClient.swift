@@ -183,7 +183,8 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
             // Request console history
             requestLogs()
         case "console output":
-            eventSubject.send(.consoleOutput(content))
+            let cleanContent = filterAnsiCodes(content)
+            eventSubject.send(.consoleOutput(cleanContent))
         case "stats":
             eventSubject.send(.stats(content))
         case "status":
@@ -193,5 +194,14 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
         default:
             break
         }
+    }
+    
+    private func filterAnsiCodes(_ text: String) -> String {
+        let ansiPattern = "\\u001B\\[[0-9;]*[a-zA-Z]"
+        if let regex = try? NSRegularExpression(pattern: ansiPattern, options: []) {
+            let range = NSRange(text.startIndex..<text.endIndex, in: text)
+            return regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "")
+        }
+        return text
     }
 }

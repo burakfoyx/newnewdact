@@ -47,6 +47,26 @@ class FileManagerViewModel: ObservableObject {
             currentPath = "/" + components.dropLast().joined(separator: "/")
         }
         Task { await listFiles() }
+    func compress(file: FileAttributes) async {
+        await MainActor.run { isLoading = true }
+        do {
+            _ = try await PterodactylClient.shared.compressFiles(serverId: serverId, root: currentPath, files: [file.name])
+            await listFiles()
+        } catch {
+            print("Error compressing: \(error)")
+            await MainActor.run { isLoading = false }
+        }
+    }
+
+    func decompress(file: FileAttributes) async {
+        await MainActor.run { isLoading = true }
+        do {
+            try await PterodactylClient.shared.decompressFile(serverId: serverId, root: currentPath, file: file.name)
+            await listFiles()
+        } catch {
+            print("Error decompressing: \(error)")
+            await MainActor.run { isLoading = false }
+        }
     }
 }
 
@@ -93,14 +113,18 @@ struct FileManagerView: View {
                 ScrollView {
                     LazyVStack(spacing: 8) {
                         ForEach(viewModel.files, id: \.name) { file in
-                            FileRow(file: file)
-                                .onTapGesture {
-                                    if !file.isFile {
-                                        viewModel.navigate(to: file.name)
-                                    } else {
-                                        selectedFileForEditing = file
-                                    }
+                            FileRow(
+                                file: file,
+                                onCompress: { Task { await viewModel.compress(file: file) } },
+                                onDecompress: { Task { await viewModel.decompress(file: file) } }
+                            )
+                            .onTapGesture {
+                                if !file.isFile {
+                                    viewModel.navigate(to: file.name)
+                                } else {
+                                    selectedFileForEditing = file
                                 }
+                            }
                         }
                     }
                     .padding()
@@ -124,6 +148,8 @@ extension FileAttributes: Identifiable {
 
 struct FileRow: View {
     let file: FileAttributes
+    let onCompress: () -> Void
+    let onDecompress: () -> Void
     
     var body: some View {
         HStack {
@@ -156,6 +182,19 @@ struct FileRow: View {
         }
         .padding()
         .liquidGlass(variant: .clear, cornerRadius: 12)
+        .contextMenu {
+            if file.isFile {
+                 if file.name.hasSuffix(".tar.gz") || file.name.hasSuffix(".zip") || file.name.hasSuffix(".rar") {
+                     Button(action: onDecompress) {
+                         Label("Unarchive", systemImage: "arrow.up.bin")
+                     }
+                 }
+            }
+            
+            Button(action: onCompress) {
+                Label("Archive", systemImage: "archivebox")
+            }
+        }
     }
     
     func formatBytes(_ bytes: Int) -> String {

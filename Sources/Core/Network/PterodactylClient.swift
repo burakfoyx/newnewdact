@@ -155,6 +155,76 @@ actor PterodactylClient {
         return response.data.map { $0.attributes }
     }
     
+    func createBackup(serverId: String, name: String? = nil, ignoredFiles: [String] = []) async throws -> BackupAttributes {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/backups")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        var body: [String: Any] = [:]
+        if let name = name { body["name"] = name }
+        if !ignoredFiles.isEmpty { body["ignored"] = ignoredFiles.joined(separator: "\n") }
+        
+        if !body.isEmpty {
+           request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        }
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to create backup")
+        }
+        
+        let decoded = try JSONDecoder().decode(BackupData.self, from: data)
+        return decoded.attributes
+    }
+    
+    func deleteBackup(serverId: String, uuid: String) async throws {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/backups/\(uuid)")
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to delete backup")
+        }
+    }
+    
+    func getBackupDownloadUrl(serverId: String, uuid: String) async throws -> URL {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/backups/\(uuid)/download-url")
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to get download URL")
+        }
+        
+        struct DownloadResponse: Codable {
+            let attributes: DownloadAttributes
+        }
+        struct DownloadAttributes: Codable {
+            let url: String
+        }
+        
+        let decoded = try JSONDecoder().decode(DownloadResponse.self, from: data)
+        guard let downloadURL = URL(string: decoded.attributes.url) else {
+             throw PterodactylError.serializationError
+        }
+        return downloadURL
+    }
+    
     func fetchStartupVariables(serverId: String) async throws -> [StartupVariable] {
         guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
         
@@ -206,6 +276,56 @@ actor PterodactylClient {
         let (_, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
              throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to save file")
+        }
+    }
+
+    func compressFiles(serverId: String, root: String, files: [String]) async throws -> FileAttributes {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/compress")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Ensure root has trailing slash if needed? API expects root path.
+        // files array is filenames relative to root.
+        
+        let body: [String: Any] = [
+            "root": root,
+            "files": files
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to compress files")
+        }
+        
+        let decoded = try JSONDecoder().decode(PterodactylFile.self, from: data)
+        return decoded.attributes
+    }
+    
+    func decompressFile(serverId: String, root: String, file: String) async throws {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/decompress")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "root": root,
+            "file": file
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to decompress file")
         }
     }
 
