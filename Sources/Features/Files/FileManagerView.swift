@@ -47,6 +47,8 @@ class FileManagerViewModel: ObservableObject {
             currentPath = "/" + components.dropLast().joined(separator: "/")
         }
         Task { await listFiles() }
+    }
+
     func compress(file: FileAttributes) async {
         await MainActor.run { isLoading = true }
         do {
