@@ -359,6 +359,7 @@ struct HistoryView: View {
         case .disk: return .orange
         case .networkRx: return .green
         case .networkTx: return .teal
+        case .uptime: return .pink
         }
     }
     
