@@ -195,10 +195,10 @@ struct HistoryView: View {
             )
             
             SummaryCard(
-                title: "Peak Memory",
-                value: String(format: "%.1f%%", summary.peakMemoryPercent),
+                title: "Uptime Reliability",
+                value: String(format: "%.1f%%", summary.uptimeAvailability),
                 trend: nil,
-                icon: "arrow.up.circle"
+                icon: "clock.arrow.circlepath"
             )
         }
     }
@@ -289,7 +289,7 @@ struct HistoryView: View {
     private var metricSelector: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(AnalyticsMetric.allCases) { metric in
+                ForEach(AnalyticsMetric.allCases.filter { $0 != .uptime }) { metric in
                     MetricButton(
                         metric: metric,
                         isSelected: selectedMetric == metric

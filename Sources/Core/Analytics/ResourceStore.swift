@@ -187,6 +187,10 @@ class ResourceStore: ObservableObject {
         let avgMemory = snapshots.map(\.memoryPercent).reduce(0, +) / Double(snapshots.count)
         let avgDisk = snapshots.map(\.diskPercent).reduce(0, +) / Double(snapshots.count)
         
+        // Calculate availability
+        let upCount = snapshots.filter { $0.uptimeMs > 0 }.count
+        let uptimeAvailability = Double(upCount) / Double(snapshots.count) * 100
+        
         // Calculate peaks
         let peakCPU = snapshots.map(\.cpuPercent).max() ?? 0
         let peakMemory = snapshots.map(\.memoryPercent).max() ?? 0
@@ -212,6 +216,7 @@ class ResourceStore: ObservableObject {
             avgCPU: avgCPU,
             avgMemoryPercent: avgMemory,
             avgDiskPercent: avgDisk,
+            uptimeAvailability: uptimeAvailability,
             peakCPU: peakCPU,
             peakMemoryPercent: peakMemory,
             peakDiskPercent: peakDisk,

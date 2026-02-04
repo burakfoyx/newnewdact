@@ -131,6 +131,7 @@ struct ResourceUsage: Codable {
     let diskBytes: Int64
     let networkRxBytes: Int64
     let networkTxBytes: Int64
+    let uptime: Int64?
     
     enum CodingKeys: String, CodingKey {
         case memoryBytes = "memory_bytes"
@@ -138,6 +139,7 @@ struct ResourceUsage: Codable {
         case diskBytes = "disk_bytes"
         case networkRxBytes = "network_rx_bytes"
         case networkTxBytes = "network_tx_bytes"
+        case uptime
     }
 }
 

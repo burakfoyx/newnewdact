@@ -118,6 +118,7 @@ struct ServerAnalyticsSummary {
     let avgCPU: Double
     let avgMemoryPercent: Double
     let avgDiskPercent: Double
+    let uptimeAvailability: Double // 0-100%
     
     // Peaks
     let peakCPU: Double

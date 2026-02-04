@@ -19,6 +19,9 @@ class ResourceCollector: ObservableObject {
     // Track last collection per server to avoid hitting the store for every stats update
     private var lastCollectionPerServer: [String: Date] = [:]
     
+    // Polling Timer
+    private var pollingTimer: Timer?
+    
     // Collection settings based on tier
     var collectionInterval: TimeInterval {
         switch SubscriptionManager.shared.currentTier {
@@ -30,6 +33,62 @@ class ResourceCollector: ObservableObject {
     }
     
     private init() {}
+    
+    // MARK: - Polling Logic
+    func startPolling() {
+        stopPolling()
+        print("Starting background polling (Interval: \(collectionInterval)s)...")
+        pollingTimer = Timer.scheduledTimer(withTimeInterval: collectionInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                await self?.pollServers()
+            }
+        }
+        // Trigger immediate poll
+        Task { @MainActor in
+            await pollServers()
+        }
+    }
+    
+    func stopPolling() {
+        pollingTimer?.invalidate()
+        pollingTimer = nil
+        print("Stopped background polling")
+    }
+    
+    private func pollServers() async {
+        do {
+            // 1. Fetch all servers
+            let servers = try await PterodactylClient.shared.fetchServers()
+            
+            // 2. Iterate and fetch resources
+            for server in servers {
+                do {
+                    let stats = try await PterodactylClient.shared.fetchResources(serverId: server.identifier)
+                    
+                    let memoryLimit = Int64(server.limits.memory * 1024 * 1024)
+                    let diskLimit = Int64(server.limits.disk * 1024 * 1024)
+                    
+                    recordFromStats(
+                        serverId: server.identifier,
+                        panelId: AccountManager.shared.activeAccount?.id.uuidString ?? "unknown",
+                        cpu: stats.resources.cpuAbsolute,
+                        memory: stats.resources.memoryBytes,
+                        memoryLimit: memoryLimit,
+                        disk: stats.resources.diskBytes,
+                        diskLimit: diskLimit,
+                        networkRx: stats.resources.networkRxBytes,
+                        networkTx: stats.resources.networkTxBytes,
+                        uptimeMs: stats.resources.uptime ?? 0
+                    )
+                    
+                } catch {
+                    print("Failed to poll stats for server \(server.name): \(error)")
+                }
+            }
+        } catch {
+            print("Failed to poll server list: \(error)")
+        }
+    }
     
     // MARK: - Record Snapshot (called from ConsoleView when stats are received)
     /// Call this when WebSocket stats are received
@@ -146,9 +205,9 @@ class ResourceCollector: ObservableObject {
         case .free:
             return 1    // Free tier: 24 hours only
         case .pro:
-            return 30   // Pro tier: 30 days
+            return 7    // Pro tier: 7 days
         case .host:
-            return 180  // Host tier: 180 days
+            return 30   // Host tier: 30 days
         }
     }
     

@@ -81,6 +81,37 @@ actor PterodactylClient {
         }
     }
 
+    func fetchResources(serverId: String) async throws -> ServerStats {
+        guard let baseURL = baseURL, let apiKey = apiKey else {
+            throw PterodactylError.invalidURL
+        }
+        
+        // Correct endpoint: /api/client/servers/{id}/resources
+        let endpoint = baseURL.appendingPathComponent("api/client/servers/\(serverId)/resources")
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
+                let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+                // If 409 conflict (server installing/transferring), return default empty stats? Or throw.
+                // Pterodactyl returns 409 if server is installing.
+                if code == 409 {
+                    throw PterodactylError.apiError(code, "Server is installing/transferring")
+                }
+                throw PterodactylError.apiError(code, "Failed to fetch resources")
+            }
+            
+            let decoded = try JSONDecoder().decode(ServerStatsResponse.self, from: data)
+            return decoded.attributes
+        } catch {
+            throw PterodactylError.networkError(error)
+        }
+    }
+
     func listFiles(serverId: String, directory: String = "/") async throws -> [FileAttributes] {
         guard let baseURL = baseURL, let apiKey = apiKey else {
             throw PterodactylError.invalidURL

@@ -36,6 +36,13 @@ struct XYIdactylApp: App {
         WindowGroup {
             ContentView()
                 .preferredColorScheme(.dark) // Liquid Glass looks best in dark mode
+                .onAppear {
+                    ResourceCollector.shared.startPolling()
+                    
+                    // Register background tasks
+                    ResourceCollector.registerBackgroundTasks()
+                    ResourceCollector.scheduleBackgroundTask() 
+                }
         }
     }
 }
