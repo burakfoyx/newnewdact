@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject private var backgroundSettings = BackgroundSettings.shared
+    @ObservedObject private var subscriptionManager = SubscriptionManager.shared
+    @State private var showPaywall = false
     
     var body: some View {
         NavigationStack {
@@ -10,6 +12,53 @@ struct SettingsView: View {
                     .ignoresSafeArea()
                 
                 List {
+                    // Subscription Section
+                    Section {
+                        Button {
+                            showPaywall = true
+                        } label: {
+                            HStack(spacing: 16) {
+                                // Crown Icon
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: subscriptionManager.currentTier == .free ? [.yellow, .orange] : [.green, .teal],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 44, height: 44)
+                                    
+                                    Image(systemName: subscriptionManager.currentTier == .free ? "crown.fill" : "checkmark.seal.fill")
+                                        .font(.title3)
+                                        .foregroundStyle(.white)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(subscriptionManager.currentTier == .free ? "Upgrade to Pro" : "\(subscriptionManager.currentTier.displayName) Member")
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                    
+                                    Text(subscriptionManager.currentTier == .free ? "Unlock analytics, alerts & more" : "Thank you for your support!")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                if subscriptionManager.currentTier == .free {
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption.bold())
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .padding(.vertical, 8)
+                        }
+                    } header: {
+                        Text("Subscription")
+                    }
+                    
                     // Background Selection
                     Section("Appearance") {
                         ForEach(BackgroundStyle.allCases) { style in
@@ -86,6 +135,9 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
+            }
         }
         .background(Color.clear)
     }
