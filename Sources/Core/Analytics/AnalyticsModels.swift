@@ -134,6 +134,7 @@ struct ServerAnalyticsSummary {
     let isOverallocated: Bool       // Consistently near limits
     let totalNetworkRx: Int64
     let totalNetworkTx: Int64
+    let currentUptimeMs: Int64
     
     // Idle detection
     var idleHoursPerDay: Double {

@@ -173,6 +173,22 @@ struct HistoryView: View {
             GridItem(.flexible()),
             GridItem(.flexible())
         ], spacing: 12) {
+            // Uptime Reliability (Moved to top)
+            SummaryCard(
+                title: "Uptime • \(formatUptime(summary.currentUptimeMs))",
+                value: String(format: "%.1f%%", summary.uptimeAvailability),
+                trend: nil,
+                icon: "clock.arrow.circlepath"
+            )
+            
+            // Peak Memory (Restored)
+            SummaryCard(
+                title: "Peak Memory",
+                value: String(format: "%.1f%%", summary.peakMemoryPercent),
+                trend: nil,
+                icon: "memorychip.fill"
+            )
+            
             SummaryCard(
                 title: "Avg CPU",
                 value: String(format: "%.1f%%", summary.avgCPU),
@@ -195,11 +211,26 @@ struct HistoryView: View {
             )
             
             SummaryCard(
-                title: "Uptime Reliability",
-                value: String(format: "%.1f%%", summary.uptimeAvailability),
+                title: "Peak Disk",
+                value: String(format: "%.1f%%", summary.peakDiskPercent),
                 trend: nil,
-                icon: "clock.arrow.circlepath"
+                icon: "internaldrive"
             )
+        }
+    }
+    
+    private func formatUptime(_ ms: Int64) -> String {
+        let seconds = ms / 1000
+        let days = seconds / 86400
+        let hours = (seconds % 86400) / 3600
+        let minutes = (seconds % 3600) / 60
+        
+        if days > 0 {
+            return "\(days)d \(hours)h \(minutes)m"
+        } else if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        } else {
+            return "\(minutes)m"
         }
     }
     

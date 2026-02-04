@@ -225,7 +225,8 @@ class ResourceStore: ObservableObject {
             isUnderutilized: isUnderutilized,
             isOverallocated: isOverallocated,
             totalNetworkRx: totalRx,
-            totalNetworkTx: totalTx
+            totalNetworkTx: totalTx,
+            currentUptimeMs: snapshots.last?.uptimeMs ?? 0
         )
     }
     
