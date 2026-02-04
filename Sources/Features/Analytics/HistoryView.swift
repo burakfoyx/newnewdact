@@ -24,16 +24,39 @@ struct HistoryView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     // Collection Status
-                    if let lastCollected = collector.lastCollectionTime {
-                        HStack {
-                            Image(systemName: "clock.arrow.circlepath")
-                                .font(.caption)
-                            Text("Last collected: \(lastCollected.formatted(.relative(presentation: .named)))")
-                                .font(.caption)
+                    VStack(spacing: 4) {
+                        if collector.snapshotCount > 0 {
+                            HStack(spacing: 12) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "chart.bar.fill")
+                                        .font(.caption)
+                                    Text("\(collector.snapshotCount) snapshots")
+                                        .font(.caption)
+                                }
+                                
+                                if let lastCollected = collector.lastCollectionTime {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "clock.arrow.circlepath")
+                                            .font(.caption)
+                                        Text(lastCollected.formatted(.relative(presentation: .named)))
+                                            .font(.caption)
+                                    }
+                                }
+                            }
+                            .foregroundStyle(.green.opacity(0.8))
+                        } else {
+                            HStack(spacing: 4) {
+                                Image(systemName: "info.circle")
+                                    .font(.caption)
+                                Text("No data yet - View Console to start collecting")
+                                    .font(.caption)
+                            }
+                            .foregroundStyle(.yellow.opacity(0.8))
                         }
-                        .foregroundStyle(.white.opacity(0.5))
-                        .padding(.top, -8)
                     }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .glassEffect(.clear, in: Capsule())
                     
                     // Time Range Selector
                     timeRangeSelector

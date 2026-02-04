@@ -12,16 +12,20 @@ class ResourceCollector: ObservableObject {
     
     @Published var isCollecting = false
     @Published var lastCollectionTime: Date?
+    @Published var snapshotCount: Int = 0
     
     private let store = ResourceStore.shared
+    
+    // Track last collection per server to avoid hitting the store for every stats update
+    private var lastCollectionPerServer: [String: Date] = [:]
     
     // Collection settings based on tier
     var collectionInterval: TimeInterval {
         switch SubscriptionManager.shared.currentTier {
         case .free:
-            return 300  // 5 minutes for free tier (limited storage)
+            return 60   // 1 minute for free tier (still useful for testing)
         case .pro, .host:
-            return 60   // 1 minute for paid tiers
+            return 30   // 30 seconds for paid tiers
         }
     }
     
@@ -40,14 +44,16 @@ class ResourceCollector: ObservableObject {
         networkRxBytes: Int64,
         networkTxBytes: Int64
     ) {
-        // Check minimum interval since last snapshot for this server
-        if let lastSnapshot = store.fetchLatestSnapshot(serverId: serverId) {
-            let timeSinceLastSnapshot = Date().timeIntervalSince(lastSnapshot.timestamp)
-            if timeSinceLastSnapshot < collectionInterval {
+        // Check in-memory cache first (faster than hitting store)
+        if let lastCollection = lastCollectionPerServer[serverId] {
+            let timeSinceLastCollection = Date().timeIntervalSince(lastCollection)
+            if timeSinceLastCollection < collectionInterval {
                 // Skip - too soon since last snapshot
                 return
             }
         }
+        
+        print("📊 Recording snapshot for server \(serverId): CPU=\(cpuPercent)%")
         
         let snapshot = ResourceSnapshot(
             serverId: serverId,
@@ -64,10 +70,17 @@ class ResourceCollector: ObservableObject {
         
         store.save(snapshot)
         lastCollectionTime = Date()
+        lastCollectionPerServer[serverId] = Date()
+        snapshotCount += 1
+        isCollecting = true
         
-        // Cleanup old data based on tier
-        let retentionDays = dataRetentionDays()
-        store.cleanupOldData(retentionDays: retentionDays)
+        print("📊 Snapshot saved! Total count: \(snapshotCount)")
+        
+        // Cleanup old data periodically (not on every save)
+        if snapshotCount % 10 == 0 {
+            let retentionDays = dataRetentionDays()
+            store.cleanupOldData(retentionDays: retentionDays)
+        }
     }
     
     // MARK: - Record from Server Stats
@@ -93,6 +106,32 @@ class ResourceCollector: ObservableObject {
             diskLimitBytes: diskLimit,
             networkRxBytes: networkRx,
             networkTxBytes: networkTx
+        )
+    }
+    
+    // MARK: - Force Record (ignores interval)
+    func forceRecord(
+        serverId: String,
+        panelId: String,
+        cpu: Double,
+        memory: Int64,
+        memoryLimit: Int64,
+        disk: Int64,
+        diskLimit: Int64
+    ) {
+        // Clear the cache for this server to force recording
+        lastCollectionPerServer.removeValue(forKey: serverId)
+        
+        recordFromStats(
+            serverId: serverId,
+            panelId: panelId,
+            cpu: cpu,
+            memory: memory,
+            memoryLimit: memoryLimit,
+            disk: disk,
+            diskLimit: diskLimit,
+            networkRx: 0,
+            networkTx: 0
         )
     }
     
