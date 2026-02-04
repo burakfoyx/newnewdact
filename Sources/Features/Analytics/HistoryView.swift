@@ -1,9 +1,6 @@
 import SwiftUI
 import Charts
 
-// Type alias for consistency
-typealias Server = ServerAttributes
-
 // MARK: - History View (Analytics Dashboard)
 struct HistoryView: View {
     let server: ServerAttributes

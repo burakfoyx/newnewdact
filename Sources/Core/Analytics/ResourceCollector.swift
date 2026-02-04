@@ -4,16 +4,14 @@ import BackgroundTasks
 
 // MARK: - Resource Collector
 /// Collects and stores resource usage data periodically
+/// Note: Since Pterodactyl Client API doesn't have a direct resources endpoint,
+/// we collect from WebSocket stats updates when the user views a server.
 @MainActor
 class ResourceCollector: ObservableObject {
     static let shared = ResourceCollector()
     
     @Published var isCollecting = false
     @Published var lastCollectionTime: Date?
-    @Published var collectionErrors: [String] = []
-    
-    private var collectionTimer: Timer?
-    private var cancellables = Set<AnyCancellable>()
     
     private let store = ResourceStore.shared
     
@@ -29,45 +27,42 @@ class ResourceCollector: ObservableObject {
     
     private init() {}
     
-    // MARK: - Start Collection
-    func startCollecting() {
-        guard !isCollecting else { return }
-        
-        isCollecting = true
-        print("📊 Starting resource collection every \(collectionInterval)s")
-        
-        // Collect immediately
-        Task {
-            await collectAllServers()
-        }
-        
-        // Schedule periodic collection
-        collectionTimer = Timer.scheduledTimer(
-            withTimeInterval: collectionInterval,
-            repeats: true
-        ) { [weak self] _ in
-            Task { @MainActor in
-                await self?.collectAllServers()
+    // MARK: - Record Snapshot (called from ConsoleView when stats are received)
+    /// Call this when WebSocket stats are received
+    func recordSnapshot(
+        serverId: String,
+        panelId: String,
+        cpuPercent: Double,
+        memoryUsedBytes: Int64,
+        memoryLimitBytes: Int64,
+        diskUsedBytes: Int64,
+        diskLimitBytes: Int64,
+        networkRxBytes: Int64,
+        networkTxBytes: Int64
+    ) {
+        // Check minimum interval since last snapshot for this server
+        if let lastSnapshot = store.fetchLatestSnapshot(serverId: serverId) {
+            let timeSinceLastSnapshot = Date().timeIntervalSince(lastSnapshot.timestamp)
+            if timeSinceLastSnapshot < collectionInterval {
+                // Skip - too soon since last snapshot
+                return
             }
         }
-    }
-    
-    // MARK: - Stop Collection
-    func stopCollecting() {
-        collectionTimer?.invalidate()
-        collectionTimer = nil
-        isCollecting = false
-        print("📊 Stopped resource collection")
-    }
-    
-    // MARK: - Collect All Servers
-    func collectAllServers() async {
-        let accounts = AccountManager.shared.accounts
         
-        for account in accounts {
-            await collectForPanel(account: account)
-        }
+        let snapshot = ResourceSnapshot(
+            serverId: serverId,
+            panelId: panelId,
+            timestamp: Date(),
+            cpuPercent: cpuPercent,
+            memoryUsedBytes: memoryUsedBytes,
+            memoryLimitBytes: memoryLimitBytes,
+            diskUsedBytes: diskUsedBytes,
+            diskLimitBytes: diskLimitBytes,
+            networkRxBytes: networkRxBytes,
+            networkTxBytes: networkTxBytes
+        )
         
+        store.save(snapshot)
         lastCollectionTime = Date()
         
         // Cleanup old data based on tier
@@ -75,53 +70,30 @@ class ResourceCollector: ObservableObject {
         store.cleanupOldData(retentionDays: retentionDays)
     }
     
-    // MARK: - Collect for Single Panel
-    private func collectForPanel(account: PanelAccount) async {
-        do {
-            // Configure client for this panel
-            PterodactylClient.shared.configure(
-                baseURL: account.panelURL,
-                apiKey: account.apiKey
-            )
-            
-            // Fetch all servers
-            let servers = try await PterodactylClient.shared.listServers()
-            
-            for server in servers {
-                await collectForServer(server: server, panelId: account.id.uuidString)
-            }
-        } catch {
-            collectionErrors.append("Panel \(account.panelName): \(error.localizedDescription)")
-            // Keep only last 10 errors
-            if collectionErrors.count > 10 {
-                collectionErrors.removeFirst()
-            }
-        }
-    }
-    
-    // MARK: - Collect for Single Server
-    private func collectForServer(server: Server, panelId: String) async {
-        do {
-            let resources = try await PterodactylClient.shared.getServerResources(identifier: server.identifier)
-            
-            let snapshot = ResourceSnapshot(
-                serverId: server.identifier,
-                panelId: panelId,
-                timestamp: Date(),
-                cpuPercent: resources.cpuAbsolute,
-                memoryUsedBytes: resources.memoryBytes,
-                memoryLimitBytes: resources.memoryLimitBytes,
-                diskUsedBytes: resources.diskBytes,
-                diskLimitBytes: resources.diskLimitBytes,
-                networkRxBytes: resources.networkRxBytes,
-                networkTxBytes: resources.networkTxBytes
-            )
-            
-            store.save(snapshot)
-        } catch {
-            // Silent fail for individual servers - don't spam errors
-            print("Failed to collect for server \(server.name): \(error.localizedDescription)")
-        }
+    // MARK: - Record from Server Stats
+    /// Convenience method to record from ConsoleViewModel stats
+    func recordFromStats(
+        serverId: String,
+        panelId: String,
+        cpu: Double,
+        memory: Int64,
+        memoryLimit: Int64,
+        disk: Int64,
+        diskLimit: Int64,
+        networkRx: Int64,
+        networkTx: Int64
+    ) {
+        recordSnapshot(
+            serverId: serverId,
+            panelId: panelId,
+            cpuPercent: cpu,
+            memoryUsedBytes: memory,
+            memoryLimitBytes: memoryLimit,
+            diskUsedBytes: disk,
+            diskLimitBytes: diskLimit,
+            networkRxBytes: networkRx,
+            networkTxBytes: networkTx
+        )
     }
     
     // MARK: - Data Retention Policy
@@ -136,7 +108,7 @@ class ResourceCollector: ObservableObject {
         }
     }
     
-    // MARK: - Background Task Registration
+    // MARK: - Background Task Registration (for future use)
     static func registerBackgroundTasks() {
         // Register background fetch task
         BGTaskScheduler.shared.register(
@@ -163,31 +135,7 @@ class ResourceCollector: ObservableObject {
         // Schedule next background task
         scheduleBackgroundTask()
         
-        let operationTask = Task {
-            await ResourceCollector.shared.collectAllServers()
-        }
-        
-        task.expirationHandler = {
-            operationTask.cancel()
-        }
-        
-        Task {
-            _ = await operationTask.result
-            task.setTaskCompleted(success: true)
-        }
-    }
-}
-
-// MARK: - Server Resource Extension
-extension ServerResources {
-    var memoryLimitBytes: Int64 {
-        // Get from server limits or use a default
-        // This should come from server.limits in real implementation
-        4 * 1024 * 1024 * 1024 // Default 4GB
-    }
-    
-    var diskLimitBytes: Int64 {
-        // Get from server limits
-        50 * 1024 * 1024 * 1024 // Default 50GB
+        // For now, just complete - background collection requires more infrastructure
+        task.setTaskCompleted(success: true)
     }
 }
