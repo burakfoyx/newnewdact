@@ -211,7 +211,7 @@ class SubscriptionManager: ObservableObject {
             for await result in Transaction.updates {
                 do {
                     let transaction = try Self.checkVerifiedStatic(result)
-                    await MainActor.run {
+                    _ = await MainActor.run {
                         Task {
                             await self.updateSubscriptionStatus()
                         }
