@@ -24,42 +24,11 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
     private var isConnected = false
     
     // Subject to publish events
-    let eventSubject = PassthroughSubject<WebSocketEvent, Never>()
+    private let eventSubject = PassthroughSubject<WebSocketEvent, Never>()
     
-    // Compatibility helpers for ConsoleViewModel
-    var messageSubject: AnyPublisher<String, Never> {
-        eventSubject.compactMap { event -> String? in
-            if case .consoleOutput(let msg) = event { return msg }
-            if case .stats(let msg) = event { return "{\"event\":\"stats\",\"args\":[\"\(msg.replacingOccurrences(of: "\"", with: "\\\""))\"]}" } // Hacky re-json for ViewModel compatibility or just pass object.
-            // Actually ConsoleViewModel parsing expects raw JSON string or parsed.
-            // Let's make messageSubject emit the raw frame text equivalent if possible, or just what ViewModel needs.
-            // ViewModel `handleMessage` expects JSON string.
-            // Let's reconstruct it simply for compatibility or update ViewModel.
-            // Updating ViewModel logic to use WebSocketEvent is cleaner but let's stick to fixing the "missing member" error first by exposing the subject.
-            return nil 
-        }.eraseToAnyPublisher()
-    }
-    
-    // WAIT, ConsoleViewModel expects `messageSubject` to emit String.
-    // And `connectionStatusSubject` to emit WebSocketConnectionStatus (or similar).
-    
-    // Let's actually update ConsoleViewModel to use `eventSubject` because it's cleaner than adding shim layers.
-    // I will CANCEL this tool call and update ConsoleViewModel instead.
-    
-    // ACTUALLY, I will add `public` props that map to the internal subject to minimize code drift.
-    
-    var connectionStatusSubject: AnyPublisher<ConnectionStatus, Never> {
-        return eventSubject
-            .map { event -> ConnectionStatus in
-                switch event {
-                case .connected: return .connected
-                case .disconnected: return .disconnected
-                default: return .connected // Keep state if receiving other events? No, this logic is flawed.
-                }
-            }
-            // Filter only status changes ideally, but for now simple map
-            .filter { $0 == .connected || $0 == .disconnected }
-            .eraseToAnyPublisher()
+    // Public publisher
+    var eventPublisher: AnyPublisher<WebSocketEvent, Never> {
+        eventSubject.eraseToAnyPublisher()
     }
     
     func connect(url: URL, token: String, origin: String? = nil) {
