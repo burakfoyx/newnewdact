@@ -365,23 +365,7 @@ actor PterodactylClient {
         _ = try await fetchServers()
         return true
     }
-    func fetchResources(serverId: String) async throws -> ServerStats {
-        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
-        
-        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/resources")
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.addValue("application/json", forHTTPHeaderField: "Accept")
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to fetch resources")
-        }
-        
-        let decoded = try JSONDecoder().decode(ServerStatsResponse.self, from: data)
-        return decoded.attributes
-    }
+    // fetchResources was already defined above
     // MARK: - New Features
     func fetchDatabases(serverId: String) async throws -> [DatabaseAttributes] {
         guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }

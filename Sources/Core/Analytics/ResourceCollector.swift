@@ -65,8 +65,8 @@ class ResourceCollector: ObservableObject {
                 do {
                     let stats = try await PterodactylClient.shared.fetchResources(serverId: server.identifier)
                     
-                    let memoryLimit = Int64(server.limits.memory * 1024 * 1024)
-                    let diskLimit = Int64(server.limits.disk * 1024 * 1024)
+                    let memoryLimit = Int64((server.limits.memory ?? 0) * 1024 * 1024)
+                    let diskLimit = Int64((server.limits.disk ?? 0) * 1024 * 1024)
                     
                     recordFromStats(
                         serverId: server.identifier,
