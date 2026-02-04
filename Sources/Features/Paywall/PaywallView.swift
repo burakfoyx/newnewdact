@@ -1,11 +1,12 @@
 import SwiftUI
 import StoreKit
 
-// MARK: - Full Paywall View
+// MARK: - Full Paywall View (Liquid Glass Design)
 struct PaywallView: View {
     var highlightedFeature: Feature? = nil
     @Environment(\.dismiss) var dismiss
     @StateObject private var subscriptionManager = SubscriptionManager.shared
+    @State private var selectedTier: UserTier = .pro
     @State private var selectedPlan: ProductID = .proYearly
     @State private var isPurchasing = false
     @State private var showError = false
@@ -14,33 +15,28 @@ struct PaywallView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.05, green: 0.02, blue: 0.15),
-                        Color(red: 0.10, green: 0.05, blue: 0.20),
-                        Color(red: 0.05, green: 0.02, blue: 0.12)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                // Use app's Liquid Glass background
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 24) {
                         // Header
                         headerSection
                         
-                        // Plan Selector
+                        // Tier Selector (Pro / Host)
+                        tierSelector
+                        
+                        // Plan Options for selected tier
                         planSelector
                         
-                        // Feature Comparison
-                        featureComparison
+                        // Feature List
+                        featureList
                         
                         // Purchase Button
                         purchaseButton
                         
-                        // Restore & Legal
+                        // Footer
                         footerSection
                     }
                     .padding()
@@ -70,95 +66,193 @@ struct PaywallView: View {
     // MARK: - Header Section
     private var headerSection: some View {
         VStack(spacing: 16) {
-            // Crown Icon
+            // Animated Crown/Star Icon
             ZStack {
                 Circle()
-                    .fill(
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 90, height: 90)
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [.yellow.opacity(0.6), .orange.opacity(0.3)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+                
+                Image(systemName: "crown.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(
                         LinearGradient(
                             colors: [.yellow, .orange],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 80, height: 80)
-                    .shadow(color: .orange.opacity(0.5), radius: 20)
-                
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.white)
             }
+            .shadow(color: .orange.opacity(0.3), radius: 20)
             
-            Text("Upgrade to Pro")
-                .font(.system(size: 32, weight: .bold))
+            Text("Unlock Full Potential")
+                .font(.system(size: 28, weight: .bold))
                 .foregroundStyle(.white)
             
-            Text("Unlock powerful features to manage your servers like a pro")
+            Text("Choose the plan that fits your needs")
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.7))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
         }
         .padding(.top, 20)
+    }
+    
+    // MARK: - Tier Selector
+    private var tierSelector: some View {
+        HStack(spacing: 0) {
+            TierTab(
+                title: "Pro",
+                subtitle: "For individuals",
+                isSelected: selectedTier == .pro
+            ) {
+                withAnimation(.spring(response: 0.3)) {
+                    selectedTier = .pro
+                    selectedPlan = .proYearly
+                }
+            }
+            
+            TierTab(
+                title: "Host",
+                subtitle: "For providers",
+                isSelected: selectedTier == .host
+            ) {
+                withAnimation(.spring(response: 0.3)) {
+                    selectedTier = .host
+                    selectedPlan = .hostYearly
+                }
+            }
+        }
+        .padding(4)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
     }
     
     // MARK: - Plan Selector
     private var planSelector: some View {
         VStack(spacing: 12) {
-            // Pro Plans
-            HStack(spacing: 12) {
-                PlanCard(
-                    title: "Monthly",
-                    price: subscriptionManager.formattedPrice(for: .proMonthly) ?? "€4.99",
-                    period: "/month",
-                    isSelected: selectedPlan == .proMonthly,
-                    badge: nil
-                ) {
-                    selectedPlan = .proMonthly
+            if selectedTier == .pro {
+                // Pro Plans
+                HStack(spacing: 12) {
+                    GlassPlanCard(
+                        title: "Monthly",
+                        price: subscriptionManager.formattedPrice(for: .proMonthly) ?? "€4.99",
+                        period: "/month",
+                        badge: nil,
+                        isSelected: selectedPlan == .proMonthly
+                    ) {
+                        selectedPlan = .proMonthly
+                    }
+                    
+                    GlassPlanCard(
+                        title: "Yearly",
+                        price: subscriptionManager.formattedPrice(for: .proYearly) ?? "€39.99",
+                        period: "/year",
+                        badge: "Save 33%",
+                        isSelected: selectedPlan == .proYearly
+                    ) {
+                        selectedPlan = .proYearly
+                    }
                 }
                 
-                PlanCard(
-                    title: "Yearly",
-                    price: subscriptionManager.formattedPrice(for: .proYearly) ?? "€39.99",
-                    period: "/year",
-                    isSelected: selectedPlan == .proYearly,
-                    badge: "Save 33%"
+                GlassPlanCard(
+                    title: "Lifetime",
+                    price: subscriptionManager.formattedPrice(for: .lifetimePro) ?? "€29.99",
+                    period: "one-time",
+                    badge: "Best Value",
+                    isSelected: selectedPlan == .lifetimePro,
+                    isWide: true
                 ) {
-                    selectedPlan = .proYearly
+                    selectedPlan = .lifetimePro
                 }
-            }
-            
-            // Lifetime Option
-            PlanCard(
-                title: "Lifetime",
-                price: subscriptionManager.formattedPrice(for: .lifetimePro) ?? "€29.99",
-                period: "one-time",
-                isSelected: selectedPlan == .lifetimePro,
-                badge: "Best Value",
-                isWide: true
-            ) {
-                selectedPlan = .lifetimePro
+            } else {
+                // Host Plans
+                HStack(spacing: 12) {
+                    GlassPlanCard(
+                        title: "Monthly",
+                        price: subscriptionManager.formattedPrice(for: .hostMonthly) ?? "€9.99",
+                        period: "/month",
+                        badge: nil,
+                        isSelected: selectedPlan == .hostMonthly
+                    ) {
+                        selectedPlan = .hostMonthly
+                    }
+                    
+                    GlassPlanCard(
+                        title: "Yearly",
+                        price: subscriptionManager.formattedPrice(for: .hostYearly) ?? "€79.99",
+                        period: "/year",
+                        badge: "Save 33%",
+                        isSelected: selectedPlan == .hostYearly
+                    ) {
+                        selectedPlan = .hostYearly
+                    }
+                }
+                
+                GlassPlanCard(
+                    title: "Lifetime",
+                    price: subscriptionManager.formattedPrice(for: .lifetimeHost) ?? "€49.99",
+                    period: "one-time",
+                    badge: "Best Value",
+                    isSelected: selectedPlan == .lifetimeHost,
+                    isWide: true
+                ) {
+                    selectedPlan = .lifetimeHost
+                }
             }
         }
     }
     
-    // MARK: - Feature Comparison
-    private var featureComparison: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("What's Included")
+    // MARK: - Feature List
+    private var featureList: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(selectedTier == .pro ? "Pro Features" : "Host Features")
                 .font(.headline)
                 .foregroundStyle(.white)
+                .padding(.leading, 4)
             
-            VStack(spacing: 12) {
-                FeatureRow(icon: "chart.xyaxis.line", title: "Historical Analytics", description: "View resource usage over time", isIncluded: true)
-                FeatureRow(icon: "bell.badge", title: "Custom Alerts", description: "Get notified when thresholds are exceeded", isIncluded: true)
-                FeatureRow(icon: "folder.fill", title: "Server Groups", description: "Organize servers into groups (up to 5)", isIncluded: true)
-                FeatureRow(icon: "star.fill", title: "Favorites", description: "Pin servers to the top", isIncluded: true)
-                FeatureRow(icon: "arrow.clockwise", title: "Faster Refresh", description: "5s/10s refresh intervals", isIncluded: true)
-                FeatureRow(icon: "tag.fill", title: "Custom Labels", description: "Add labels and colors to servers", isIncluded: true)
+            VStack(spacing: 0) {
+                if selectedTier == .pro {
+                    GlassFeatureRow(icon: "chart.xyaxis.line", title: "Historical Analytics", description: "30-day resource history")
+                    Divider().background(Color.white.opacity(0.1))
+                    GlassFeatureRow(icon: "bell.badge", title: "Custom Alerts", description: "Up to 5 alert rules")
+                    Divider().background(Color.white.opacity(0.1))
+                    GlassFeatureRow(icon: "folder.fill", title: "Server Groups", description: "Organize into 5 groups")
+                    Divider().background(Color.white.opacity(0.1))
+                    GlassFeatureRow(icon: "star.fill", title: "Favorites", description: "Pin servers to top")
+                    Divider().background(Color.white.opacity(0.1))
+                    GlassFeatureRow(icon: "arrow.clockwise", title: "Faster Refresh", description: "5s/10s intervals")
+                } else {
+                    GlassFeatureRow(icon: "checkmark.seal.fill", title: "All Pro Features", description: "Everything in Pro, plus...")
+                    Divider().background(Color.white.opacity(0.1))
+                    GlassFeatureRow(icon: "gearshape.2.fill", title: "Automation Rules", description: "Unlimited automated actions")
+                    Divider().background(Color.white.opacity(0.1))
+                    GlassFeatureRow(icon: "cpu", title: "Node Intelligence", description: "Advanced node analytics")
+                    Divider().background(Color.white.opacity(0.1))
+                    GlassFeatureRow(icon: "bell.fill", title: "Unlimited Alerts", description: "No limits on alert rules")
+                    Divider().background(Color.white.opacity(0.1))
+                    GlassFeatureRow(icon: "arrow.up.forward.app", title: "Webhooks", description: "Discord, Slack & more")
+                }
             }
             .padding()
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            )
         }
     }
     
@@ -169,11 +263,13 @@ struct PaywallView: View {
                 await purchase()
             }
         } label: {
-            HStack {
+            HStack(spacing: 8) {
                 if isPurchasing {
                     ProgressView()
-                        .tint(.black)
+                        .tint(.white)
                 } else {
+                    Image(systemName: "crown.fill")
+                        .font(.body.bold())
                     Text("Continue with \(selectedPlan.displayName)")
                         .fontWeight(.bold)
                 }
@@ -189,9 +285,10 @@ struct PaywallView: View {
             )
             .foregroundStyle(.black)
             .clipShape(Capsule())
-            .shadow(color: .orange.opacity(0.4), radius: 10, y: 5)
+            .shadow(color: .orange.opacity(0.4), radius: 12, y: 6)
         }
         .disabled(isPurchasing)
+        .padding(.top, 8)
     }
     
     // MARK: - Footer Section
@@ -235,7 +332,7 @@ struct PaywallView: View {
     // MARK: - Purchase Logic
     private func purchase() async {
         guard let product = subscriptionManager.product(for: selectedPlan) else {
-            errorMessage = "Product not available"
+            errorMessage = "Product not available. Please try again later."
             showError = true
             return
         }
@@ -255,13 +352,48 @@ struct PaywallView: View {
     }
 }
 
-// MARK: - Plan Card
-struct PlanCard: View {
+// MARK: - Tier Tab
+struct TierTab: View {
+    let title: String
+    let subtitle: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(isSelected ? .white : .white.opacity(0.5))
+                
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(isSelected ? .white.opacity(0.7) : .white.opacity(0.3))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                isSelected ?
+                    AnyShapeStyle(LinearGradient(
+                        colors: [.white.opacity(0.15), .white.opacity(0.05)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )) :
+                    AnyShapeStyle(Color.clear)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Glass Plan Card
+struct GlassPlanCard: View {
     let title: String
     let price: String
     let period: String
-    let isSelected: Bool
     let badge: String?
+    let isSelected: Bool
     var isWide: Bool = false
     let action: () -> Void
     
@@ -303,36 +435,40 @@ struct PlanCard: View {
             .frame(minWidth: isWide ? nil : 140)
             .padding(.vertical, 20)
             .padding(.horizontal, 16)
-            .background(
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(
-                                isSelected ? 
-                                    LinearGradient(colors: [.yellow, .orange], startPoint: .topLeading, endPoint: .bottomTrailing) :
-                                    LinearGradient(colors: [.white.opacity(0.2)], startPoint: .topLeading, endPoint: .bottomTrailing),
-                                lineWidth: isSelected ? 2 : 1
-                            )
+                    .stroke(
+                        isSelected ?
+                            LinearGradient(colors: [.yellow, .orange], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                            LinearGradient(colors: [.white.opacity(0.15)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                        lineWidth: isSelected ? 2 : 1
                     )
             )
+            .shadow(color: isSelected ? .orange.opacity(0.2) : .clear, radius: 8)
         }
         .buttonStyle(PlainButtonStyle())
     }
 }
 
-// MARK: - Feature Row
-struct FeatureRow: View {
+// MARK: - Glass Feature Row
+struct GlassFeatureRow: View {
     let icon: String
     let title: String
     let description: String
-    let isIncluded: Bool
     
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundStyle(.yellow)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.yellow, .orange],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .frame(width: 32)
             
             VStack(alignment: .leading, spacing: 2) {
@@ -347,9 +483,11 @@ struct FeatureRow: View {
             
             Spacer()
             
-            Image(systemName: isIncluded ? "checkmark.circle.fill" : "xmark.circle")
-                .foregroundStyle(isIncluded ? .green : .gray)
+            Image(systemName: "checkmark")
+                .font(.caption.bold())
+                .foregroundStyle(.green)
         }
+        .padding(.vertical, 10)
     }
 }
 
@@ -363,7 +501,13 @@ struct UpgradePromptView: View {
             HStack(spacing: 8) {
                 Image(systemName: feature.icon)
                     .font(.title3)
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.yellow, .orange],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                 
                 Text(feature.displayName)
                     .font(.headline)
@@ -400,6 +544,10 @@ struct UpgradePromptView: View {
         .frame(maxWidth: .infinity)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+        )
         .sheet(isPresented: $showPaywall) {
             PaywallView(highlightedFeature: feature)
         }
