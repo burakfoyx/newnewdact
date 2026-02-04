@@ -106,6 +106,7 @@ struct LogEntry: Identifiable {
 
 class ConsoleViewModel: ObservableObject {
     let serverId: String
+    let serverLimits: ServerLimits?
     @Published var logs: [String] = []
     @Published var inputCommand: String = ""
     @Published var isConnected = false
@@ -114,8 +115,9 @@ class ConsoleViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
-    init(serverId: String) {
+    init(serverId: String, limits: ServerLimits? = nil) {
         self.serverId = serverId
+        self.serverLimits = limits
         self.logs.append("System: Console interface initialized.")
         setupSubscription()
     }
@@ -123,27 +125,19 @@ class ConsoleViewModel: ObservableObject {
     private func setupSubscription() {
         cancellables.removeAll()
         
-        WebSocketClient.shared.eventSubject
-            .receive(on: RunLoop.main)
+        WebSocketClient.shared.eventPublisher
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] event in
                 self?.handleEvent(event)
             }
             .store(in: &cancellables)
     }
     
-
-    
     func sendCommand() {
-        guard !inputCommand.isEmpty else { return }
+        let command = inputCommand.trimmingCharacters(in: .whitespaces)
+        guard !command.isEmpty else { return }
         
-        if !isConnected {
-            self.logs.append("System: Cannot send - Disconnected")
-            return
-        }
-        
-        let cmd = inputCommand
-        self.logs.append("> \(cmd)") // Local echo
-        WebSocketClient.shared.sendCommand(cmd)
+        WebSocketClient.shared.sendCommand(command)
         inputCommand = ""
     }
     
@@ -160,18 +154,17 @@ class ConsoleViewModel: ObservableObject {
                 await MainActor.run { self.logs.append("System: Authenticating with Pterodactyl...") }
                 
                 // Need both socket details and origin
-                let details = try await PterodactylClient.shared.fetchWebsocketDetails(serverId: serverId)
-                let panelURL = await PterodactylClient.shared.getPanelURL()
+                let (urlString, token) = try await PterodactylClient.shared.fetchWebsocketDetails(serverId: serverId)
+                guard let socketURL = URL(string: urlString) else {
+                    throw PterodactylError.invalidURL
+                }
+                guard let origin = await PterodactylClient.shared.getPanelURL() else {
+                    throw PterodactylError.invalidURL
+                }
                 
-                WebSocketClient.shared.disconnect() // Ensure crisp state
+                await MainActor.run { self.logs.append("System: Connecting to console...") }
+                WebSocketClient.shared.connect(url: socketURL, token: token, origin: origin.absoluteString)
                 
-                // Add token as query param too, some daemons need it
-                
-                WebSocketClient.shared.connect(
-                    url: URL(string: details.url)!, 
-                    token: details.token,
-                    origin: panelURL?.absoluteString 
-                )
             } catch {
                 await MainActor.run {
                     self.logs.append("System Error: Could not connect - \(error.localizedDescription)")
@@ -203,6 +196,9 @@ class ConsoleViewModel: ObservableObject {
              if let statsData = statsJson.data(using: .utf8),
                 let stats = try? JSONDecoder().decode(WebsocketResponse.Stats.self, from: statsData) {
                  self.stats = stats
+                 
+                 // Record analytics data
+                 recordAnalytics(stats: stats)
              }
              
         case .status(let status):
@@ -219,6 +215,31 @@ class ConsoleViewModel: ObservableObject {
             
         default:
             break
+        }
+    }
+    
+    // MARK: - Analytics Recording
+    private func recordAnalytics(stats: WebsocketResponse.Stats) {
+        // Get panel ID from active account
+        let panelId = AccountManager.shared.activeAccount?.id.uuidString ?? "unknown"
+        
+        // Calculate limits (use server limits if available, otherwise use defaults)
+        let memoryLimit = Int64((serverLimits?.memory ?? 4096) * 1024 * 1024) // MB to bytes
+        let diskLimit = Int64((serverLimits?.disk ?? 50000) * 1024 * 1024) // MB to bytes
+        
+        // Record to ResourceCollector
+        Task { @MainActor in
+            ResourceCollector.shared.recordFromStats(
+                serverId: serverId,
+                panelId: panelId,
+                cpu: stats.cpu_absolute,
+                memory: stats.memory_bytes,
+                memoryLimit: memoryLimit,
+                disk: stats.disk_bytes,
+                diskLimit: diskLimit,
+                networkRx: 0,  // WebSocket stats don't include network, use 0
+                networkTx: 0
+            )
         }
     }
 }

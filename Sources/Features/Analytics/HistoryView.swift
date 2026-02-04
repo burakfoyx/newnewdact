@@ -7,11 +7,13 @@ struct HistoryView: View {
     
     @StateObject private var store = ResourceStore.shared
     @StateObject private var subscriptionManager = SubscriptionManager.shared
+    @StateObject private var collector = ResourceCollector.shared
     @State private var selectedTimeRange: AnalyticsTimeRange = .hour24
     @State private var selectedMetric: AnalyticsMetric = .cpu
     @State private var chartData: [ChartDataPoint] = []
     @State private var summary: ServerAnalyticsSummary?
     @State private var isLoading = true
+    @State private var isRefreshing = false
     @State private var showPaywall = false
     
     var body: some View {
@@ -21,6 +23,18 @@ struct HistoryView: View {
             
             ScrollView {
                 VStack(spacing: 20) {
+                    // Collection Status
+                    if let lastCollected = collector.lastCollectionTime {
+                        HStack {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .font(.caption)
+                            Text("Last collected: \(lastCollected.formatted(.relative(presentation: .named)))")
+                                .font(.caption)
+                        }
+                        .foregroundStyle(.white.opacity(0.5))
+                        .padding(.top, -8)
+                    }
+                    
                     // Time Range Selector
                     timeRangeSelector
                     
@@ -39,9 +53,17 @@ struct HistoryView: View {
                     if let summary = summary {
                         insightsSection(summary)
                     }
+                    
+                    // Collection hint
+                    if chartData.isEmpty {
+                        collectionHint
+                    }
                 }
                 .padding()
                 .padding(.bottom, 40)
+            }
+            .refreshable {
+                await refreshData()
             }
         }
         .navigationTitle("Analytics")
@@ -60,6 +82,44 @@ struct HistoryView: View {
         .sheet(isPresented: $showPaywall) {
             PaywallView(highlightedFeature: .historicalAnalytics)
         }
+    }
+    
+    // MARK: - Collection Hint
+    private var collectionHint: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "info.circle")
+                .font(.title2)
+                .foregroundStyle(.blue)
+            
+            Text("How Analytics Work")
+                .font(.headline)
+                .foregroundStyle(.white)
+            
+            Text("Analytics data is collected while viewing the Console tab. Open the Console to start collecting real-time stats, then return here to see your charts.")
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.6))
+                .multilineTextAlignment(.center)
+            
+            Text("Pull down to refresh")
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.4))
+                .padding(.top, 4)
+        }
+        .padding()
+        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+    
+    // MARK: - Refresh Data
+    private func refreshData() async {
+        isRefreshing = true
+        
+        // Small delay for visual feedback
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        
+        // Reload data from store
+        await loadData()
+        
+        isRefreshing = false
     }
     
     // MARK: - Time Range Selector

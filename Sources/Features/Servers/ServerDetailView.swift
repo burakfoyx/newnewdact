@@ -37,7 +37,7 @@ struct ServerDetailView: View {
     
     init(server: ServerAttributes) {
         self.server = server
-        _consoleViewModel = StateObject(wrappedValue: ConsoleViewModel(serverId: server.identifier))
+        _consoleViewModel = StateObject(wrappedValue: ConsoleViewModel(serverId: server.identifier, limits: server.limits))
     }
     
     // ... Tab Enum ...
