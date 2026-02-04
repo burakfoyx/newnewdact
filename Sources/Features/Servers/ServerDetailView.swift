@@ -2,6 +2,7 @@ import SwiftUI
 
 enum ServerTab: String, CaseIterable, Identifiable {
     case console = "Console"
+    case analytics = "Analytics"
     case files = "Files"
     case network = "Network"
     case backups = "Backups"
@@ -15,6 +16,7 @@ enum ServerTab: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .console: return "terminal.fill"
+        case .analytics: return "chart.xyaxis.line"
         case .files: return "folder.fill"
         case .network: return "network"
         case .backups: return "archivebox.fill"
@@ -60,6 +62,9 @@ struct ServerDetailView: View {
                   TabView(selection: $selectedTab) {
                     ConsoleView(viewModel: consoleViewModel, limits: server.limits)
                         .tag(ServerTab.console)
+                    
+                    HistoryView(server: server)
+                        .tag(ServerTab.analytics)
                     
                     FileManagerView(serverId: server.identifier)
                         .tag(ServerTab.files)
