@@ -210,8 +210,12 @@ class SubscriptionManager: ObservableObject {
         Task.detached {
             for await result in Transaction.updates {
                 do {
-                    let transaction = try self.checkVerified(result)
-                    await self.updateSubscriptionStatus()
+                    let transaction = try Self.checkVerifiedStatic(result)
+                    await MainActor.run {
+                        Task {
+                            await self.updateSubscriptionStatus()
+                        }
+                    }
                     await transaction.finish()
                 } catch {
                     print("Transaction verification failed: \(error)")
@@ -220,8 +224,18 @@ class SubscriptionManager: ObservableObject {
         }
     }
     
-    // MARK: - Verification Helper
+    // MARK: - Verification Helper (instance method for MainActor context)
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+        switch result {
+        case .unverified:
+            throw StoreError.verificationFailed
+        case .verified(let safe):
+            return safe
+        }
+    }
+    
+    // Static nonisolated version for detached tasks
+    private static nonisolated func checkVerifiedStatic<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
         case .unverified:
             throw StoreError.verificationFailed

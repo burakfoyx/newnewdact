@@ -110,7 +110,7 @@ struct StartupVariableRow: View {
                         .padding()
                         .background(Color.black.opacity(0.2))
                         .cornerRadius(8)
-                        .onChange(of: text) { _ in
+                        .onChange(of: text) {
                             isEditing = true
                         }
                     
