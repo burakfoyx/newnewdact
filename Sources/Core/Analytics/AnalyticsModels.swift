@@ -17,6 +17,7 @@ struct ResourceSnapshot: Identifiable, Codable {
     let diskLimitBytes: Int64
     let networkRxBytes: Int64
     let networkTxBytes: Int64
+    let uptimeMs: Int64
     
     // Computed properties
     var memoryPercent: Double {
@@ -40,7 +41,8 @@ struct ResourceSnapshot: Identifiable, Codable {
         diskUsedBytes: Int64,
         diskLimitBytes: Int64,
         networkRxBytes: Int64,
-        networkTxBytes: Int64
+        networkTxBytes: Int64,
+        uptimeMs: Int64
     ) {
         self.id = id
         self.serverId = serverId
@@ -53,6 +55,7 @@ struct ResourceSnapshot: Identifiable, Codable {
         self.diskLimitBytes = diskLimitBytes
         self.networkRxBytes = networkRxBytes
         self.networkTxBytes = networkTxBytes
+        self.uptimeMs = uptimeMs
     }
 }
 

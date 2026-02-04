@@ -238,7 +238,8 @@ class ConsoleViewModel: ObservableObject {
                 disk: stats.disk_bytes,
                 diskLimit: diskLimit,
                 networkRx: 0,  // WebSocket stats don't include network, use 0
-                networkTx: 0
+                networkTx: 0,
+                uptimeMs: stats.uptime ?? 0
             )
         }
     }

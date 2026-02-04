@@ -16,6 +16,7 @@ final class ResourceSnapshotEntity {
     var diskLimitBytes: Int64
     var networkRxBytes: Int64
     var networkTxBytes: Int64
+    var uptimeMs: Int64
     
     init(
         id: UUID = UUID(),
@@ -28,7 +29,8 @@ final class ResourceSnapshotEntity {
         diskUsedBytes: Int64,
         diskLimitBytes: Int64,
         networkRxBytes: Int64,
-        networkTxBytes: Int64
+        networkTxBytes: Int64,
+        uptimeMs: Int64
     ) {
         self.id = id
         self.serverId = serverId
@@ -41,6 +43,7 @@ final class ResourceSnapshotEntity {
         self.diskLimitBytes = diskLimitBytes
         self.networkRxBytes = networkRxBytes
         self.networkTxBytes = networkTxBytes
+        self.uptimeMs = uptimeMs
     }
     
     /// Convert to value type
@@ -56,7 +59,8 @@ final class ResourceSnapshotEntity {
             diskUsedBytes: diskUsedBytes,
             diskLimitBytes: diskLimitBytes,
             networkRxBytes: networkRxBytes,
-            networkTxBytes: networkTxBytes
+            networkTxBytes: networkTxBytes,
+            uptimeMs: uptimeMs
         )
     }
 }
@@ -101,7 +105,8 @@ class ResourceStore: ObservableObject {
             diskUsedBytes: snapshot.diskUsedBytes,
             diskLimitBytes: snapshot.diskLimitBytes,
             networkRxBytes: snapshot.networkRxBytes,
-            networkTxBytes: snapshot.networkTxBytes
+            networkTxBytes: snapshot.networkTxBytes,
+            uptimeMs: snapshot.uptimeMs
         )
         
         context.insert(entity)
@@ -278,6 +283,8 @@ class ResourceStore: ObservableObject {
                 value = Double(snapshot.networkRxBytes) / 1_000_000 // MB
             case .networkTx:
                 value = Double(snapshot.networkTxBytes) / 1_000_000 // MB
+            case .uptime:
+                value = Double(snapshot.uptimeMs) / 3_600_000 // Hours
             }
             return ChartDataPoint(timestamp: snapshot.timestamp, value: value)
         }
@@ -314,6 +321,7 @@ enum AnalyticsMetric: String, CaseIterable, Identifiable {
     case disk = "Disk"
     case networkRx = "Network In"
     case networkTx = "Network Out"
+    case uptime = "Uptime"
     
     var id: String { rawValue }
     
@@ -324,6 +332,7 @@ enum AnalyticsMetric: String, CaseIterable, Identifiable {
         case .disk: return "internaldrive"
         case .networkRx: return "arrow.down.circle"
         case .networkTx: return "arrow.up.circle"
+        case .uptime: return "clock.arrow.circlepath"
         }
     }
     
@@ -331,6 +340,7 @@ enum AnalyticsMetric: String, CaseIterable, Identifiable {
         switch self {
         case .cpu, .memory, .disk: return "%"
         case .networkRx, .networkTx: return "MB"
+        case .uptime: return "Hr"
         }
     }
     
@@ -341,6 +351,7 @@ enum AnalyticsMetric: String, CaseIterable, Identifiable {
         case .disk: return "orange"
         case .networkRx: return "green"
         case .networkTx: return "teal"
+        case .uptime: return "pink"
         }
     }
 }

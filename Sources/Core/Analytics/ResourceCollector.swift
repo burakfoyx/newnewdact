@@ -42,7 +42,8 @@ class ResourceCollector: ObservableObject {
         diskUsedBytes: Int64,
         diskLimitBytes: Int64,
         networkRxBytes: Int64,
-        networkTxBytes: Int64
+        networkTxBytes: Int64,
+        uptimeMs: Int64
     ) {
         // Check in-memory cache first (faster than hitting store)
         if let lastCollection = lastCollectionPerServer[serverId] {
@@ -65,7 +66,8 @@ class ResourceCollector: ObservableObject {
             diskUsedBytes: diskUsedBytes,
             diskLimitBytes: diskLimitBytes,
             networkRxBytes: networkRxBytes,
-            networkTxBytes: networkTxBytes
+            networkTxBytes: networkTxBytes,
+            uptimeMs: uptimeMs
         )
         
         store.save(snapshot)
@@ -94,7 +96,8 @@ class ResourceCollector: ObservableObject {
         disk: Int64,
         diskLimit: Int64,
         networkRx: Int64,
-        networkTx: Int64
+        networkTx: Int64,
+        uptimeMs: Int64
     ) {
         recordSnapshot(
             serverId: serverId,
@@ -105,7 +108,8 @@ class ResourceCollector: ObservableObject {
             diskUsedBytes: disk,
             diskLimitBytes: diskLimit,
             networkRxBytes: networkRx,
-            networkTxBytes: networkTx
+            networkTxBytes: networkTx,
+            uptimeMs: uptimeMs
         )
     }
     
@@ -131,7 +135,8 @@ class ResourceCollector: ObservableObject {
             disk: disk,
             diskLimit: diskLimit,
             networkRx: 0,
-            networkTx: 0
+            networkTx: 0,
+            uptimeMs: 0
         )
     }
     

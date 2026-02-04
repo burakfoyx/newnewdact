@@ -104,6 +104,7 @@ struct WebsocketResponse: Codable {
         let cpu_absolute: Double
         let disk_bytes: Int64
         let state: String
+        let uptime: Int64?
     }
 }
 
