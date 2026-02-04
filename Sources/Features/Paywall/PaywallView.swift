@@ -108,7 +108,7 @@ struct PaywallView: View {
     
     // MARK: - Tier Selector
     private var tierSelector: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 4) {
             TierTab(
                 title: "Pro",
                 subtitle: "For individuals",
@@ -131,13 +131,8 @@ struct PaywallView: View {
                 }
             }
         }
-        .padding(4)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
+        .padding(6)
+        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
     
     // MARK: - Plan Selector
@@ -247,12 +242,7 @@ struct PaywallView: View {
                 }
             }
             .padding()
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-            )
+            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
     
@@ -371,17 +361,21 @@ struct TierTab: View {
                     .foregroundStyle(isSelected ? .white.opacity(0.7) : .white.opacity(0.3))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 8)
             .background(
                 isSelected ?
-                    AnyShapeStyle(LinearGradient(
-                        colors: [.white.opacity(0.15), .white.opacity(0.05)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )) :
+                    AnyShapeStyle(Color.white.opacity(0.1)) :
                     AnyShapeStyle(Color.clear)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(
+                        isSelected ? Color.white.opacity(0.2) : Color.clear,
+                        lineWidth: 1
+                    )
+            )
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -415,6 +409,13 @@ struct GlassPlanCard: View {
                                 )
                             )
                         )
+                } else {
+                    // Invisible spacer to keep cards same height
+                    Text(" ")
+                        .font(.caption2.bold())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .opacity(0)
                 }
                 
                 Text(title)
@@ -431,22 +432,24 @@ struct GlassPlanCard: View {
                         .foregroundStyle(.white.opacity(0.5))
                 }
             }
-            .frame(maxWidth: isWide ? .infinity : nil)
-            .frame(minWidth: isWide ? nil : 140)
-            .padding(.vertical, 20)
-            .padding(.horizontal, 16)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 100)
+            .padding(.vertical, 16)
+            .padding(.horizontal, 12)
+            .glassEffect(
+                isSelected ? .clear.interactive() : .clear,
+                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+            )
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .stroke(
                         isSelected ?
                             LinearGradient(colors: [.yellow, .orange], startPoint: .topLeading, endPoint: .bottomTrailing) :
-                            LinearGradient(colors: [.white.opacity(0.15)], startPoint: .topLeading, endPoint: .bottomTrailing),
-                        lineWidth: isSelected ? 2 : 1
+                            LinearGradient(colors: [.clear], startPoint: .topLeading, endPoint: .bottomTrailing),
+                        lineWidth: isSelected ? 2 : 0
                     )
             )
-            .shadow(color: isSelected ? .orange.opacity(0.2) : .clear, radius: 8)
+            .shadow(color: isSelected ? .orange.opacity(0.3) : .clear, radius: 12)
         }
         .buttonStyle(PlainButtonStyle())
     }
