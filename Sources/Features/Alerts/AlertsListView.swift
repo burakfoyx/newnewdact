@@ -22,54 +22,41 @@ struct AlertsListView: View {
     @StateObject private var subscriptionManager = SubscriptionManager.shared
     
     var body: some View {
-        List {
-            if rules.isEmpty {
-                ContentUnavailableView(
-                    "No Alerts",
-                    systemImage: "bell.slash",
-                    description: Text(limitDescription)
-                )
-                .listRowBackground(Color.clear)
-            } else {
-                ForEach(rules) { rule in
-                    AlertRuleRow(rule: rule)
-                        .swipeActions {
-                            Button(role: .destructive) {
-                                modelContext.delete(rule)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
+        ZStack {
+            List {
+                if rules.isEmpty {
+                    ContentUnavailableView(
+                        "No Alerts",
+                        systemImage: "bell.slash",
+                        description: Text(limitDescription)
+                    )
+                    .listRowBackground(Color.clear)
+                } else {
+                    ForEach(rules) { rule in
+                        AlertRuleRow(rule: rule)
+                            .swipeActions {
+                                Button(role: .destructive) {
+                                    modelContext.delete(rule)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                
+                                Button {
+                                    rule.isEnabled.toggle()
+                                } label: {
+                                    Label(rule.isEnabled ? "Mute" : "Enable", systemImage: rule.isEnabled ? "bell.slash" : "bell")
+                                }
+                                .tint(.orange)
                             }
-                            
-                            Button {
-                                rule.isEnabled.toggle()
-                            } label: {
-                                Label(rule.isEnabled ? "Mute" : "Enable", systemImage: rule.isEnabled ? "bell.slash" : "bell")
-                            }
-                            .tint(.orange)
-                        }
+                    }
                 }
             }
-        }
-        .navigationTitle("Alerts")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                HStack(spacing: 16) {
-                    Menu {
-                        Button {
-                            showHistory = true
-                        } label: {
-                            Label("History", systemImage: "clock.arrow.circlepath")
-                        }
-                        
-                        Button {
-                            showSettings = true
-                        } label: {
-                            Label("Quiet Hours", systemImage: "moon.fill")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                    
+            
+            // Floating Action Button
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
                     Button {
                         if canCreateRule {
                             showEditor = true
@@ -78,7 +65,32 @@ struct AlertsListView: View {
                         }
                     } label: {
                         Image(systemName: "plus")
+                            .font(.title2.bold())
+                            .foregroundStyle(.white)
+                            .frame(width: 56, height: 56)
+                            .glassEffect(.clear.interactive(), in: Circle())
                     }
+                    .padding()
+                }
+            }
+        }
+        .navigationTitle("Alerts")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Button {
+                        showHistory = true
+                    } label: {
+                        Label("History", systemImage: "clock.arrow.circlepath")
+                    }
+                    
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Label("Quiet Hours", systemImage: "moon.fill")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
             }
         }

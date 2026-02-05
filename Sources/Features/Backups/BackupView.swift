@@ -167,14 +167,7 @@ struct BackupView: View {
                             .font(.title2.bold())
                             .foregroundStyle(.white)
                             .frame(width: 56, height: 56)
-                            .background(.ultraThinMaterial) // Liquid Glass Base
-                            .background(Color.white.opacity(0.1)) // Tint
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                            )
-                            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                            .glassEffect(.clear.interactive(), in: Circle())
                     }
                     .padding()
                 }
