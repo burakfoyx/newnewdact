@@ -66,10 +66,10 @@ struct AnsiParser {
         case 0:
             // Reset
             attributes.foregroundColor = .white.opacity(0.9)
-            attributes.inlinePresentationIntent = []
+            attributes.font = nil
         case 1:
             // Bold
-            attributes.inlinePresentationIntent?.insert(.bold)
+            attributes.font = .system(size: 11, weight: .bold, design: .monospaced)
         case 30: attributes.foregroundColor = .black
         case 31: attributes.foregroundColor = .red
         case 32: attributes.foregroundColor = .green
