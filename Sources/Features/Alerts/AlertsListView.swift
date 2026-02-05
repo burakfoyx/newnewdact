@@ -166,7 +166,6 @@ struct AlertRuleRow: View {
                     .foregroundStyle(.gray)
             }
         }
-        }
         .padding()
         .liquidGlass(variant: .clear, in: RoundedRectangle(cornerRadius: 16))
     }
