@@ -167,7 +167,7 @@ struct AlertRuleRow: View {
             }
         }
         .padding()
-        .liquidGlass(variant: .clear, in: RoundedRectangle(cornerRadius: 16))
+        .liquidGlass(variant: .clear, cornerRadius: 16)
     }
     
     func iconFor(_ metric: AlertMetric) -> String {

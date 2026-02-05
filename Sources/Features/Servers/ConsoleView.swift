@@ -74,7 +74,7 @@ struct ConsoleView: View {
             }
             .background(Color(red: 0.1, green: 0.12, blue: 0.15).opacity(0.8)) // Slightly more transparent background
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .liquidGlass(variant: .clear, in: RoundedRectangle(cornerRadius: 16)) // Uses proper liquid glass
+            .liquidGlass(variant: .clear, cornerRadius: 16) // Uses proper liquid glass
             .padding()
             .padding(.bottom, 40) // Increased bottom margin for screen curve
         }
