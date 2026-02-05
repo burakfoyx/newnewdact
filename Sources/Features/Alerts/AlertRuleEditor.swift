@@ -35,7 +35,7 @@ struct AlertRuleEditor: View {
                                 Text("\(Int(threshold))\(metric.unit)")
                                     .foregroundStyle(.secondary)
                             }
-                            Slider(value: $threshold, in: 0...100, step: 5)
+                            Slider(value: $threshold, in: 0...maxThreshold, step: 5)
                         }
                     }
                 }
@@ -74,6 +74,19 @@ struct AlertRuleEditor: View {
         )
         
         modelContext.insert(rule)
+        try? modelContext.save() // Explicit save
         dismiss()
+    }
+    
+    private var maxThreshold: Double {
+        if metric == .cpu {
+            // If explicit limit exists and > 0, use it. Otherwise, assume up to 400% (4 cores) as reasonable default for unlimited/unset
+            if let limit = server.limits.cpu, limit > 0 {
+                return Double(limit)
+            }
+            return 400.0
+        }
+        // Memory/Disk are usually handled as % of limit in AlertEngine logic, so 100% is max
+        return 100.0
     }
 }

@@ -84,6 +84,9 @@ class ResourceStore: ObservableObject {
             modelContainer = try ModelContainer(for: schema, configurations: config)
             if let container = modelContainer {
                 modelContext = ModelContext(container)
+                // Cleanup old data on startup
+                // Default to 7 days for now to keep size minimal
+                cleanupOldData(retentionDays: 7)
             }
         } catch {
             print("Failed to setup SwiftData: \(error)")
