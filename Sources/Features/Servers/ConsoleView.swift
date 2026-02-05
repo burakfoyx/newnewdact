@@ -7,54 +7,50 @@ struct ConsoleView: View {
     var limits: ServerLimits?
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Stats Bar
-            // Stats removed (displayed in header)
-
-            
-            // Logs
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 4) {
-                        ForEach(viewModel.logs, id: \.self) { log in
-                            Text(log)
-                                .font(.system(.caption, design: .monospaced))
-                                .foregroundStyle(.white.opacity(0.9))
-                                .frame(maxWidth: .infinity, alignment: .leading)
+        VStack {
+            // Unified Terminal Box
+            VStack(spacing: 0) {
+                // Logs Area
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 2) {
+                            ForEach(viewModel.logs, id: \.self) { log in
+                                Text(AnsiParser.parse(log))
+                                    .font(.system(.caption, design: .monospaced))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .textSelection(.enabled) // Allow copying text
+                            }
+                        }
+                        .padding()
+                    }
+                    .defaultScrollAnchor(.bottom)
+                    .onChange(of: viewModel.logs.count) {
+                        if let last = viewModel.logs.last {
+                             withAnimation {
+                                 proxy.scrollTo(last, anchor: .bottom)
+                             }
                         }
                     }
-                    .padding()
-                    .padding(.bottom, 100) // Extra padding to prevent overlap with input area
                 }
                 .scrollDismissesKeyboard(.interactively)
-                .background(Color.clear)
-                .onChange(of: viewModel.logs.count) {
-                    if let last = viewModel.logs.last {
-                         withAnimation {
-                             proxy.scrollTo(last, anchor: .bottom)
-                         }
-                    }
-                }
-            }
-            
-            // Input Area
-            VStack {
+                
+                Divider()
+                    .overlay(Color.white.opacity(0.1))
+                
+                // Input Area
                 HStack(spacing: 12) {
-                    // Connection Status / Reconnect
+                    // Connection Indication
                     if !viewModel.isConnected {
                         Button(action: { viewModel.connect() }) {
                              Image(systemName: "arrow.clockwise.circle.fill")
-                                .font(.system(size: 20))
+                                .font(.system(size: 18))
                                 .foregroundStyle(.red)
-                                .shadow(color: .red.opacity(0.5), radius: 5)
                         }
-                        .transition(.scale.combined(with: .opacity))
                     } else {
                          Circle()
                             .fill(Color.green)
                             .frame(width: 8, height: 8)
-                            .shadow(color: .green, radius: 5)
-                            .padding(.leading, 4)
+                            .shadow(color: .green, radius: 4)
                     }
 
                     TextField("Type a command...", text: $viewModel.inputCommand)
@@ -68,25 +64,23 @@ struct ConsoleView: View {
                         Image(systemName: "paperplane.fill")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(.white)
-                            .padding(10)
-                            .background(
-                                LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
-                            )
+                            .padding(8)
+                            .background(Color.blue)
                             .clipShape(Circle())
-                            .shadow(color: .blue.opacity(0.4), radius: 4)
                     }
                 }
-                .padding(6)
-                .padding(.horizontal, 6)
-                .glassEffect(.clear, in: Capsule())
-                .padding(.horizontal)
-                .padding(.bottom, 8)
+                .padding(12)
+                .background(Color.black.opacity(0.2)) // Slightly darker input area
             }
+            .background(Color(red: 0.1, green: 0.12, blue: 0.15)) // Terminal Background Color (Pterodactyl-ish)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16)) // Outer Glass wrapper
+            .padding()
+            .padding(.bottom, 16)
         }
         .background(Color.clear)
         .navigationTitle("Console")
         .navigationBarTitleDisplayMode(.inline)
-        .ignoresSafeArea(edges: []) // Reset if needed, or just standard
         .toolbar(.hidden, for: .tabBar) // Hide Tab Bar
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true // Keep screen awake
