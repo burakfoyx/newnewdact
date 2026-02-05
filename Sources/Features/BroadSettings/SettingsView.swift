@@ -131,10 +131,7 @@ struct SettingsView: View {
                     
                     // #if DEBUG
                     Section("Debug Actions (Dev Only)") {
-                        Picker("Force Tier", selection: Binding(
-                            get: { subscriptionManager.debugTierOverride ?? .free },
-                            set: { subscriptionManager.debugTierOverride = $0 }
-                        )) {
+                        Picker("Force Tier", selection: $subscriptionManager.debugTierOverride) {
                             Text("Real").tag(Optional<UserTier>.none)
                             Text("Free").tag(Optional<UserTier>.some(.free))
                             Text("Pro").tag(Optional<UserTier>.some(.pro))
