@@ -118,10 +118,13 @@ actor PterodactylClient {
         }
         
         // Handle URL encoding for directory path
-        var components = URLComponents(url: baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/list"), resolvingAgainstBaseURL: true)!
+        guard var components = URLComponents(url: baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/list"), resolvingAgainstBaseURL: true) else {
+            throw PterodactylError.invalidURL
+        }
         components.queryItems = [URLQueryItem(name: "directory", value: directory)]
         
-        var request = URLRequest(url: components.url!)
+        guard let finalURL = components.url else { throw PterodactylError.invalidURL }
+        var request = URLRequest(url: finalURL)
         request.httpMethod = "GET"
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Accept")
@@ -273,10 +276,13 @@ actor PterodactylClient {
     func getFileContent(serverId: String, filePath: String) async throws -> String {
         guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
         
-        var components = URLComponents(url: baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/contents"), resolvingAgainstBaseURL: true)!
+        guard var components = URLComponents(url: baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/contents"), resolvingAgainstBaseURL: true) else {
+             throw PterodactylError.invalidURL
+        }
         components.queryItems = [URLQueryItem(name: "file", value: filePath)]
         
-        var request = URLRequest(url: components.url!)
+        guard let finalURL = components.url else { throw PterodactylError.invalidURL }
+        var request = URLRequest(url: finalURL)
         request.httpMethod = "GET"
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Accept")
