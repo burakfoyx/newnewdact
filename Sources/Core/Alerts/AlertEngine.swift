@@ -34,7 +34,7 @@ class AlertEngine: ObservableObject {
     private func evaluate(rule: AlertRule, server: ServerAttributes, stats: ResourceUsage, state: String, context: ModelContext) {
         // Basic cooldown check (e.g., don't alert again for 30 mins)
         if let last = rule.lastTriggeredAt {
-            if Date().timeIntervalSince(last) < 1800 { return }
+            if Date().timeIntervalSince(last) < Double(rule.durationSeconds) { return }
         }
         
         var isTriggered = false

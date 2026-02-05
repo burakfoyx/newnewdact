@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct XYIdactylApp: App {
@@ -32,7 +33,7 @@ struct XYIdactylApp: App {
             UserDefaults.standard.set(true, forKey: hasLaunchedKey)
         }
     }
-
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -44,5 +45,6 @@ struct XYIdactylApp: App {
                     ResourceCollector.scheduleBackgroundTask() 
                 }
         }
+        .modelContainer(for: [ResourceSnapshotEntity.self, AlertRule.self, AlertEvent.self])
     }
 }
