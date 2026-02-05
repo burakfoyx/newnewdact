@@ -12,47 +12,54 @@ struct AlertRuleEditor: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Trigger") {
-                    Picker("Metric", selection: $metric) {
-                        ForEach(AlertMetric.allCases) { m in
-                            Text(m.displayName).tag(m)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    
-                    if metric != .offline {
-                        Picker("Condition", selection: $condition) {
-                            ForEach(AlertCondition.allCases) { c in
-                                Text(c.displayName).tag(c)
+            ZStack {
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
+                
+                Form {
+                    Section("Trigger") {
+                        Picker("Metric", selection: $metric) {
+                            ForEach(AlertMetric.allCases) { m in
+                                Text(m.displayName).tag(m)
                             }
                         }
+                        .pickerStyle(.menu)
                         
-                        VStack(alignment: .leading) {
-                            HStack {
-                                Text("Threshold")
-                                Spacer()
-                                Text("\(Int(threshold))\(metric.unit)")
-                                    .foregroundStyle(.secondary)
+                        if metric != .offline {
+                            Picker("Condition", selection: $condition) {
+                                ForEach(AlertCondition.allCases) { c in
+                                    Text(c.displayName).tag(c)
+                                }
                             }
-                            Slider(value: $threshold, in: 0...maxThreshold, step: 5)
+                            
+                            VStack(alignment: .leading) {
+                                HStack {
+                                    Text("Threshold")
+                                    Spacer()
+                                    Text("\(Int(threshold))\(metric.unit)")
+                                        .foregroundStyle(.secondary)
+                                }
+                                Slider(value: $threshold, in: 0...maxThreshold, step: 5)
+                            }
                         }
                     }
-                }
-                
-                Section {
-                    Button("Create Alert Rule") {
-                        createRule()
+                    
+                    Section {
+                        Button("Create Alert Rule") {
+                            createRule()
+                        }
+                        .frame(maxWidth: .infinity)
+                        .bold()
                     }
-                    .frame(maxWidth: .infinity)
-                    .bold()
+                    
+                    Section {
+                        Text("You will receive a local notification when this rule is triggered while the app is running.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                
-                Section {
-                    Text("You will receive a local notification when this rule is triggered while the app is running.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
             }
             .navigationTitle("New Alert")
             .navigationBarTitleDisplayMode(.inline)
