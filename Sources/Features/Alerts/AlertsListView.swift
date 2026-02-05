@@ -34,6 +34,9 @@ struct AlertsListView: View {
                 } else {
                     ForEach(rules) { rule in
                         AlertRuleRow(rule: rule)
+                            .opacity(rule.isEnabled ? 1.0 : 0.6)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                             .swipeActions {
                                 Button(role: .destructive) {
                                     modelContext.delete(rule)
@@ -163,7 +166,9 @@ struct AlertRuleRow: View {
                     .foregroundStyle(.gray)
             }
         }
-        .opacity(rule.isEnabled ? 1.0 : 0.6)
+        }
+        .padding()
+        .liquidGlass(variant: .clear, in: RoundedRectangle(cornerRadius: 16))
     }
     
     func iconFor(_ metric: AlertMetric) -> String {

@@ -72,11 +72,11 @@ struct ConsoleView: View {
                 .padding(12)
                 .background(Color.black.opacity(0.2)) // Slightly darker input area
             }
-            .background(Color(red: 0.1, green: 0.12, blue: 0.15)) // Terminal Background Color (Pterodactyl-ish)
+            .background(Color(red: 0.1, green: 0.12, blue: 0.15).opacity(0.8)) // Slightly more transparent background
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16)) // Outer Glass wrapper
+            .liquidGlass(variant: .clear, in: RoundedRectangle(cornerRadius: 16)) // Uses proper liquid glass
             .padding()
-            .padding(.bottom, 16)
+            .padding(.bottom, 40) // Increased bottom margin for screen curve
         }
         .background(Color.clear)
         .navigationTitle("Console")
