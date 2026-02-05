@@ -114,8 +114,12 @@ class AlertEngine: ObservableObject {
         let defaults = UserDefaults.standard
         if !defaults.bool(forKey: "quietHoursEnabled") { return false }
         
-        let start = (defaults.object(forKey: "quietHoursStart") as? Date) ?? Date()
-        let end = (defaults.object(forKey: "quietHoursEnd") as? Date) ?? Date()
+        // AppStorage stores Date as Double (TimeIntervalSinceReferenceDate)
+        let startInterval = defaults.double(forKey: "quietHoursStart")
+        let endInterval = defaults.double(forKey: "quietHoursEnd")
+        
+        let start = Date(timeIntervalSinceReferenceDate: startInterval)
+        let end = Date(timeIntervalSinceReferenceDate: endInterval)
         
         let calendar = Calendar.current
         let now = Date()
