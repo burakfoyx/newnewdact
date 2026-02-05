@@ -129,7 +129,7 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                     
-                    #if DEBUG
+                    // #if DEBUG
                     Section("Debug Actions (Dev Only)") {
                         Picker("Force Tier", selection: Binding(
                             get: { subscriptionManager.debugTierOverride ?? .free },
@@ -145,7 +145,7 @@ struct SettingsView: View {
                             subscriptionManager.debugTierOverride = nil
                         }
                     }
-                    #endif
+                    // #endif
                 }
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)
