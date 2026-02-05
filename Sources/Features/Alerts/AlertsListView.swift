@@ -112,20 +112,22 @@ struct AlertsListView: View {
     }
     
     var limitDescription: String {
-        switch subscriptionManager.currentTier {
-        case .free: return "Upgrade to Pro to create alert rules."
-        case .pro: return "Create up to 5 alert rules."
-        case .host: return "Create unlimited alert rules."
+        guard let limit = FeatureFlags.shared.limit(for: .customAlerts) else {
+            return "Create custom alert rules."
+        }
+        
+        if limit == 0 {
+            return "Upgrade to Pro to create alert rules."
+        } else if limit == .max {
+            return "Create unlimited alert rules."
+        } else {
+            return "Create up to \(limit) alert rules."
         }
     }
     
     var canCreateRule: Bool {
-        let count = rules.count
-        switch subscriptionManager.currentTier {
-        case .free: return false
-        case .pro: return count < 5
-        case .host: return true
-        }
+        guard let limit = FeatureFlags.shared.limit(for: .customAlerts) else { return true }
+        return rules.count < limit
     }
 }
 
