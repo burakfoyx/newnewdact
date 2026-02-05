@@ -29,13 +29,14 @@ class BackupViewModel: ObservableObject {
     func createBackup(name: String) async {
         await MainActor.run { isLoading = true }
         do {
-            _ = try await PterodactylClient.shared.createBackup(serverId: serverId, name: name.isEmpty ? nil : name)
+            let newBackup = try await PterodactylClient.shared.createBackup(serverId: serverId, name: name.isEmpty ? nil : name)
             await MainActor.run {
-                // Prepend to list optimistically or reload?
-                // Reload is safer for status
+                // Optimistically insert the new backup at the top
+                self.backups.insert(newBackup, at: 0)
                 self.isLoading = false
             }
-            await loadBackups()
+            // Optional: Reload after a delay to get updated status (completed state)
+            // await loadBackups() 
         } catch {
             await MainActor.run {
                 self.isLoading = false
