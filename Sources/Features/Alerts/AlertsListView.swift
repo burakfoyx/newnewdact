@@ -13,7 +13,7 @@ struct AlertsListView: View {
         let id = server.identifier
         _rules = Query(filter: #Predicate<AlertRule> { rule in
             rule.serverId == id
-        }, sort: \.metric.rawValue)
+        })
     }
     
     @State private var showPaywall = false
