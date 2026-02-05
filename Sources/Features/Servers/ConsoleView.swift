@@ -196,9 +196,6 @@ class ConsoleViewModel: ObservableObject {
              if let statsData = statsJson.data(using: .utf8),
                 let stats = try? JSONDecoder().decode(WebsocketResponse.Stats.self, from: statsData) {
                  self.stats = stats
-                 
-                 // Record analytics data
-                 recordAnalytics(stats: stats)
              }
              
         case .status(let status):
@@ -218,29 +215,5 @@ class ConsoleViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Analytics Recording
-    private func recordAnalytics(stats: WebsocketResponse.Stats) {
-        // Get panel ID from active account
-        let panelId = AccountManager.shared.activeAccount?.id.uuidString ?? "unknown"
-        
-        // Calculate limits (use server limits if available, otherwise use defaults)
-        let memoryLimit = Int64((serverLimits?.memory ?? 4096) * 1024 * 1024) // MB to bytes
-        let diskLimit = Int64((serverLimits?.disk ?? 50000) * 1024 * 1024) // MB to bytes
-        
-        // Record to ResourceCollector
-        Task { @MainActor in
-            ResourceCollector.shared.recordFromStats(
-                serverId: serverId,
-                panelId: panelId,
-                cpu: stats.cpu_absolute,
-                memory: stats.memory_bytes,
-                memoryLimit: memoryLimit,
-                disk: stats.disk_bytes,
-                diskLimit: diskLimit,
-                networkRx: 0,  // WebSocket stats don't include network, use 0
-                networkTx: 0,
-                uptimeMs: stats.uptime ?? 0
-            )
-        }
-    }
+
 }
