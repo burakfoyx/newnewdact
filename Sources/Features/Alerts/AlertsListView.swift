@@ -17,6 +17,8 @@ struct AlertsListView: View {
     }
     
     @State private var showPaywall = false
+    @State private var showHistory = false
+    @State private var showSettings = false
     @StateObject private var subscriptionManager = SubscriptionManager.shared
     
     var body: some View {
@@ -51,14 +53,32 @@ struct AlertsListView: View {
         .navigationTitle("Alerts")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button {
-                    if canCreateRule {
-                        showEditor = true
-                    } else {
-                        showPaywall = true
+                HStack(spacing: 16) {
+                    Menu {
+                        Button {
+                            showHistory = true
+                        } label: {
+                            Label("History", systemImage: "clock.arrow.circlepath")
+                        }
+                        
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Label("Quiet Hours", systemImage: "moon.fill")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
-                } label: {
-                    Image(systemName: "plus")
+                    
+                    Button {
+                        if canCreateRule {
+                            showEditor = true
+                        } else {
+                            showPaywall = true
+                        }
+                    } label: {
+                        Image(systemName: "plus")
+                    }
                 }
             }
         }
@@ -67,6 +87,12 @@ struct AlertsListView: View {
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView(highlightedFeature: .customAlerts)
+        }
+        .sheet(isPresented: $showHistory) {
+            AlertHistoryView(serverId: server.identifier)
+        }
+        .sheet(isPresented: $showSettings) {
+            AlertSettingsView()
         }
         .onAppear {
             NotificationService.shared.requestPermissions()

@@ -135,12 +135,7 @@ struct ServerAnalyticsSummary {
     let totalNetworkRx: Int64
     let totalNetworkTx: Int64
     let currentUptimeMs: Int64
-    
-    // Idle detection
-    var idleHoursPerDay: Double {
-        // Hours per day where CPU < 5%
-        0 // Calculated from snapshots
-    }
+    let idleHoursPerDay: Double // Hours per day where CPU < 5%
 }
 
 // MARK: - Chart Data Point

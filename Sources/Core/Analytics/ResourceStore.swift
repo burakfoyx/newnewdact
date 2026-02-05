@@ -79,7 +79,7 @@ class ResourceStore: ObservableObject {
     
     private func setupContainer() {
         do {
-            let schema = Schema([ResourceSnapshotEntity.self, AlertRule.self])
+            let schema = Schema([ResourceSnapshotEntity.self, AlertRule.self, AlertEvent.self])
             let config = ModelConfiguration(isStoredInMemoryOnly: false)
             modelContainer = try ModelContainer(for: schema, configurations: config)
             if let container = modelContainer {
@@ -208,6 +208,14 @@ class ResourceStore: ObservableObject {
         let isUnderutilized = avgCPU < 10 && avgMemory < 20
         let isOverallocated = peakCPU > 90 || peakMemory > 90
         
+        // Idle Detection (CPU < 5%)
+        let idleSnapshots = snapshots.filter { $0.cpuPercent < 5.0 }
+        let timePerSnapshot = 900.0 // Assuming ~15 min intervals for rough estimate, or calculate from timestamps
+        // More precise: total time spanned * (idle count / total count)
+        let totalHours = Date().timeIntervalSince(timeRange.startDate) / 3600.0
+        let idleRatio = Double(idleSnapshots.count) / Double(snapshots.count)
+        let idleHours = totalHours * idleRatio
+        
         return ServerAnalyticsSummary(
             serverId: serverId,
             serverName: serverName,
@@ -226,7 +234,8 @@ class ResourceStore: ObservableObject {
             isOverallocated: isOverallocated,
             totalNetworkRx: totalRx,
             totalNetworkTx: totalTx,
-            currentUptimeMs: snapshots.last?.uptimeMs ?? 0
+            currentUptimeMs: snapshots.last?.uptimeMs ?? 0,
+            idleHoursPerDay: idleHours
         )
     }
     

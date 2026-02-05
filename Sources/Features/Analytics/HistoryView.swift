@@ -346,6 +346,15 @@ struct HistoryView: View {
                     )
                 }
                 
+                if summary.idleHoursPerDay > 4 {
+                    InsightRow(
+                        icon: "moon.zzz.fill",
+                        iconColor: .purple,
+                        title: "Idle Server",
+                        description: "This server is idle for ~\(Int(summary.idleHoursPerDay)) hours/day. Consider stopping it when not in use."
+                    )
+                }
+                
                 if summary.isOverallocated {
                     InsightRow(
                         icon: "exclamationmark.triangle.fill",
