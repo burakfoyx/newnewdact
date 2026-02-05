@@ -210,7 +210,7 @@ class ResourceStore: ObservableObject {
         
         // Idle Detection (CPU < 5%)
         let idleSnapshots = snapshots.filter { $0.cpuPercent < 5.0 }
-        let timePerSnapshot = 900.0 // Assuming ~15 min intervals for rough estimate, or calculate from timestamps
+        // let timePerSnapshot = 900.0 // Assuming ~15 min intervals for rough estimate, or calculate from timestamps
         // More precise: total time spanned * (idle count / total count)
         let totalHours = Date().timeIntervalSince(timeRange.startDate) / 3600.0
         let idleRatio = Double(idleSnapshots.count) / Double(snapshots.count)

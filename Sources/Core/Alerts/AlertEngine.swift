@@ -114,8 +114,8 @@ class AlertEngine: ObservableObject {
         let defaults = UserDefaults.standard
         if !defaults.bool(forKey: "quietHoursEnabled") { return false }
         
-        let start = defaults.date(forKey: "quietHoursStart") ?? Date()
-        let end = defaults.date(forKey: "quietHoursEnd") ?? Date()
+        let start = (defaults.object(forKey: "quietHoursStart") as? Date) ?? Date()
+        let end = (defaults.object(forKey: "quietHoursEnd") as? Date) ?? Date()
         
         let calendar = Calendar.current
         let now = Date()
