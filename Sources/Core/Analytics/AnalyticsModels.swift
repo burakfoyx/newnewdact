@@ -128,10 +128,13 @@ struct ServerAnalyticsSummary {
     // Trends
     let cpuTrend: UsageTrend
     let memoryTrend: UsageTrend
+    let diskTrend: UsageTrend
     
     // Insights
     let isUnderutilized: Bool       // Low avg usage
     let isOverallocated: Bool       // Consistently near limits
+    let isSaturated: Bool           // Resources consistently very high (>90%)
+    let isDiskCritical: Bool        // Disk usage critically high (>90%)
     let totalNetworkRx: Int64
     let totalNetworkTx: Int64
     let currentUptimeMs: Int64

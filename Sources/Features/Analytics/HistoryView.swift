@@ -353,12 +353,30 @@ struct HistoryView: View {
                     )
                 }
                 
+                if summary.isDiskCritical {
+                    InsightRow(
+                        icon: "internaldrive.fill",
+                        iconColor: .red,
+                        title: "Critical Disk Space",
+                        description: "Disk usage averages >90%. Risk of data corruption or write failures."
+                    )
+                }
+                
+                if summary.isSaturated {
+                    InsightRow(
+                        icon: "flame.fill",
+                        iconColor: .red,
+                        title: "Severe Saturation",
+                        description: "Average load is consistently high (>80%). Performance is likely degraded."
+                    )
+                }
+                
                 if summary.isOverallocated {
                     InsightRow(
                         icon: "exclamationmark.triangle.fill",
                         iconColor: .orange,
-                        title: "High Resource Usage",
-                        description: "This server frequently hits resource limits. Consider upgrading."
+                        title: "Peak Usage Warning",
+                        description: "This server frequently hits resource limits during peaks. Consider upgrading."
                     )
                 }
                 
@@ -371,7 +389,7 @@ struct HistoryView: View {
                     )
                 }
                 
-                if !summary.isUnderutilized && !summary.isOverallocated && summary.cpuTrend != .increasing {
+                if !summary.isUnderutilized && !summary.isOverallocated && !summary.isSaturated && !summary.isDiskCritical && summary.cpuTrend != .increasing {
                     InsightRow(
                         icon: "checkmark.circle.fill",
                         iconColor: .green,

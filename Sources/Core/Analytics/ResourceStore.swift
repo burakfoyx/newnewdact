@@ -202,6 +202,7 @@ class ResourceStore: ObservableObject {
         // Calculate trends
         let cpuTrend = calculateTrend(values: snapshots.map(\.cpuPercent))
         let memoryTrend = calculateTrend(values: snapshots.map(\.memoryPercent))
+        let diskTrend = calculateTrend(values: snapshots.map(\.diskPercent))
         
         // Network totals
         let totalRx = snapshots.map(\.networkRxBytes).max() ?? 0
@@ -209,7 +210,9 @@ class ResourceStore: ObservableObject {
         
         // Insights
         let isUnderutilized = avgCPU < 10 && avgMemory < 20
-        let isOverallocated = peakCPU > 90 || peakMemory > 90
+        let isOverallocated = peakCPU > 95 || peakMemory > 95 // Bumped to 95 for peak
+        let isSaturated = avgCPU > 80 || avgMemory > 90       // High average load
+        let isDiskCritical = avgDisk > 90
         
         // Idle Detection (CPU < 5%)
         let idleSnapshots = snapshots.filter { $0.cpuPercent < 5.0 }
@@ -233,8 +236,11 @@ class ResourceStore: ObservableObject {
             peakDiskPercent: peakDisk,
             cpuTrend: cpuTrend,
             memoryTrend: memoryTrend,
+            diskTrend: diskTrend,
             isUnderutilized: isUnderutilized,
             isOverallocated: isOverallocated,
+            isSaturated: isSaturated,
+            isDiskCritical: isDiskCritical,
             totalNetworkRx: totalRx,
             totalNetworkTx: totalTx,
             currentUptimeMs: snapshots.last?.uptimeMs ?? 0,
