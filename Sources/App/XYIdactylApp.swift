@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct XYIdactylApp: App {
     init() {
+        ResourceCollector.registerBackgroundTasks()
         triggerNetworkPermissionIfNeeded()
     }
     
@@ -40,7 +41,6 @@ struct XYIdactylApp: App {
                     ResourceCollector.shared.startPolling()
                     
                     // Register background tasks
-                    ResourceCollector.registerBackgroundTasks()
                     ResourceCollector.scheduleBackgroundTask() 
                 }
         }

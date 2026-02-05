@@ -128,6 +128,24 @@ struct SettingsView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    
+                    #if DEBUG
+                    Section("Debug Actions (Dev Only)") {
+                        Picker("Force Tier", selection: Binding(
+                            get: { subscriptionManager.debugTierOverride ?? .free },
+                            set: { subscriptionManager.debugTierOverride = $0 }
+                        )) {
+                            Text("Real").tag(Optional<UserTier>.none)
+                            Text("Free").tag(Optional<UserTier>.some(.free))
+                            Text("Pro").tag(Optional<UserTier>.some(.pro))
+                            Text("Host").tag(Optional<UserTier>.some(.host))
+                        }
+                        
+                        Button("Reset Debug Tier") {
+                            subscriptionManager.debugTierOverride = nil
+                        }
+                    }
+                    #endif
                 }
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)

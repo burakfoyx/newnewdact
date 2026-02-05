@@ -75,6 +75,8 @@ class SubscriptionManager: ObservableObject {
     @Published private(set) var isLoading = false
     @Published var errorMessage: String?
     
+    @Published var debugTierOverride: UserTier?
+    
     private var updateListenerTask: Task<Void, Error>?
     
     private init() {
@@ -94,7 +96,10 @@ class SubscriptionManager: ObservableObject {
     
     // MARK: - Current Tier (Convenience)
     var currentTier: UserTier {
-        subscriptionStatus.tier
+        if let override = debugTierOverride {
+            return override
+        }
+        return subscriptionStatus.tier
     }
     
     var isPro: Bool {

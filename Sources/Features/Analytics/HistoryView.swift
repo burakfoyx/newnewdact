@@ -169,53 +169,49 @@ struct HistoryView: View {
     
     // MARK: - Summary Cards
     private func summaryCards(_ summary: ServerAnalyticsSummary) -> some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ], spacing: 12) {
-            // Uptime Reliability (Moved to top)
+        VStack(spacing: 12) {
+            // Uptime Wide Card
             SummaryCard(
-                title: "Uptime • \(formatUptime(summary.currentUptimeMs))",
-                value: String(format: "%.1f%%", summary.uptimeAvailability),
+                title: String(format: "%.1f%% Reliability", summary.uptimeAvailability),
+                value: formatUptime(summary.currentUptimeMs),
                 trend: nil,
                 icon: "clock.arrow.circlepath"
             )
             
-            // Peak Memory (Restored)
-            SummaryCard(
-                title: "Peak Memory",
-                value: String(format: "%.1f%%", summary.peakMemoryPercent),
-                trend: nil,
-                icon: "memorychip.fill"
-            )
-            
-            SummaryCard(
-                title: "Avg CPU",
-                value: String(format: "%.1f%%", summary.avgCPU),
-                trend: summary.cpuTrend,
-                icon: "cpu"
-            )
-            
-            SummaryCard(
-                title: "Peak CPU",
-                value: String(format: "%.1f%%", summary.peakCPU),
-                trend: nil,
-                icon: "arrow.up.circle"
-            )
-            
-            SummaryCard(
-                title: "Avg Memory",
-                value: String(format: "%.1f%%", summary.avgMemoryPercent),
-                trend: summary.memoryTrend,
-                icon: "memorychip"
-            )
-            
-            SummaryCard(
-                title: "Peak Disk",
-                value: String(format: "%.1f%%", summary.peakDiskPercent),
-                trend: nil,
-                icon: "internaldrive"
-            )
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 12) {
+                // Row 1: CPU
+                SummaryCard(
+                    title: "Avg CPU",
+                    value: String(format: "%.1f%%", summary.avgCPU),
+                    trend: summary.cpuTrend,
+                    icon: "cpu"
+                )
+                
+                SummaryCard(
+                    title: "Peak CPU",
+                    value: String(format: "%.1f%%", summary.peakCPU),
+                    trend: nil,
+                    icon: "arrow.up.circle"
+                )
+                
+                // Row 2: Memory
+                SummaryCard(
+                    title: "Avg Memory",
+                    value: String(format: "%.1f%%", summary.avgMemoryPercent),
+                    trend: summary.memoryTrend,
+                    icon: "memorychip"
+                )
+                
+                SummaryCard(
+                    title: "Peak Memory",
+                    value: String(format: "%.1f%%", summary.peakMemoryPercent),
+                    trend: nil,
+                    icon: "memorychip.fill"
+                )
+            }
         }
     }
     

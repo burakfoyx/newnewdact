@@ -71,7 +71,7 @@ class ResourceStore: ObservableObject {
     static let shared = ResourceStore()
     
     private var modelContainer: ModelContainer?
-    private var modelContext: ModelContext?
+    var modelContext: ModelContext?
     
     private init() {
         setupContainer()
@@ -79,7 +79,7 @@ class ResourceStore: ObservableObject {
     
     private func setupContainer() {
         do {
-            let schema = Schema([ResourceSnapshotEntity.self])
+            let schema = Schema([ResourceSnapshotEntity.self, AlertRule.self])
             let config = ModelConfiguration(isStoredInMemoryOnly: false)
             modelContainer = try ModelContainer(for: schema, configurations: config)
             if let container = modelContainer {

@@ -81,6 +81,16 @@ class ResourceCollector: ObservableObject {
                         uptimeMs: stats.resources.uptime ?? 0
                     )
                     
+                    // Check Alerts
+                    if let context = ResourceStore.shared.modelContext {
+                        AlertEngine.shared.checkAlerts(
+                            server: server,
+                            stats: stats.resources,
+                            state: stats.currentState,
+                            context: context
+                        )
+                    }
+                    
                 } catch {
                     print("Failed to poll stats for server \(server.name): \(error)")
                 }
