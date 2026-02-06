@@ -34,15 +34,15 @@ struct ConsoleView: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
                 
-                // Input Area - overlays on top
+                // Input Area - overlays on top with opaque background
                 VStack(spacing: 0) {
                     // Fade gradient so text smoothly disappears behind input
                     LinearGradient(
-                        colors: [.clear, Color.black.opacity(0.3)],
+                        colors: [.clear, Color(red: 0.08, green: 0.08, blue: 0.12)],
                         startPoint: .top,
                         endPoint: .bottom
                     )
-                    .frame(height: 20)
+                    .frame(height: 30)
                     
                     HStack(spacing: 12) {
                         // Connection Indication
@@ -76,7 +76,7 @@ struct ConsoleView: View {
                         }
                     }
                     .padding(12)
-                    .background(Color.black.opacity(0.4))
+                    .background(Color(red: 0.08, green: 0.08, blue: 0.12)) // Solid opaque dark background
                 }
             }
             .background(Color.black.opacity(0.1))
