@@ -87,7 +87,7 @@ public struct GlassEffectContainer<Content: View>: View {
 public struct GlassEffectTransition {}
 
 extension ButtonStyle where Self == LiquidButtonStyle {
-    public static var glass: LiquidButtonStyle { LiquidButtonStyle() }
+    public static var liquidGlass: LiquidButtonStyle { LiquidButtonStyle() }
 }
 
 // MARK: - Background Style Enum

@@ -134,7 +134,7 @@ struct AlertRuleEditor: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
                         }
-                        .buttonStyle(.glass)
+                        .buttonStyle(GlassButtonStyle())
                     }
                     .padding()
                     .padding(.bottom, 40)
