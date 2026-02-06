@@ -47,9 +47,9 @@ struct QuickActionsBar: View {
         
         Task {
             do {
-                try await PterodactylClient.shared.sendPowerAction(
+                try await PterodactylClient.shared.sendPowerSignal(
                     serverId: serverId,
-                    action: action.signal
+                    signal: action.signal
                 )
                 
                 // Haptic feedback on success

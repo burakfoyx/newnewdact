@@ -67,6 +67,7 @@ struct ServerListView: View {
     @State private var showGroupsSheet = false
     @State private var serverToCustomize: ServerAttributes?
     @State private var navigationPath = NavigationPath()
+    @Environment(\.modelContext) private var modelContext
     
     private var hasAdminAccess: Bool {
         accountManager.activeAccount?.hasAdminAccess ?? false
@@ -89,104 +90,16 @@ struct ServerListView: View {
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
-            ZStack {
-                LiquidBackgroundView()
-                    .ignoresSafeArea()
-                
-                if viewModel.isLoading {
-                    ProgressView("Loading Servers...")
-                        .tint(.white)
-                } else if let error = viewModel.errorMessage {
-                    VStack {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.largeTitle)
-                            .foregroundStyle(.orange)
-                        Text(error)
-                            .multilineTextAlignment(.center)
-                            .padding()
-                        Button("Retry") {
-                            Task { await viewModel.loadServers() }
-                        }
-                        .buttonStyle(LiquidButtonStyle())
-                    }
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            ForEach(sortedServers, id: \.uuid) { server in
-                                NavigationLink(destination: ServerDetailView(server: server)) {
-                                    ServerRow(
-                                        server: server,
-                                        stats: viewModel.serverStats[server.uuid],
-                                        customization: customization(for: server.identifier)
-                                    )
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                                .contextMenu {
-                                    Button("Customize", systemImage: "paintbrush") {
-                                        serverToCustomize = server
-                                    }
-                                    
-                                    if let custom = customization(for: server.identifier), custom.isFavorite {
-                                        Button("Remove from Favorites", systemImage: "star.slash") {
-                                            custom.isFavorite = false
-                                        }
-                                    } else {
-                                        Button("Add to Favorites", systemImage: "star.fill") {
-                                            toggleFavorite(for: server)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .padding()
-                        .padding(.bottom, hasAdminAccess ? 80 : 0) // Make room for FAB
-                    }
-                    .scrollContentBackground(.hidden)
-                }
-                
-                // Floating Action Button for Admin Users
-                if hasAdminAccess && !viewModel.isLoading {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Button(action: { showCreateSheet = true }) {
-                                Image(systemName: "plus")
-                                    .font(.title2.bold())
-                                    .foregroundStyle(.white)
-                                    .frame(width: 56, height: 56)
-                                    .glassEffect(.clear.interactive(), in: Circle())
-                                    .shadow(color: .purple.opacity(0.5), radius: 10)
-                            }
-                            .padding()
-                        }
-                    }
-                }
-            }
-            .background(Color.clear)
-            .navigationTitle("Servers")
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    NotificationBellButton()
-                }
-                
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showGroupsSheet = true
-                    } label: {
-                        Image(systemName: "folder.fill")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.white)
-                    }
-                }
-            }
+            mainContent
+                .background(Color.clear)
+                .navigationTitle("Servers")
+                .toolbarColorScheme(.dark, for: .navigationBar)
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .toolbar { toolbarContent }
         }
         .scrollContentBackground(.hidden)
         .background(Color.clear)
         .task {
-            // Always load on appear
             await viewModel.loadServers()
             viewModel.currentAccountId = accountManager.activeAccount?.id
         }
@@ -201,14 +114,12 @@ struct ServerListView: View {
         }
         .onChange(of: showCreateSheet) { _, isPresented in
             if !isPresented {
-                // Refresh servers after creating
                 Task { await viewModel.loadServers() }
             }
         }
         .onChange(of: accountManager.activeAccount?.id) { oldId, newId in
-            // Account changed - reset navigation and reload servers
             if oldId != newId {
-                navigationPath = NavigationPath() // Pop all detail views
+                navigationPath = NavigationPath()
                 viewModel.clear()
                 Task { await viewModel.loadServers() }
                 viewModel.currentAccountId = newId
@@ -216,7 +127,137 @@ struct ServerListView: View {
         }
     }
     
-    @Environment(\.modelContext) private var modelContext
+    // MARK: - Main Content
+    
+    private var mainContent: some View {
+        ZStack {
+            LiquidBackgroundView()
+                .ignoresSafeArea()
+            
+            if viewModel.isLoading {
+                loadingView
+            } else if let error = viewModel.errorMessage {
+                errorView(error)
+            } else {
+                serverListContent
+            }
+            
+            if hasAdminAccess && !viewModel.isLoading {
+                floatingActionButton
+            }
+        }
+    }
+    
+    // MARK: - Loading View
+    
+    private var loadingView: some View {
+        ProgressView("Loading Servers...")
+            .tint(.white)
+    }
+    
+    // MARK: - Error View
+    
+    private func errorView(_ error: String) -> some View {
+        VStack {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.largeTitle)
+                .foregroundStyle(.orange)
+            Text(error)
+                .multilineTextAlignment(.center)
+                .padding()
+            Button("Retry") {
+                Task { await viewModel.loadServers() }
+            }
+            .buttonStyle(LiquidButtonStyle())
+        }
+    }
+    
+    // MARK: - Server List Content
+    
+    private var serverListContent: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(sortedServers, id: \.uuid) { server in
+                    serverRowLink(for: server)
+                }
+            }
+            .padding()
+            .padding(.bottom, hasAdminAccess ? 80 : 0)
+        }
+        .scrollContentBackground(.hidden)
+    }
+    
+    private func serverRowLink(for server: ServerAttributes) -> some View {
+        NavigationLink(destination: ServerDetailView(server: server)) {
+            ServerRow(
+                server: server,
+                stats: viewModel.serverStats[server.uuid],
+                customization: customization(for: server.identifier)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .contextMenu {
+            serverContextMenu(for: server)
+        }
+    }
+    
+    @ViewBuilder
+    private func serverContextMenu(for server: ServerAttributes) -> some View {
+        Button("Customize", systemImage: "paintbrush") {
+            serverToCustomize = server
+        }
+        
+        if let custom = customization(for: server.identifier), custom.isFavorite {
+            Button("Remove from Favorites", systemImage: "star.slash") {
+                custom.isFavorite = false
+            }
+        } else {
+            Button("Add to Favorites", systemImage: "star.fill") {
+                toggleFavorite(for: server)
+            }
+        }
+    }
+    
+    // MARK: - Floating Action Button
+    
+    private var floatingActionButton: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                Button(action: { showCreateSheet = true }) {
+                    Image(systemName: "plus")
+                        .font(.title2.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 56, height: 56)
+                        .glassEffect(.clear.interactive(), in: Circle())
+                        .shadow(color: .purple.opacity(0.5), radius: 10)
+                }
+                .padding()
+            }
+        }
+    }
+    
+    // MARK: - Toolbar Content
+    
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            NotificationBellButton()
+        }
+        
+        ToolbarItem(placement: .primaryAction) {
+            Button {
+                showGroupsSheet = true
+            } label: {
+                Image(systemName: "folder.fill")
+                    .font(.system(size: 16))
+                    .foregroundStyle(.white)
+            }
+        }
+    }
+    
+    // MARK: - Helper Functions
     
     private func toggleFavorite(for server: ServerAttributes) {
         if let existing = customization(for: server.identifier) {
@@ -229,22 +270,21 @@ struct ServerListView: View {
     }
 }
 
+// MARK: - Server Row
+
 struct ServerRow: View {
     let server: ServerAttributes
     let stats: ServerStats?
     var customization: ServerCustomization? = nil
     
-    // Display name (custom or default)
     var displayName: String {
         customization?.customName ?? server.name
     }
     
-    // Is favorite
     var isFavorite: Bool {
         customization?.isFavorite ?? false
     }
     
-    // Custom accent color
     var accentColor: Color {
         if let hex = customization?.colorHex {
             return hex.asColor
@@ -253,7 +293,6 @@ struct ServerRow: View {
     }
     
     var statusColor: Color {
-        // Dynamic State
         if let state = stats?.currentState {
             switch state {
             case "running": return .green
@@ -266,7 +305,6 @@ struct ServerRow: View {
             }
         }
         
-        // Static Fallbacks
         if server.isSuspended { return .orange }
         if server.isInstalling { return .blue }
         return .black
@@ -295,74 +333,87 @@ struct ServerRow: View {
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 6) {
-                // Server Name with favorite indicator
-                HStack(spacing: 6) {
-                    if isFavorite {
-                        Image(systemName: "star.fill")
-                            .font(.caption)
-                            .foregroundStyle(.yellow)
-                    }
-                    
-                    Text(displayName)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.white)
-                }
-                
-                // IP Address
-                HStack(spacing: 4) {
-                     Image(systemName: "network")
-                        .font(.caption2)
-                     Text(displayIP) 
-                        .font(.caption)
-                }
-                .foregroundStyle(.white.opacity(0.6))
-                
-                // Resources
-                HStack(spacing: 16) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "cpu")
-                        Text(cpuUsage)
-                    }
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.8))
-                    
-                    HStack(spacing: 4) {
-                        Image(systemName: "memorychip")
-                        Text(memoryUsage)
-                    }
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.8))
-                }
-            }
-            
+            serverInfo
             Spacer()
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        // Small status indicator on left edge only (status color -> transparent)
         .overlay(alignment: .leading) {
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [statusColor.opacity(0.4), .clear],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .frame(width: 60) // Only 60pt wide on the left
-                .clipShape(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 16,
-                        bottomLeadingRadius: 16,
-                        bottomTrailingRadius: 0,
-                        topTrailingRadius: 0,
-                        style: .continuous
-                    )
-                )
-                .allowsHitTesting(false)
+            statusOverlay
         }
         .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+    
+    private var serverInfo: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            nameRow
+            ipRow
+            resourcesRow
+        }
+    }
+    
+    private var nameRow: some View {
+        HStack(spacing: 6) {
+            if isFavorite {
+                Image(systemName: "star.fill")
+                    .font(.caption)
+                    .foregroundStyle(.yellow)
+            }
+            
+            Text(displayName)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.white)
+        }
+    }
+    
+    private var ipRow: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "network")
+                .font(.caption2)
+            Text(displayIP) 
+                .font(.caption)
+        }
+        .foregroundStyle(.white.opacity(0.6))
+    }
+    
+    private var resourcesRow: some View {
+        HStack(spacing: 16) {
+            HStack(spacing: 4) {
+                Image(systemName: "cpu")
+                Text(cpuUsage)
+            }
+            .font(.caption.monospacedDigit())
+            .foregroundStyle(.white.opacity(0.8))
+            
+            HStack(spacing: 4) {
+                Image(systemName: "memorychip")
+                Text(memoryUsage)
+            }
+            .font(.caption.monospacedDigit())
+            .foregroundStyle(.white.opacity(0.8))
+        }
+    }
+    
+    private var statusOverlay: some View {
+        Rectangle()
+            .fill(
+                LinearGradient(
+                    colors: [statusColor.opacity(0.4), .clear],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .frame(width: 60)
+            .clipShape(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 16,
+                    bottomLeadingRadius: 16,
+                    bottomTrailingRadius: 0,
+                    topTrailingRadius: 0,
+                    style: .continuous
+                )
+            )
+            .allowsHitTesting(false)
     }
 }

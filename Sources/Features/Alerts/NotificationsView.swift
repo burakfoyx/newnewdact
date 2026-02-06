@@ -146,6 +146,8 @@ struct NotificationBellButton: View {
         return events.filter { $0.triggeredAt > oneDayAgo }.count
     }
     
+    init() {}
+    
     var body: some View {
         Button {
             showNotifications = true

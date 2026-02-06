@@ -14,70 +14,9 @@ struct PanelListView: View {
                     .ignoresSafeArea()
                 
                 if accountManager.accounts.isEmpty {
-                    // Empty state
-                    VStack(spacing: 20) {
-                        Image(systemName: "rectangle.stack.badge.plus")
-                            .font(.system(size: 60))
-                            .foregroundStyle(.white.opacity(0.5))
-                        
-                        Text("No Panels")
-                            .font(.title2.bold())
-                            .foregroundStyle(.white)
-                        
-                        Text("Add your first Pterodactyl panel to get started")
-                            .font(.subheadline)
-                            .foregroundStyle(.white.opacity(0.7))
-                            .multilineTextAlignment(.center)
-                        
-                        Button(action: { showAddPanel = true }) {
-                            Label("Add Panel", systemImage: "plus")
-                                .fontWeight(.bold)
-                        }
-                        .buttonStyle(LiquidButtonStyle())
-                        .padding(.horizontal, 60)
-                    }
-                    .padding()
+                    emptyStateView
                 } else {
-                    List {
-                        ForEach(accountManager.accounts) { account in
-                            PanelRowItem(
-                                account: account,
-                                isActive: accountManager.activeAccount?.id == account.id,
-                                onSelect: {
-                                    accountManager.switchToAccount(id: account.id)
-                                    selectedTab = 2
-                                }
-                            )
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                        }
-                        .onDelete { indexSet in
-                            for index in indexSet {
-                                let account = accountManager.accounts[index]
-                                panelToDelete = account
-                                showDeleteConfirmation = true
-                            }
-                        }
-                    }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
-                    
-                    // Floating Add Button
-                    VStack {
-                         Spacer()
-                         HStack {
-                             Spacer()
-                             Button(action: { showAddPanel = true }) {
-                                 Image(systemName: "plus")
-                                     .font(.title2.bold())
-                                     .foregroundStyle(.white)
-                                     .frame(width: 56, height: 56)
-                                     .glassEffect(.clear.interactive(), in: Circle())
-                             }
-                             .padding()
-                         }
-                    }
+                    panelListContent
                 }
             }
             .background(Color.clear)
@@ -85,16 +24,7 @@ struct PanelListView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    NotificationBellButton()
-                }
-                
-                if !accountManager.accounts.isEmpty {
-                    ToolbarItem(placement: .primaryAction) {
-                        EditButton()
-                            .foregroundStyle(.white)
-                    }
-                }
+                toolbarContent
             }
         }
         .scrollContentBackground(.hidden)
@@ -115,6 +45,101 @@ struct PanelListView: View {
             Text("Are you sure you want to remove \"\(panel.name)\"? This will remove the saved credentials.")
         }
     }
+    
+    // MARK: - Empty State
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "rectangle.stack.badge.plus")
+                .font(.system(size: 60))
+                .foregroundStyle(.white.opacity(0.5))
+            
+            Text("No Panels")
+                .font(.title2.bold())
+                .foregroundStyle(.white)
+            
+            Text("Add your first Pterodactyl panel to get started")
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+            
+            Button(action: { showAddPanel = true }) {
+                Label("Add Panel", systemImage: "plus")
+                    .fontWeight(.bold)
+            }
+            .buttonStyle(LiquidButtonStyle())
+            .padding(.horizontal, 60)
+        }
+        .padding()
+    }
+    
+    // MARK: - Panel List Content
+    
+    private var panelListContent: some View {
+        ZStack {
+            List {
+                ForEach(accountManager.accounts) { account in
+                    PanelRowItem(
+                        account: account,
+                        isActive: accountManager.activeAccount?.id == account.id,
+                        onSelect: {
+                            accountManager.switchToAccount(id: account.id)
+                            selectedTab = 2
+                        }
+                    )
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                }
+                .onDelete { indexSet in
+                    for index in indexSet {
+                        let account = accountManager.accounts[index]
+                        panelToDelete = account
+                        showDeleteConfirmation = true
+                    }
+                }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            
+            floatingAddButton
+        }
+    }
+    
+    // MARK: - Floating Add Button
+    
+    private var floatingAddButton: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                Button(action: { showAddPanel = true }) {
+                    Image(systemName: "plus")
+                        .font(.title2.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 56, height: 56)
+                        .glassEffect(.clear.interactive(), in: Circle())
+                }
+                .padding()
+            }
+        }
+    }
+    
+    // MARK: - Toolbar Content
+    
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            NotificationBellButton()
+        }
+        
+        if !accountManager.accounts.isEmpty {
+            ToolbarItem(placement: .primaryAction) {
+                EditButton()
+                    .foregroundStyle(.white)
+            }
+        }
+    }
 }
 
 // MARK: - Panel Row Item
@@ -126,48 +151,56 @@ struct PanelRowItem: View {
     
     var body: some View {
         Button(action: onSelect) {
-            HStack {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                        Text(account.name)
-                            .font(.title3.weight(.bold))
-                            .foregroundStyle(.white)
-                        
-                        if account.hasAdminAccess {
-                            Text("ADMIN")
-                                .font(.caption2.bold())
-                                .foregroundStyle(.purple)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.purple.opacity(0.2))
-                                .clipShape(Capsule())
-                        }
-                    }
-                    
-                    Text(account.url)
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-                
-                Spacer()
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity)
-            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
-            .shadow(
-                color: isActive ? Color.blue.opacity(0.6) : Color.clear,
-                radius: isActive ? 12 : 0
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        isActive ? Color.blue.opacity(0.8) : Color.white.opacity(0.1),
-                        lineWidth: isActive ? 2 : 1
-                    )
-                    .allowsHitTesting(false)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: 16))
+            rowContent
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var rowContent: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 6) {
+                nameWithBadge
+                
+                Text(account.url)
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+            
+            Spacer()
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+        .shadow(
+            color: isActive ? Color.blue.opacity(0.6) : Color.clear,
+            radius: isActive ? 12 : 0
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    isActive ? Color.blue.opacity(0.8) : Color.white.opacity(0.1),
+                    lineWidth: isActive ? 2 : 1
+                )
+                .allowsHitTesting(false)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 16))
+    }
+    
+    private var nameWithBadge: some View {
+        HStack(spacing: 8) {
+            Text(account.name)
+                .font(.title3.weight(.bold))
+                .foregroundStyle(.white)
+            
+            if account.hasAdminAccess {
+                Text("ADMIN")
+                    .font(.caption2.bold())
+                    .foregroundStyle(.purple)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.purple.opacity(0.2))
+                    .clipShape(Capsule())
+            }
+        }
     }
 }
