@@ -23,37 +23,37 @@ struct AlertsListView: View {
     
     var body: some View {
         ZStack {
-            List {
-                if rules.isEmpty {
-                    ContentUnavailableView(
-                        "No Alerts",
-                        systemImage: "bell.slash",
-                        description: Text(limitDescription)
-                    )
-                    .listRowBackground(Color.clear)
-                } else {
-                    ForEach(rules) { rule in
-                        AlertRuleRow(rule: rule)
-                            .opacity(rule.isEnabled ? 1.0 : 0.6)
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                            .swipeActions {
-                                Button(role: .destructive) {
-                                    modelContext.delete(rule)
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
+            ScrollView {
+                VStack(spacing: 12) {
+                    if rules.isEmpty {
+                        ContentUnavailableView(
+                            "No Alerts",
+                            systemImage: "bell.slash",
+                            description: Text(limitDescription)
+                        )
+                        .padding(.top, 100)
+                    } else {
+                        ForEach(rules) { rule in
+                            AlertRuleRow(rule: rule)
+                                .opacity(rule.isEnabled ? 1.0 : 0.6)
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        modelContext.delete(rule)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    
+                                    Button {
+                                        rule.isEnabled.toggle()
+                                    } label: {
+                                        Label(rule.isEnabled ? "Mute" : "Enable", systemImage: rule.isEnabled ? "bell.slash" : "bell")
+                                    }
                                 }
-                                
-                                Button {
-                                    rule.isEnabled.toggle()
-                                } label: {
-                                    Label(rule.isEnabled ? "Mute" : "Enable", systemImage: rule.isEnabled ? "bell.slash" : "bell")
-                                }
-                                .tint(.orange)
-                            }
+                        }
                     }
                 }
+                .padding(.horizontal)
+                .padding(.top, 8)
             }
             
             // Floating Action Button
