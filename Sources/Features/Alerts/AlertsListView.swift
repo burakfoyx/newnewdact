@@ -108,7 +108,7 @@ struct AlertsListView: View {
             AlertHistoryView(serverId: server.identifier)
         }
         .sheet(isPresented: $showSettings) {
-            AlertSettingsView()
+            AlertSettingsView(server: server)
         }
         .onAppear {
             NotificationService.shared.requestPermissions()
