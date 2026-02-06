@@ -129,7 +129,7 @@ struct ServerListView: View {
         if viewModel.isLoading {
             ProgressView("Loading Servers...")
                 .tint(.white)
-        } else if letMN error = viewModel.errorMessage {
+        } else if let error = viewModel.errorMessage {
             errorView(error)
         } else {
             successContent
