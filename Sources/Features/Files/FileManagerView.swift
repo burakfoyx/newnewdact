@@ -82,7 +82,7 @@ struct FileManagerView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            Color.clear.frame(height: 140) // Spacer for header
+            Color.clear.frame(height: 240) // Spacer for header
             // Path Breadcrumb
             HStack {
                 Button(action: { viewModel.navigateUp() }) {

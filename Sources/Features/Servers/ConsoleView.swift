@@ -23,7 +23,7 @@ struct ConsoleView: View {
                             }
                         }
                         .padding(.horizontal)
-                        .padding(.top, 160) // Clears the floating header
+                        .padding(.top, 260) // Clears the floating header (NavBar + Metrics)
                         .padding(.bottom, 80) // Clears the tab bar
                     }
                     .defaultScrollAnchor(.bottom)

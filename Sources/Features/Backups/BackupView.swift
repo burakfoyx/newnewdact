@@ -86,7 +86,7 @@ struct BackupView: View {
         ZStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    Color.clear.frame(height: 140) // Header spacer
+                    Color.clear.frame(height: 240) // Header spacer
                     if let error = viewModel.error {
                         Text(error)
                             .foregroundStyle(.red)

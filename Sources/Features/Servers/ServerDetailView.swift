@@ -90,6 +90,26 @@ struct ServerDetailView: View {
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(nil, value: selectedTab)
                 
+                // Header Layer (Floating on top)
+                VStack(spacing: 8) {
+                    GlassyNavBar(
+                        title: server.name,
+                        statusState: consoleViewModel.state,
+                        selectedTab: $selectedTab,
+                        onBack: { dismiss() },
+                        onPowerAction: { action in consoleViewModel.sendPowerAction(action) }
+                    )
+                    
+                    // Metrics Card
+                    if consoleViewModel.stats != nil {
+                         GlassMetricsCard(stats: consoleViewModel.stats, limits: server.limits)
+                            .padding(.horizontal)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                }
+                .padding(.top, 50) // Adjust for status bar/notch since we are in ZStack ignoring safe area
+                .padding(.horizontal, 10) // Slight horizontal padding for floating look
+                
                 // Bottom Tab Bar ...
             }
         }

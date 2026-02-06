@@ -12,10 +12,9 @@ struct AlertSettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    // Spacer
                     Color.clear.listRowBackground(Color.clear)
                 }
-                .frame(height: 100)
+                .frame(height: 240)
                 .listRowBackground(Color.clear)
                 
                 Section {

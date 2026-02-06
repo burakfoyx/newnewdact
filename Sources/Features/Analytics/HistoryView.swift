@@ -19,8 +19,7 @@ struct HistoryView: View {
     var body: some View {
         ScrollView {
                 VStack(spacing: 20) {
-                    // Spacer for header
-                    Color.clear.frame(height: 120)
+                    Color.clear.frame(height: 240)
                     // Collection Status
                     VStack(spacing: 4) {
                         if collector.snapshotCount > 0 {
