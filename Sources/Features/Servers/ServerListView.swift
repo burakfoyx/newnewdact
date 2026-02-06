@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 class ServerListViewModel: ObservableObject {
     @Published var servers: [ServerAttributes] = []
@@ -61,11 +62,29 @@ class ServerListViewModel: ObservableObject {
 struct ServerListView: View {
     @StateObject private var viewModel = ServerListViewModel()
     @ObservedObject private var accountManager = AccountManager.shared
+    @Query private var customizations: [ServerCustomization]
     @State private var showCreateSheet = false
+    @State private var showGroupsSheet = false
+    @State private var serverToCustomize: ServerAttributes?
     @State private var navigationPath = NavigationPath()
     
     private var hasAdminAccess: Bool {
         accountManager.activeAccount?.hasAdminAccess ?? false
+    }
+    
+    // Sort servers with favorites at top
+    private var sortedServers: [ServerAttributes] {
+        let favoriteIds = Set(customizations.filter { $0.isFavorite }.map { $0.serverId })
+        return viewModel.servers.sorted { server1, server2 in
+            let isFav1 = favoriteIds.contains(server1.identifier)
+            let isFav2 = favoriteIds.contains(server2.identifier)
+            if isFav1 != isFav2 { return isFav1 }
+            return server1.name < server2.name
+        }
+    }
+    
+    private func customization(for serverId: String) -> ServerCustomization? {
+        customizations.first { $0.serverId == serverId }
     }
     
     var body: some View {
@@ -93,11 +112,30 @@ struct ServerListView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 12) {
-                            ForEach(viewModel.servers, id: \.uuid) { server in
+                            ForEach(sortedServers, id: \.uuid) { server in
                                 NavigationLink(destination: ServerDetailView(server: server)) {
-                                    ServerRow(server: server, stats: viewModel.serverStats[server.uuid])
+                                    ServerRow(
+                                        server: server,
+                                        stats: viewModel.serverStats[server.uuid],
+                                        customization: customization(for: server.identifier)
+                                    )
                                 }
                                 .buttonStyle(PlainButtonStyle())
+                                .contextMenu {
+                                    Button("Customize", systemImage: "paintbrush") {
+                                        serverToCustomize = server
+                                    }
+                                    
+                                    if let custom = customization(for: server.identifier), custom.isFavorite {
+                                        Button("Remove from Favorites", systemImage: "star.slash") {
+                                            custom.isFavorite = false
+                                        }
+                                    } else {
+                                        Button("Add to Favorites", systemImage: "star.fill") {
+                                            toggleFavorite(for: server)
+                                        }
+                                    }
+                                }
                             }
                         }
                         .padding()
@@ -133,6 +171,16 @@ struct ServerListView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     NotificationBellButton()
                 }
+                
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showGroupsSheet = true
+                    } label: {
+                        Image(systemName: "folder.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.white)
+                    }
+                }
             }
         }
         .scrollContentBackground(.hidden)
@@ -144,6 +192,12 @@ struct ServerListView: View {
         }
         .sheet(isPresented: $showCreateSheet) {
             CreateServerView()
+        }
+        .sheet(isPresented: $showGroupsSheet) {
+            ServerGroupsView()
+        }
+        .sheet(item: $serverToCustomize) { server in
+            ServerCustomizationSheet(server: server)
         }
         .onChange(of: showCreateSheet) { _, isPresented in
             if !isPresented {
@@ -161,11 +215,42 @@ struct ServerListView: View {
             }
         }
     }
+    
+    @Environment(\.modelContext) private var modelContext
+    
+    private func toggleFavorite(for server: ServerAttributes) {
+        if let existing = customization(for: server.identifier) {
+            existing.isFavorite.toggle()
+        } else {
+            let newCustomization = ServerCustomization(serverId: server.identifier)
+            newCustomization.isFavorite = true
+            modelContext.insert(newCustomization)
+        }
+    }
 }
 
 struct ServerRow: View {
     let server: ServerAttributes
     let stats: ServerStats?
+    var customization: ServerCustomization? = nil
+    
+    // Display name (custom or default)
+    var displayName: String {
+        customization?.customName ?? server.name
+    }
+    
+    // Is favorite
+    var isFavorite: Bool {
+        customization?.isFavorite ?? false
+    }
+    
+    // Custom accent color
+    var accentColor: Color {
+        if let hex = customization?.colorHex {
+            return hex.asColor
+        }
+        return statusColor
+    }
     
     var statusColor: Color {
         // Dynamic State
@@ -211,10 +296,18 @@ struct ServerRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 6) {
-                // Server Name
-                Text(server.name)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
+                // Server Name with favorite indicator
+                HStack(spacing: 6) {
+                    if isFavorite {
+                        Image(systemName: "star.fill")
+                            .font(.caption)
+                            .foregroundStyle(.yellow)
+                    }
+                    
+                    Text(displayName)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.white)
+                }
                 
                 // IP Address
                 HStack(spacing: 4) {

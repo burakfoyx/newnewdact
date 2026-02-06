@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject private var backgroundSettings = BackgroundSettings.shared
     @ObservedObject private var subscriptionManager = SubscriptionManager.shared
+    @ObservedObject private var serverPrefs = ServerPreferencesManager.shared
     @State private var showPaywall = false
     
     var body: some View {
@@ -86,6 +87,30 @@ struct SettingsView: View {
                                     }
                                 }
                             }
+                        }
+                    }
+                    
+                    // Refresh Interval
+                    Section("Refresh Interval") {
+                        Picker("Auto-refresh", selection: $serverPrefs.refreshInterval) {
+                            ForEach(RefreshInterval.allCases) { interval in
+                                HStack {
+                                    Text(interval.displayName)
+                                    if interval.requiresPro && subscriptionManager.currentTier == .free {
+                                        Spacer()
+                                        Text("PRO")
+                                            .font(.caption2.bold())
+                                            .foregroundStyle(.purple)
+                                    }
+                                }
+                                .tag(interval)
+                            }
+                        }
+                        
+                        if subscriptionManager.currentTier == .free {
+                            Text("5s and 10s intervals require Pro")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     
