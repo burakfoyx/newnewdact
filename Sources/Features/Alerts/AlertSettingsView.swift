@@ -14,7 +14,7 @@ struct AlertSettingsView: View {
                 Section {
                     Color.clear.listRowBackground(Color.clear)
                 }
-                .frame(height: 240)
+                .frame(height: 200)
                 .listRowBackground(Color.clear)
                 
                 Section {

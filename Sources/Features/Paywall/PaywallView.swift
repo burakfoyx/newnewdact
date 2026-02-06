@@ -68,9 +68,10 @@ struct PaywallView: View {
         VStack(spacing: 16) {
             // Animated Crown/Star Icon
             ZStack {
-                Circle()
-                    .fill(.ultraThinMaterial)
+// Header Circle
+                Color.clear
                     .frame(width: 90, height: 90)
+                    .glassEffect(.clear, in: Circle())
                     .overlay(
                         Circle()
                             .stroke(
@@ -545,7 +546,7 @@ struct UpgradePromptView: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .background(.ultraThinMaterial)
+        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)

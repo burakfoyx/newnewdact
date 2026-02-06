@@ -4,6 +4,13 @@ import Charts
 // MARK: - History View (Analytics Dashboard)
 struct HistoryView: View {
     let server: ServerAttributes
+    let serverName: String
+    let statusState: String
+    @Binding var selectedTab: ServerTab
+    let onBack: () -> Void
+    let onPowerAction: (String) -> Void
+    var stats: WebsocketResponse.Stats?
+    var limits: ServerLimits?
     
     @StateObject private var store = ResourceStore.shared
     @StateObject private var subscriptionManager = SubscriptionManager.shared
@@ -19,7 +26,17 @@ struct HistoryView: View {
     var body: some View {
         ScrollView {
                 VStack(spacing: 20) {
-                    Color.clear.frame(height: 240)
+                     ServerDetailHeader(
+                        title: serverName,
+                        statusState: statusState,
+                        selectedTab: $selectedTab,
+                        onBack: onBack,
+                        onPowerAction: onPowerAction,
+                        stats: stats,
+                        limits: limits
+                    )
+                    .padding(.bottom, 10)
+                    
                     // Collection Status
                     VStack(spacing: 4) {
                         if collector.snapshotCount > 0 {

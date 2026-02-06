@@ -42,15 +42,42 @@ class StartupViewModel: ObservableObject {
 struct StartupView: View {
     @StateObject private var viewModel: StartupViewModel
     
-    init(serverId: String) {
-        _viewModel = StateObject(wrappedValue: StartupViewModel(serverId: serverId))
+    let serverName: String
+    let statusState: String
+    @Binding var selectedTab: ServerTab
+    let onBack: () -> Void
+    let onPowerAction: (String) -> Void
+    var stats: WebsocketResponse.Stats?
+    var limits: ServerLimits?
+    
+    init(server: ServerAttributes, serverName: String, statusState: String, selectedTab: Binding<ServerTab>, onBack: @escaping () -> Void, onPowerAction: @escaping (String) -> Void, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
+        _viewModel = StateObject(wrappedValue: StartupViewModel(serverId: server.identifier))
+        self.serverName = serverName
+        self.statusState = statusState
+        self._selectedTab = selectedTab
+        self.onBack = onBack
+        self.onPowerAction = onPowerAction
+        self.stats = stats
+        self.limits = limits
     }
     
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
+                 ServerDetailHeader(
+                    title: serverName,
+                    statusState: statusState,
+                    selectedTab: $selectedTab,
+                    onBack: onBack,
+                    onPowerAction: onPowerAction,
+                    stats: stats,
+                    limits: limits
+                )
+                .padding(.bottom, 10)
+                
                 if viewModel.isLoading {
                     ProgressView().tint(.white)
+                        .padding(.top, 40)
                 } else {
                     ForEach(viewModel.variables) { variable in
                         StartupVariableRow(variable: variable, onUpdate: { newValue in
@@ -62,6 +89,7 @@ struct StartupView: View {
                 }
             }
             .padding()
+            .padding(.bottom, 80)
         }
         .task {
             await viewModel.loadVariables()

@@ -2,10 +2,28 @@ import SwiftUI
 
 struct ServerSettingsView: View {
     let server: ServerAttributes
+    let serverName: String
+    let statusState: String
+    @Binding var selectedTab: ServerTab
+    let onBack: () -> Void
+    let onPowerAction: (String) -> Void
+    var stats: WebsocketResponse.Stats?
+    var limits: ServerLimits?
     
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
+                 ServerDetailHeader(
+                    title: serverName,
+                    statusState: statusState,
+                    selectedTab: $selectedTab,
+                    onBack: onBack,
+                    onPowerAction: onPowerAction,
+                    stats: stats,
+                    limits: limits
+                )
+                .padding(.bottom, 10)
+                
                 // Info Card
                 VStack(spacing: 12) {
                     Label("Server Information", systemImage: "info.circle.fill")
@@ -68,7 +86,7 @@ struct ServerSettingsView: View {
                 .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
             }
             .padding()
-            .padding(.bottom, 50)
+            .padding(.bottom, 80)
         }
     }
 }

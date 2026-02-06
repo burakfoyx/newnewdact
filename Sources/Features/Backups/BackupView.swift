@@ -78,15 +78,40 @@ struct BackupView: View {
     @State private var newBackupName = ""
     @Environment(\.openURL) var openURL
     
-    init(serverId: String) {
-        _viewModel = StateObject(wrappedValue: BackupViewModel(serverId: serverId))
+    let serverName: String
+    let statusState: String
+    @Binding var selectedTab: ServerTab
+    let onBack: () -> Void
+    let onPowerAction: (String) -> Void
+    var stats: WebsocketResponse.Stats?
+    var limits: ServerLimits?
+    
+    init(server: ServerAttributes, serverName: String, statusState: String, selectedTab: Binding<ServerTab>, onBack: @escaping () -> Void, onPowerAction: @escaping (String) -> Void, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
+        _viewModel = StateObject(wrappedValue: BackupViewModel(serverId: server.identifier))
+        self.serverName = serverName
+        self.statusState = statusState
+        self._selectedTab = selectedTab
+        self.onBack = onBack
+        self.onPowerAction = onPowerAction
+        self.stats = stats
+        self.limits = limits
     }
     
     var body: some View {
         ZStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    Color.clear.frame(height: 240) // Header spacer
+                     ServerDetailHeader(
+                        title: serverName,
+                        statusState: statusState,
+                        selectedTab: $selectedTab,
+                        onBack: onBack,
+                        onPowerAction: onPowerAction,
+                        stats: stats,
+                        limits: limits
+                    )
+                    .padding(.bottom, 10)
+                    
                     if let error = viewModel.error {
                         Text(error)
                             .foregroundStyle(.red)

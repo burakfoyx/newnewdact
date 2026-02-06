@@ -76,44 +76,71 @@ struct FileManagerView: View {
     @StateObject private var viewModel: FileManagerViewModel
     @State private var selectedFileForEditing: FileAttributes?
     
-    init(server: ServerAttributes) {
+    let serverName: String
+    let statusState: String
+    @Binding var selectedTab: ServerTab
+    let onBack: () -> Void
+    let onPowerAction: (String) -> Void
+    var stats: WebsocketResponse.Stats?
+    var limits: ServerLimits?
+    
+    init(server: ServerAttributes, serverName: String, statusState: String, selectedTab: Binding<ServerTab>, onBack: @escaping () -> Void, onPowerAction: @escaping (String) -> Void, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
         _viewModel = StateObject(wrappedValue: FileManagerViewModel(serverId: server.identifier))
+        self.serverName = serverName
+        self.statusState = statusState
+        self._selectedTab = selectedTab
+        self.onBack = onBack
+        self.onPowerAction = onPowerAction
+        self.stats = stats
+        self.limits = limits
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            Color.clear.frame(height: 240) // Spacer for header
-            // Path Breadcrumb
-            HStack {
-                Button(action: { viewModel.navigateUp() }) {
-                    Image(systemName: "arrow.turn.up.left")
-                        .foregroundStyle(.white)
+        ScrollView {
+            VStack(spacing: 0) {
+                 ServerDetailHeader(
+                    title: serverName,
+                    statusState: statusState,
+                    selectedTab: $selectedTab,
+                    onBack: onBack,
+                    onPowerAction: onPowerAction,
+                    stats: stats,
+                    limits: limits
+                )
+                .padding(.bottom, 10)
+                
+                // Path Breadcrumb
+                HStack {
+                    Button(action: { viewModel.navigateUp() }) {
+                        Image(systemName: "arrow.turn.up.left")
+                            .foregroundStyle(.white)
+                    }
+                    .disabled(viewModel.currentPath == "/")
+                    .opacity(viewModel.currentPath == "/" ? 0.3 : 1.0)
+                    
+                    Text(viewModel.currentPath)
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.white.opacity(0.8))
+                        .lineLimit(1)
+                    
+                    Spacer()
+                    
+                    Button(action: { Task { await viewModel.listFiles() } }) {
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundStyle(.white)
+                    }
                 }
-                .disabled(viewModel.currentPath == "/")
-                .opacity(viewModel.currentPath == "/" ? 0.3 : 1.0)
+                .padding()
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(12)
+                .padding(.horizontal)
+                .padding(.bottom, 8)
                 
-                Text(viewModel.currentPath)
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.white.opacity(0.8))
-                    .lineLimit(1)
-                
-                Spacer()
-                
-                Button(action: { Task { await viewModel.listFiles() } }) {
-                    Image(systemName: "arrow.clockwise")
-                        .foregroundStyle(.white)
-                }
-            }
-            .padding()
-            .background(Color.white.opacity(0.05))
-            
-            if viewModel.isLoading {
-                Spacer()
-                ProgressView()
-                    .tint(.white)
-                Spacer()
-            } else {
-                ScrollView {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .tint(.white)
+                        .padding(.top, 40)
+                } else {
                     LazyVStack(spacing: 8) {
                         ForEach(viewModel.files, id: \.name) { file in
                             FileRow(
@@ -130,7 +157,8 @@ struct FileManagerView: View {
                             }
                         }
                     }
-                    .padding()
+                    .padding(.horizontal)
+                    .padding(.bottom, 80)
                 }
             }
         }

@@ -5,14 +5,35 @@ import Combine
 struct ConsoleView: View {
     @ObservedObject var viewModel: ConsoleViewModel
     var limits: ServerLimits?
+    let serverName: String
+    @Binding var selectedTab: ServerTab
+    let onBack: () -> Void
+    let onPowerAction: (String) -> Void
     
     var body: some View {
         VStack(spacing: 0) {
-            // Console glass container
-            VStack(spacing: 0) {
-                // Logs Area
-                ScrollViewReader { proxy in
-                    ScrollView {
+            // Header (Scrolls naturally if we put everything in a ScrollView, but here logs are the scroll view)
+            // Wait, if logs are the scroll view, putting header above logs makes it "sticky" or "fixed". 
+            // The user wants it to "scroll with content".
+            // So `ServerDetailHeader` must be INSIDE the ScrollView?
+            // "Console" has a unique structure: Logs are a ScrollView.
+            // If I put Header in Logs ScrollView, it scrolls away. Excellent.
+            
+            // Log Area with Header inside
+             ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 0) {
+                         ServerDetailHeader(
+                            title: serverName,
+                            statusState: viewModel.state,
+                            selectedTab: $selectedTab,
+                            onBack: onBack,
+                            onPowerAction: onPowerAction,
+                            stats: viewModel.stats,
+                            limits: limits
+                        )
+                        .padding(.bottom, 10)
+                        
                         LazyVStack(alignment: .leading, spacing: 2) {
                             ForEach(Array(viewModel.logs.enumerated()), id: \.offset) { index, log in
                                 Text(AnsiParser.parse(log))
@@ -23,58 +44,63 @@ struct ConsoleView: View {
                             }
                         }
                         .padding(.horizontal)
-                        .padding(.top, 260) // Clears the floating header (NavBar + Metrics)
                         .padding(.bottom, 80) // Clears the tab bar
                     }
-                    .defaultScrollAnchor(.bottom)
-                    .onChange(of: viewModel.logs.count) { oldCount, newCount in
-                        withAnimation {
-                            proxy.scrollTo(newCount - 1, anchor: .bottom)
-                        }
+                }
+                .defaultScrollAnchor(.bottom)
+                .onChange(of: viewModel.logs.count) { oldCount, newCount in
+                    // Only scroll to bottom if we are already near bottom or it's a new log
+                    // Actually, if header is at top, "bottom" is far away.
+                    // This auto-scroll might conflict with header visibility if log is huge.
+                    // But standard console behavior is to show latest logs.
+                    // If logs fill screen, header scrolls off. Correct.
+                    withAnimation {
+                        proxy.scrollTo(newCount - 1, anchor: .bottom)
                     }
                 }
-                .scrollDismissesKeyboard(.interactively)
-                
-                // Separator line
-                Rectangle()
-                    .fill(Color.white.opacity(0.1))
-                    .frame(height: 0.5)
-                
-                // Input Area - simple inline design
-                HStack(spacing: 12) {
-                    // Connection indicator
-                    if viewModel.isConnected {
-                        Circle()
-                            .fill(Color.green)
-                            .frame(width: 8, height: 8)
-                            .shadow(color: .green, radius: 4)
-                    } else {
-                        Button(action: { viewModel.connect() }) {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 8, height: 8)
-                                .shadow(color: .red, radius: 4)
-                        }
-                    }
-                    
-                    // Command input
-                    TextField("Type a command...", text: $viewModel.inputCommand)
-                        .font(.system(.body, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.8))
-                        .tint(.cyan)
-                        .submitLabel(.send)
-                        .onSubmit { viewModel.sendCommand() }
-                    
-                    // Send button
-                    Button(action: { viewModel.sendCommand() }) {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundStyle(.blue)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
             }
+            .scrollDismissesKeyboard(.interactively)
+            
+            // ... Input Area ...
+             // Separator line
+            Rectangle()
+                .fill(Color.white.opacity(0.1))
+                .frame(height: 0.5)
+            
+            // Input Area - simple inline design
+            HStack(spacing: 12) {
+                // Connection indicator
+                if viewModel.isConnected {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 8, height: 8)
+                        .shadow(color: .green, radius: 4)
+                } else {
+                    Button(action: { viewModel.connect() }) {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 8, height: 8)
+                            .shadow(color: .red, radius: 4)
+                    }
+                }
+                
+                // Command input
+                TextField("Type a command...", text: $viewModel.inputCommand)
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .tint(.cyan)
+                    .submitLabel(.send)
+                    .onSubmit { viewModel.sendCommand() }
+                
+                // Send button
+                Button(action: { viewModel.sendCommand() }) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.blue)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .padding(.horizontal)
             .padding(.top, 8)
