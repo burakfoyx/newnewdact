@@ -262,10 +262,31 @@ struct HistoryView: View {
                 // Otherwise use the full time range
                 let selectedDuration = Date().timeIntervalSince(selectedTimeRange.startDate)
                 let dataDuration = dataEndDate.timeIntervalSince(dataStartDate)
-                let useDataRange = dataDuration < (selectedDuration * 0.5) && dataDuration > 0
                 
-                let xDomainStart = useDataRange ? dataStartDate.addingTimeInterval(-dataDuration * 0.1) : selectedTimeRange.startDate
-                let xDomainEnd = useDataRange ? dataEndDate.addingTimeInterval(dataDuration * 0.1) : Date()
+                // Use data range if it spans less than 75% of selected time range
+                // This ensures we zoom in on the data when we have sparse/new data
+                let useDataRange = dataDuration < (selectedDuration * 0.75)
+                
+                let xDomainStart: Date
+                let xDomainEnd: Date
+                
+                if useDataRange {
+                    // Ensure minimum window of 15 minutes (900s) for better visualization of sparse data
+                    let minDuration: TimeInterval = 900
+                    let displayDuration = max(dataDuration, minDuration)
+                    
+                    // If we have very little data (e.g. just started), center on the data
+                    // But if the data ends near "now", try to respect "now" as the end if possible
+                    // simplifying: just center on the data midpoint with minimum window
+                    let midPoint = dataStartDate.addingTimeInterval(dataDuration / 2)
+                    let halfDuration = displayDuration / 2
+                    
+                    xDomainStart = midPoint.addingTimeInterval(-halfDuration * 1.1) // 10% padding
+                    xDomainEnd = midPoint.addingTimeInterval(halfDuration * 1.1)
+                } else {
+                    xDomainStart = selectedTimeRange.startDate
+                    xDomainEnd = Date()
+                }
                 
                 Chart(chartData) { point in
                     AreaMark(
@@ -303,8 +324,13 @@ struct HistoryView: View {
                 .chartYScale(domain: 0...(chartData.map(\.value).max() ?? 100) * 1.1)
                 .chartXAxis {
                     AxisMarks(values: .automatic) { value in
-                        AxisValueLabel(format: xAxisFormat)
-                            .foregroundStyle(.white.opacity(0.6))
+                        if useDataRange {
+                            AxisValueLabel(format: .dateTime.hour().minute())
+                                .foregroundStyle(.white.opacity(0.6))
+                        } else {
+                            AxisValueLabel(format: xAxisFormat)
+                                .foregroundStyle(.white.opacity(0.6))
+                        }
                     }
                 }
                 .chartYAxis {
