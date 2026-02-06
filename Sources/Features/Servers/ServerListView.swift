@@ -129,6 +129,11 @@ struct ServerListView: View {
             .navigationTitle("Servers")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NotificationBellButton()
+                }
+            }
         }
         .scrollContentBackground(.hidden)
         .background(Color.clear)

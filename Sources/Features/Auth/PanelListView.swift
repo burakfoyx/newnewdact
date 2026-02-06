@@ -85,9 +85,15 @@ struct PanelListView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NotificationBellButton()
+                }
+                
                 if !accountManager.accounts.isEmpty {
-                    EditButton()
-                        .foregroundStyle(.white)
+                    ToolbarItem(placement: .primaryAction) {
+                        EditButton()
+                            .foregroundStyle(.white)
+                    }
                 }
             }
         }

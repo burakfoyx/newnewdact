@@ -95,6 +95,11 @@ struct ApiKeysView: View {
             .navigationTitle("API Keys")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NotificationBellButton()
+                }
+            }
         }
         .scrollContentBackground(.hidden)
         .background(Color.clear)
