@@ -14,21 +14,21 @@ struct ConsoleView: View {
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 2) {
-                            ForEach(viewModel.logs, id: \.self) { log in
+                            ForEach(Array(viewModel.logs.enumerated()), id: \.offset) { index, log in
                                 Text(AnsiParser.parse(log))
                                     .font(.system(.caption, design: .monospaced))
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .textSelection(.enabled) // Allow copying text
+                                    .id(index)
                             }
                         }
                         .padding()
                     }
                     .defaultScrollAnchor(.bottom)
-                    .onChange(of: viewModel.logs.count) {
-                        if let last = viewModel.logs.last {
-                             withAnimation {
-                                 proxy.scrollTo(last, anchor: .bottom)
-                             }
+                    .onChange(of: viewModel.logs.count) { oldCount, newCount in
+                        // Scroll to the last item using its index
+                        withAnimation {
+                            proxy.scrollTo(newCount - 1, anchor: .bottom)
                         }
                     }
                 }
@@ -72,11 +72,11 @@ struct ConsoleView: View {
                 .padding(12)
                 .background(Color.black.opacity(0.2)) // Slightly darker input area
             }
-            .background(Color(red: 0.1, green: 0.12, blue: 0.15).opacity(0.8)) // Slightly more transparent background
+                .background(Color.black.opacity(0.1)) // Very subtle background for clear liquid look
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .liquidGlass(variant: .clear, cornerRadius: 16) // Uses proper liquid glass
             .padding()
-            .padding(.bottom, 40) // Increased bottom margin for screen curve
+            .padding(.bottom, 16) // Standard bottom margin
         }
         .background(Color.clear)
         .navigationTitle("Console")

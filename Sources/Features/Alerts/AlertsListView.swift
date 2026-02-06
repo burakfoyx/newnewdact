@@ -138,23 +138,23 @@ struct AlertRuleRow: View {
     let rule: AlertRule
     
     var body: some View {
-        HStack {
+        HStack(spacing: 16) {
             Image(systemName: iconFor(rule.metric))
                 .foregroundStyle(rule.isEnabled ? .blue : .gray)
-                .font(.title2)
-                .frame(width: 30)
+                .font(.title)
+                .frame(width: 40)
             
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(rule.metric.displayName)
                     .font(.headline)
                 
                 if rule.metric == .offline {
                     Text("When server is offline")
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
                     Text("\(rule.condition.displayName) \(Int(rule.threshold))\(rule.metric.unit)")
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -164,10 +164,13 @@ struct AlertRuleRow: View {
             if !rule.isEnabled {
                 Image(systemName: "bell.slash.fill")
                     .foregroundStyle(.gray)
+                    .font(.title3)
             }
         }
-        .padding()
-        .liquidGlass(variant: .clear, cornerRadius: 16)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity)
+        .liquidGlass(variant: .clear, cornerRadius: 20)
     }
     
     func iconFor(_ metric: AlertMetric) -> String {

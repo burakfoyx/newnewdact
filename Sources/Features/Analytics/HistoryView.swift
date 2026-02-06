@@ -94,11 +94,16 @@ struct HistoryView: View {
         .task {
             await loadData()
         }
-        .onChange(of: selectedTimeRange) {
-            Task { await loadData() }
+        .onChange(of: selectedTimeRange) { oldValue, newValue in
+            Task { 
+                isLoading = true
+                await loadData() 
+            }
         }
-        .onChange(of: selectedMetric) {
+        .onChange(of: selectedMetric) { oldValue, newValue in
+            isLoading = true
             loadChartData()
+            isLoading = false
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView(highlightedFeature: .historicalAnalytics)
@@ -238,6 +243,13 @@ struct HistoryView: View {
                     .font(.headline)
                     .foregroundStyle(.white)
                 Spacer()
+                
+                // Show data range info
+                if !chartData.isEmpty {
+                    Text("\(chartData.count) points")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.5))
+                }
             }
             
             if isLoading {
@@ -267,6 +279,8 @@ struct HistoryView: View {
                     .foregroundStyle(metricColor)
                     .lineStyle(StrokeStyle(lineWidth: 2))
                 }
+                // Fix: Use explicit X scale domain to prevent stretching when data is sparse
+                .chartXScale(domain: selectedTimeRange.startDate...Date())
                 .chartXAxis {
                     AxisMarks(values: .automatic) { value in
                         AxisValueLabel(format: xAxisFormat)
@@ -286,6 +300,8 @@ struct HistoryView: View {
                     }
                 }
                 .frame(height: 200)
+                // Force re-render when time range or metric changes
+                .id("\(selectedTimeRange.rawValue)-\(selectedMetric.rawValue)-\(chartData.count)")
             }
         }
         .padding()
