@@ -299,6 +299,25 @@ struct ServerListView: View {
                     Label(isFavorite ? "Unfavorite" : "Favorite", systemImage: isFavorite ? "star.slash" : "star")
                 }
                 
+                // Group Action
+                Menu {
+                    if groups.isEmpty {
+                        Button("No Groups Created", action: {})
+                            .disabled(true)
+                    } else {
+                        ForEach(groups) { group in
+                            Button {
+                                toggleGroupMembership(server: server, group: group)
+                            } label: {
+                                let isInGroup = group.serverIds.contains(server.identifier)
+                                Label(group.name, systemImage: isInGroup ? "checkmark.circle.fill" : "circle")
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Add to Group", systemImage: "folder")
+                }
+                
                 // Edit
                 Button {
                     serverToCustomize = server
@@ -340,19 +359,23 @@ struct ServerListView: View {
                     withAnimation { isEditing.toggle() }
                 } label: {
                     Text(isEditing ? "Done" : "Edit")
+                        .font(.subheadline.weight(.medium))
                         .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .glassEffect(.clear, in: Capsule())
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.white.opacity(0.1))
-                .clipShape(Capsule())
                 
-                // Group Management (Only when not editing or only for adding subgroups? User asked for Edit to move things)
+                // Group Management
                 if !isEditing {
                     Button {
                         showGroupsSheet = true
                     } label: {
                         Image(systemName: "folder.badge.plus")
+                            .font(.subheadline.weight(.medium))
                             .foregroundStyle(.white)
+                            .padding(10)
+                            .glassEffect(.clear, in: Circle())
                     }
                     
                     // View Toggle
@@ -362,7 +385,10 @@ struct ServerListView: View {
                         }
                     } label: {
                         Image(systemName: viewMode == .list ? "square.grid.2x2" : "list.bullet")
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(.white)
+                            .padding(10)
+                            .glassEffect(.clear, in: Circle())
                     }
                 }
             }
@@ -370,6 +396,16 @@ struct ServerListView: View {
     }
     
     // MARK: - Actions
+    
+    private func toggleGroupMembership(server: ServerAttributes, group: ServerGroup) {
+        if let index = group.serverIds.firstIndex(of: server.identifier) {
+            group.serverIds.remove(at: index)
+        } else {
+            group.serverIds.append(server.identifier)
+        }
+        // Save handled by SwiftData autosave, but explicit can be safer
+        // try? modelContext.save() 
+    }
     
     private func moveServers(from source: IndexSet, to destination: Int) {
         // Moves are complex with mixed pinned/unpinned. 
