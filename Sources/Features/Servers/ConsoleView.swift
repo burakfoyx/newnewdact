@@ -77,6 +77,7 @@ struct ConsoleView: View {
             }
             .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .padding(.horizontal)
+            .padding(.top, 8)
             .padding(.bottom, 20)
         }
         .background(Color.clear)
