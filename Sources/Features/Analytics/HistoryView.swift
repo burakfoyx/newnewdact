@@ -17,11 +17,7 @@ struct HistoryView: View {
     @State private var showPaywall = false
     
     var body: some View {
-        ZStack {
-            LiquidBackgroundView()
-                .ignoresSafeArea()
-            
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 20) {
                     // Collection Status
                     VStack(spacing: 4) {
@@ -81,13 +77,12 @@ struct HistoryView: View {
                     if chartData.isEmpty {
                         collectionHint
                     }
-                }
-                .padding()
-                .padding(.bottom, 40)
             }
-            .refreshable {
-                await refreshData()
-            }
+            .padding()
+            .padding(.bottom, 40)
+        }
+        .refreshable {
+            await refreshData()
         }
         .navigationTitle("Analytics")
         .navigationBarTitleDisplayMode(.inline)
@@ -271,6 +266,7 @@ struct HistoryView: View {
                             endPoint: .bottom
                         )
                     )
+                    .interpolationMethod(.monotone)
                     
                     LineMark(
                         x: .value("Time", point.timestamp),
@@ -278,9 +274,11 @@ struct HistoryView: View {
                     )
                     .foregroundStyle(metricColor)
                     .lineStyle(StrokeStyle(lineWidth: 2))
+                    .interpolationMethod(.monotone)
                 }
-                // Fix: Use explicit X scale domain to prevent stretching when data is sparse
+                // Fix: Use explicit X and Y scale domains
                 .chartXScale(domain: selectedTimeRange.startDate...Date())
+                .chartYScale(domain: 0...(chartData.map(\.value).max() ?? 100) * 1.1)
                 .chartXAxis {
                     AxisMarks(values: .automatic) { value in
                         AxisValueLabel(format: xAxisFormat)
