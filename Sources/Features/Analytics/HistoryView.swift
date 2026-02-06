@@ -254,6 +254,19 @@ struct HistoryView: View {
             } else if chartData.isEmpty {
                 noDataView
             } else {
+                // Calculate the actual data time range
+                let dataStartDate = chartData.first?.timestamp ?? selectedTimeRange.startDate
+                let dataEndDate = chartData.last?.timestamp ?? Date()
+                
+                // Use data range if it spans less than 50% of selected time range
+                // Otherwise use the full time range
+                let selectedDuration = Date().timeIntervalSince(selectedTimeRange.startDate)
+                let dataDuration = dataEndDate.timeIntervalSince(dataStartDate)
+                let useDataRange = dataDuration < (selectedDuration * 0.5) && dataDuration > 0
+                
+                let xDomainStart = useDataRange ? dataStartDate.addingTimeInterval(-dataDuration * 0.1) : selectedTimeRange.startDate
+                let xDomainEnd = useDataRange ? dataEndDate.addingTimeInterval(dataDuration * 0.1) : Date()
+                
                 Chart(chartData) { point in
                     AreaMark(
                         x: .value("Time", point.timestamp),
@@ -275,9 +288,18 @@ struct HistoryView: View {
                     .foregroundStyle(metricColor)
                     .lineStyle(StrokeStyle(lineWidth: 2))
                     .interpolationMethod(.monotone)
+                    
+                    // Show individual points when data is sparse
+                    if chartData.count < 20 {
+                        PointMark(
+                            x: .value("Time", point.timestamp),
+                            y: .value(selectedMetric.rawValue, point.value)
+                        )
+                        .foregroundStyle(metricColor)
+                        .symbolSize(30)
+                    }
                 }
-                // Fix: Use explicit X and Y scale domains
-                .chartXScale(domain: selectedTimeRange.startDate...Date())
+                .chartXScale(domain: xDomainStart...xDomainEnd)
                 .chartYScale(domain: 0...(chartData.map(\.value).max() ?? 100) * 1.1)
                 .chartXAxis {
                     AxisMarks(values: .automatic) { value in
