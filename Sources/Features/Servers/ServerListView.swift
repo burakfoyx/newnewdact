@@ -93,6 +93,9 @@ struct ServerListView: View {
             ZStack {
 
                 
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
+                
                 content
             }
             .background(Color.clear)

@@ -12,6 +12,9 @@ struct PanelListView: View {
             ZStack {
 
                 
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
+                
                 if accountManager.accounts.isEmpty {
                     emptyStateView
                 } else {

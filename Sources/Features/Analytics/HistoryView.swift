@@ -350,7 +350,7 @@ struct HistoryView: View {
     private var metricSelector: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(AnalyticsMetric.allCases.filter { $0 != .uptime }) { metric in
+                ForEach(AnalyticsMetric.allCases) { metric in
                     MetricButton(
                         metric: metric,
                         isSelected: selectedMetric == metric
