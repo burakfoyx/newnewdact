@@ -91,8 +91,7 @@ struct ServerListView: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack {
-                LiquidBackgroundView()
-                    .ignoresSafeArea()
+
                 
                 content
             }
