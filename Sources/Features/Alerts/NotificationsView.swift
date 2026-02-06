@@ -146,7 +146,7 @@ struct NotificationBellButton: View {
         return events.filter { $0.triggeredAt > oneDayAgo }.count
     }
     
-    init() {}
+    public init() {}
     
     var body: some View {
         Button {

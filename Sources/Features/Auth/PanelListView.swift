@@ -46,7 +46,7 @@ struct PanelListView: View {
         }
     }
     
-    // MARK: - Empty State
+    // MARK: - Views
     
     private var emptyStateView: some View {
         VStack(spacing: 20) {
@@ -72,8 +72,6 @@ struct PanelListView: View {
         }
         .padding()
     }
-    
-    // MARK: - Panel List Content
     
     private var panelListContent: some View {
         ZStack {
@@ -106,8 +104,6 @@ struct PanelListView: View {
         }
     }
     
-    // MARK: - Floating Add Button
-    
     private var floatingAddButton: some View {
         VStack {
             Spacer()
@@ -124,8 +120,6 @@ struct PanelListView: View {
             }
         }
     }
-    
-    // MARK: - Toolbar Content
     
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
@@ -151,56 +145,57 @@ struct PanelRowItem: View {
     
     var body: some View {
         Button(action: onSelect) {
-            rowContent
+            PanelRowContent(account: account, isActive: isActive)
         }
         .buttonStyle(PlainButtonStyle())
     }
+}
+
+struct PanelRowContent: View {
+    let account: Account
+    let isActive: Bool
     
-    private var rowContent: some View {
+    var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 6) {
-                nameWithBadge
-                
-                Text(account.url)
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
-            }
-            
-            Spacer()
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
-        .shadow(
-            color: isActive ? Color.blue.opacity(0.6) : Color.clear,
-            radius: isActive ? 12 : 0
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(
-                    isActive ? Color.blue.opacity(0.8) : Color.white.opacity(0.1),
-                    lineWidth: isActive ? 2 : 1
-                )
-                .allowsHitTesting(false)
-        )
-        .contentShape(RoundedRectangle(cornerRadius: 16))
-    }
-    
-    private var nameWithBadge: some View {
-        HStack(spacing: 8) {
-            Text(account.name)
-                .font(.title3.weight(.bold))
-                .foregroundStyle(.white)
-            
-            if account.hasAdminAccess {
-                Text("ADMIN")
-                    .font(.caption2.bold())
-                    .foregroundStyle(.purple)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.purple.opacity(0.2))
-                    .clipShape(Capsule())
-            }
-        }
+             VStack(alignment: .leading, spacing: 6) {
+                 HStack(spacing: 8) {
+                     Text(account.name)
+                         .font(.title3.weight(.bold))
+                         .foregroundStyle(.white)
+                     
+                     if account.hasAdminAccess {
+                         Text("ADMIN")
+                             .font(.caption2.bold())
+                             .foregroundStyle(.purple)
+                             .padding(.horizontal, 6)
+                             .padding(.vertical, 2)
+                             .background(Color.purple.opacity(0.2))
+                             .clipShape(Capsule())
+                     }
+                 }
+                 
+                 Text(account.url)
+                     .font(.caption)
+                     .foregroundStyle(.white.opacity(0.6))
+             }
+             
+             Spacer()
+         }
+         .padding(16)
+         .frame(maxWidth: .infinity)
+         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+         .shadow(
+             color: isActive ? Color.blue.opacity(0.6) : Color.clear,
+             radius: isActive ? 12 : 0
+         )
+         .overlay(
+             RoundedRectangle(cornerRadius: 16)
+                 .stroke(
+                     isActive ? Color.blue.opacity(0.8) : Color.white.opacity(0.1),
+                     lineWidth: isActive ? 2 : 1
+                 )
+                 .allowsHitTesting(false)
+         )
+         .contentShape(RoundedRectangle(cornerRadius: 16))
     }
 }

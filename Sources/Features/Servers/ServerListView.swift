@@ -90,12 +90,17 @@ struct ServerListView: View {
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
-            mainContent
-                .background(Color.clear)
-                .navigationTitle("Servers")
-                .toolbarColorScheme(.dark, for: .navigationBar)
-                .toolbarBackground(.hidden, for: .navigationBar)
-                .toolbar { toolbarContent }
+            ZStack {
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
+                
+                content
+            }
+            .background(Color.clear)
+            .navigationTitle("Servers")
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar { toolbarContent }
         }
         .scrollContentBackground(.hidden)
         .background(Color.clear)
@@ -103,19 +108,11 @@ struct ServerListView: View {
             await viewModel.loadServers()
             viewModel.currentAccountId = accountManager.activeAccount?.id
         }
-        .sheet(isPresented: $showCreateSheet) {
-            CreateServerView()
-        }
-        .sheet(isPresented: $showGroupsSheet) {
-            ServerGroupsView()
-        }
-        .sheet(item: $serverToCustomize) { server in
-            ServerCustomizationSheet(server: server)
-        }
+        .sheet(isPresented: $showCreateSheet) { CreateServerView() }
+        .sheet(isPresented: $showGroupsSheet) { ServerGroupsView() }
+        .sheet(item: $serverToCustomize) { server in ServerCustomizationSheet(server: server) }
         .onChange(of: showCreateSheet) { _, isPresented in
-            if !isPresented {
-                Task { await viewModel.loadServers() }
-            }
+            if !isPresented { Task { await viewModel.loadServers() } }
         }
         .onChange(of: accountManager.activeAccount?.id) { oldId, newId in
             if oldId != newId {
@@ -127,35 +124,36 @@ struct ServerListView: View {
         }
     }
     
-    // MARK: - Main Content
+    @ViewBuilder
+    private var content: some View {
+        if viewModel.isLoading {
+            ProgressView("Loading Servers...")
+                .tint(.white)
+        } else if letMN error = viewModel.errorMessage {
+            errorView(error)
+        } else {
+            successContent
+        }
+    }
     
-    private var mainContent: some View {
+    private var successContent: some View {
         ZStack {
-            LiquidBackgroundView()
-                .ignoresSafeArea()
-            
-            if viewModel.isLoading {
-                loadingView
-            } else if let error = viewModel.errorMessage {
-                errorView(error)
-            } else {
-                serverListContent
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(sortedServers, id: \.uuid) { server in
+                        serverRowLink(for: server)
+                    }
+                }
+                .padding()
+                .padding(.bottom, hasAdminAccess ? 80 : 0)
             }
+            .scrollContentBackground(.hidden)
             
-            if hasAdminAccess && !viewModel.isLoading {
+            if hasAdminAccess {
                 floatingActionButton
             }
         }
     }
-    
-    // MARK: - Loading View
-    
-    private var loadingView: some View {
-        ProgressView("Loading Servers...")
-            .tint(.white)
-    }
-    
-    // MARK: - Error View
     
     private func errorView(_ error: String) -> some View {
         VStack {
@@ -170,21 +168,6 @@ struct ServerListView: View {
             }
             .buttonStyle(LiquidButtonStyle())
         }
-    }
-    
-    // MARK: - Server List Content
-    
-    private var serverListContent: some View {
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(sortedServers, id: \.uuid) { server in
-                    serverRowLink(for: server)
-                }
-            }
-            .padding()
-            .padding(.bottom, hasAdminAccess ? 80 : 0)
-        }
-        .scrollContentBackground(.hidden)
     }
     
     private func serverRowLink(for server: ServerAttributes) -> some View {
@@ -218,8 +201,6 @@ struct ServerListView: View {
         }
     }
     
-    // MARK: - Floating Action Button
-    
     private var floatingActionButton: some View {
         VStack {
             Spacer()
@@ -238,8 +219,6 @@ struct ServerListView: View {
         }
     }
     
-    // MARK: - Toolbar Content
-    
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
@@ -256,8 +235,6 @@ struct ServerListView: View {
             }
         }
     }
-    
-    // MARK: - Helper Functions
     
     private func toggleFavorite(for server: ServerAttributes) {
         if let existing = customization(for: server.identifier) {
@@ -277,22 +254,12 @@ struct ServerRow: View {
     let stats: ServerStats?
     var customization: ServerCustomization? = nil
     
-    var displayName: String {
-        customization?.customName ?? server.name
-    }
+    // Extracted Display Logic
+    private var displayName: String { customization?.customName ?? server.name }
+    private var isFavorite: Bool { customization?.isFavorite ?? false }
     
-    var isFavorite: Bool {
-        customization?.isFavorite ?? false
-    }
-    
-    var accentColor: Color {
-        if let hex = customization?.colorHex {
-            return hex.asColor
-        }
-        return statusColor
-    }
-    
-    var statusColor: Color {
+    // Status Logic
+    private var statusColor: Color {
         if let state = stats?.currentState {
             switch state {
             case "running": return .green
@@ -304,25 +271,25 @@ struct ServerRow: View {
             default: return .black
             }
         }
-        
         if server.isSuspended { return .orange }
         if server.isInstalling { return .blue }
         return .black
     }
     
-    var memoryUsage: String {
+    // Resource Strings
+    private var memoryUsage: String {
         let usedMB = Double(stats?.resources.memoryBytes ?? 0) / 1024 / 1024
         let limitMB = Double(server.limits.memory ?? 0)
         return String(format: "%.0f / %.0f MB", usedMB, limitMB)
     }
     
-    var cpuUsage: String {
+    private var cpuUsage: String {
         let used = stats?.resources.cpuAbsolute ?? 0
         let limit = Double(server.limits.cpu ?? 0)
         return String(format: "%.1f%% / %.0f%%", used, limit)
     }
 
-    var displayIP: String {
+    private var displayIP: String {
         if let allocations = server.relationships?.allocations?.data {
             if let defaultAlloc = allocations.first(where: { $0.attributes.isDefault }) {
                 return "\(defaultAlloc.attributes.ip):\(defaultAlloc.attributes.port)"
@@ -333,73 +300,65 @@ struct ServerRow: View {
 
     var body: some View {
         HStack {
-            serverInfo
+            VStack(alignment: .leading, spacing: 6) {
+                // Name Row
+                HStack(spacing: 6) {
+                    if isFavorite {
+                        Image(systemName: "star.fill")
+                            .font(.caption)
+                            .foregroundStyle(.yellow)
+                    }
+                    Text(displayName)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.white)
+                }
+                
+                // IP Row
+                HStack(spacing: 4) {
+                     Image(systemName: "network")
+                        .font(.caption2)
+                     Text(displayIP) 
+                        .font(.caption)
+                }
+                .foregroundStyle(.white.opacity(0.6))
+                
+                // Resources Row
+                HStack(spacing: 16) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "cpu")
+                        Text(cpuUsage)
+                    }
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.8))
+                    
+                    HStack(spacing: 4) {
+                        Image(systemName: "memorychip")
+                        Text(memoryUsage)
+                    }
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.8))
+                }
+            }
             Spacer()
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(alignment: .leading) {
-            statusOverlay
+            ServerStatusIndicator(color: statusColor)
         }
         .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
+}
+
+struct ServerStatusIndicator: View {
+    let color: Color
     
-    private var serverInfo: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            nameRow
-            ipRow
-            resourcesRow
-        }
-    }
-    
-    private var nameRow: some View {
-        HStack(spacing: 6) {
-            if isFavorite {
-                Image(systemName: "star.fill")
-                    .font(.caption)
-                    .foregroundStyle(.yellow)
-            }
-            
-            Text(displayName)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.white)
-        }
-    }
-    
-    private var ipRow: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "network")
-                .font(.caption2)
-            Text(displayIP) 
-                .font(.caption)
-        }
-        .foregroundStyle(.white.opacity(0.6))
-    }
-    
-    private var resourcesRow: some View {
-        HStack(spacing: 16) {
-            HStack(spacing: 4) {
-                Image(systemName: "cpu")
-                Text(cpuUsage)
-            }
-            .font(.caption.monospacedDigit())
-            .foregroundStyle(.white.opacity(0.8))
-            
-            HStack(spacing: 4) {
-                Image(systemName: "memorychip")
-                Text(memoryUsage)
-            }
-            .font(.caption.monospacedDigit())
-            .foregroundStyle(.white.opacity(0.8))
-        }
-    }
-    
-    private var statusOverlay: some View {
+    var body: some View {
         Rectangle()
             .fill(
                 LinearGradient(
-                    colors: [statusColor.opacity(0.4), .clear],
+                    colors: [color.opacity(0.4), .clear],
                     startPoint: .leading,
                     endPoint: .trailing
                 )
