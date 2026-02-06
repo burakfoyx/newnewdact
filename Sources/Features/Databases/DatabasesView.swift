@@ -25,6 +25,7 @@ struct DatabasesView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
+                Color.clear.frame(height: 140) // Header spacer
                 if viewModel.isLoading {
                     ProgressView().tint(.white)
                         .padding(.top, 40)

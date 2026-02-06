@@ -23,8 +23,8 @@ struct ConsoleView: View {
                             }
                         }
                         .padding(.horizontal)
-                        .padding(.top, 12)
-                        .padding(.bottom, 8)
+                        .padding(.top, 160) // Clears the floating header
+                        .padding(.bottom, 80) // Clears the tab bar
                     }
                     .defaultScrollAnchor(.bottom)
                     .onChange(of: viewModel.logs.count) { oldCount, newCount in

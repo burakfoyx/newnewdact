@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AlertSettingsView: View {
+    let server: ServerAttributes
     @AppStorage("quietHoursEnabled") private var quietHoursEnabled = false
     @AppStorage("quietHoursStart") private var quietHoursStart = Date()
     @AppStorage("quietHoursEnd") private var quietHoursEnd = Date()
@@ -10,6 +11,13 @@ struct AlertSettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    // Spacer
+                    Color.clear.listRowBackground(Color.clear)
+                }
+                .frame(height: 100)
+                .listRowBackground(Color.clear)
+                
                 Section {
                     Toggle("Quiet Hours", isOn: $quietHoursEnabled)
                 } header: {

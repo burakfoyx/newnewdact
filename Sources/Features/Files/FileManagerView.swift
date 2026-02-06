@@ -76,12 +76,13 @@ struct FileManagerView: View {
     @StateObject private var viewModel: FileManagerViewModel
     @State private var selectedFileForEditing: FileAttributes?
     
-    init(serverId: String) {
-        _viewModel = StateObject(wrappedValue: FileManagerViewModel(serverId: serverId))
+    init(server: ServerAttributes) {
+        _viewModel = StateObject(wrappedValue: FileManagerViewModel(serverId: server.identifier))
     }
     
     var body: some View {
         VStack(spacing: 0) {
+            Color.clear.frame(height: 140) // Spacer for header
             // Path Breadcrumb
             HStack {
                 Button(action: { viewModel.navigateUp() }) {

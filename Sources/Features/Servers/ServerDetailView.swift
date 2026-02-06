@@ -48,31 +48,24 @@ struct ServerDetailView: View {
         ZStack {
             LiquidBackgroundView()
                 .ignoresSafeArea()
-            VStack(spacing: 0) {
-                 // Header
-                 GlassyNavBar(
-                     title: server.name,
-                     statusState: consoleViewModel.state,
-                     selectedTab: $selectedTab,
-                     onBack: { dismiss() },
-                     onPowerAction: { action in consoleViewModel.sendPowerAction(action) }
-                 )
-                 .padding(.horizontal)
-                 .padding(.top)
-                 
-                  TabView(selection: $selectedTab) {
-                    ConsoleView(viewModel: consoleViewModel, limits: server.limits)
-                        .tag(ServerTab.console)
+            ZStack(alignment: .top) {
+                // Main Content Layer (Behind Header)
+                TabView(selection: $selectedTab) {
+                    ConsoleView(
+                        viewModel: consoleViewModel, 
+                        limits: server.limits
+                    )
+                    .tag(ServerTab.console)
                     
                     HistoryView(server: server)
                         .tag(ServerTab.analytics)
                     
-                    AlertsListView(server: server)
+                    AlertSettingsView(server: server)
                         .tag(ServerTab.alerts)
                     
-                    FileManagerView(serverId: server.identifier)
+                    FileManagerView(server: server)
                         .tag(ServerTab.files)
-                    
+                        
                     NetworkView(serverId: server.identifier)
                         .tag(ServerTab.network)
                         
