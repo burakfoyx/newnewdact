@@ -39,6 +39,8 @@ final class ServerCustomization {
     var colorHex: String?         // Custom color
     var icon: String?             // Custom SF Symbol
     var isFavorite: Bool
+    var isPinned: Bool            // New: Brings servers to top
+    var sortOrder: Int            // New: Manual sorting order
     var notes: String?            // Personal notes
     var tags: [String]            // Custom tags
     var updatedAt: Date
@@ -49,6 +51,8 @@ final class ServerCustomization {
         self.colorHex = nil
         self.icon = nil
         self.isFavorite = false
+        self.isPinned = false
+        self.sortOrder = 0
         self.notes = nil
         self.tags = []
         self.updatedAt = Date()
