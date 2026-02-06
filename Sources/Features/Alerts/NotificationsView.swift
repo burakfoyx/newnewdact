@@ -136,7 +136,7 @@ struct NotificationCard: View {
 
 // MARK: - Notification Bell Button (for toolbar)
 
-struct NotificationBellButton: View {
+public struct NotificationBellButton: View {
     @Query(sort: \AlertEvent.triggeredAt, order: .reverse) private var events: [AlertEvent]
     @State private var showNotifications = false
     

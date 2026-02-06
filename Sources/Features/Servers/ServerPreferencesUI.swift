@@ -172,7 +172,7 @@ struct ServerCustomizationSheet: View {
             // Icon
             ZStack {
                 Circle()
-                    .fill(selectedColor.asColor.opacity(0.2))
+                .fill(selectedColor.asColor.opacity(0.2))
                     .frame(width: 44, height: 44)
                 
                 Image(systemName: selectedIcon)
