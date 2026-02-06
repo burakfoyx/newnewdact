@@ -37,6 +37,7 @@ struct AlertsListView: View {
                             .opacity(rule.isEnabled ? 1.0 : 0.6)
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                             .swipeActions {
                                 Button(role: .destructive) {
                                     modelContext.delete(rule)

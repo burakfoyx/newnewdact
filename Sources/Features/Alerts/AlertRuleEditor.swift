@@ -16,50 +16,129 @@ struct AlertRuleEditor: View {
                 LiquidBackgroundView()
                     .ignoresSafeArea()
                 
-                Form {
-                    Section("Trigger") {
-                        Picker("Metric", selection: $metric) {
-                            ForEach(AlertMetric.allCases) { m in
-                                Text(m.displayName).tag(m)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        
-                        if metric != .offline {
-                            Picker("Condition", selection: $condition) {
-                                ForEach(AlertCondition.allCases) { c in
-                                    Text(c.displayName).tag(c)
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Metric Selection Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Metric")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.white.opacity(0.7))
+                            
+                            HStack(spacing: 8) {
+                                ForEach(AlertMetric.allCases) { m in
+                                    MetricSelectionButton(
+                                        metric: m,
+                                        isSelected: metric == m
+                                    ) {
+                                        withAnimation(.spring(response: 0.3)) {
+                                            metric = m
+                                        }
+                                    }
                                 }
                             }
+                        }
+                        .padding()
+                        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        
+                        // Condition Section (only for non-offline metrics)
+                        if metric != .offline {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Condition")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(.white.opacity(0.7))
+                                
+                                HStack(spacing: 8) {
+                                    ForEach(AlertCondition.allCases) { c in
+                                        ConditionSelectionButton(
+                                            condition: c,
+                                            isSelected: condition == c
+                                        ) {
+                                            withAnimation(.spring(response: 0.3)) {
+                                                condition = c
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .padding()
+                            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                             
-                            VStack(alignment: .leading) {
+                            // Threshold Section
+                            VStack(alignment: .leading, spacing: 16) {
                                 HStack {
                                     Text("Threshold")
+                                        .font(.subheadline.weight(.medium))
+                                        .foregroundStyle(.white.opacity(0.7))
                                     Spacer()
                                     Text("\(Int(threshold))\(metric.unit)")
-                                        .foregroundStyle(.secondary)
+                                        .font(.title2.bold())
+                                        .foregroundStyle(.white)
                                 }
-                                Slider(value: $threshold, in: 0...maxThreshold, step: 5)
+                                
+                                // Custom Slider with Glass Effect
+                                GlassSlider(value: $threshold, range: 0...maxThreshold, step: 5)
+                                
+                                // Quick value buttons
+                                HStack(spacing: 8) {
+                                    ForEach(quickValues, id: \.self) { value in
+                                        Button {
+                                            withAnimation(.spring(response: 0.3)) {
+                                                threshold = value
+                                            }
+                                        } label: {
+                                            Text("\(Int(value))\(metric.unit)")
+                                                .font(.caption.weight(.medium))
+                                                .foregroundStyle(threshold == value ? .white : .white.opacity(0.6))
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 8)
+                                                .glassEffect(
+                                                    threshold == value ? .clear.interactive() : .clear,
+                                                    in: Capsule()
+                                                )
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
+                                    }
+                                }
                             }
+                            .padding()
+                            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                         }
-                    }
-                    
-                    Section {
-                        Button("Create Alert Rule") {
-                            createRule()
+                        
+                        // Summary Card
+                        VStack(spacing: 12) {
+                            Image(systemName: iconFor(metric))
+                                .font(.largeTitle)
+                                .foregroundStyle(.blue)
+                            
+                            Text(summaryText)
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                                .multilineTextAlignment(.center)
+                            
+                            Text("You will receive a notification when this condition is met.")
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.6))
+                                .multilineTextAlignment(.center)
                         }
+                        .padding()
                         .frame(maxWidth: .infinity)
-                        .bold()
+                        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        
+                        // Create Button
+                        Button {
+                            createRule()
+                        } label: {
+                            Text("Create Alert")
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                        }
+                        .buttonStyle(.glass)
                     }
-                    
-                    Section {
-                        Text("You will receive a local notification when this rule is triggered while the app is running.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    .padding()
+                    .padding(.bottom, 40)
                 }
-                .scrollContentBackground(.hidden)
-                .background(Color.clear)
             }
             .navigationTitle("New Alert")
             .navigationBarTitleDisplayMode(.inline)
@@ -68,6 +147,34 @@ struct AlertRuleEditor: View {
                     Button("Cancel") { dismiss() }
                 }
             }
+        }
+    }
+    
+    private var summaryText: String {
+        if metric == .offline {
+            return "Alert when server goes offline"
+        } else {
+            return "Alert when \(metric.displayName) is \(condition.displayName.lowercased()) \(Int(threshold))\(metric.unit)"
+        }
+    }
+    
+    private var quickValues: [Double] {
+        switch metric {
+        case .cpu:
+            return [50, 75, 90, 100]
+        case .memory, .disk:
+            return [50, 75, 85, 95]
+        case .offline:
+            return []
+        }
+    }
+    
+    private func iconFor(_ metric: AlertMetric) -> String {
+        switch metric {
+        case .cpu: return "cpu"
+        case .memory: return "memorychip"
+        case .disk: return "internaldrive"
+        case .offline: return "power"
         }
     }
     
@@ -81,19 +188,147 @@ struct AlertRuleEditor: View {
         )
         
         modelContext.insert(rule)
-        try? modelContext.save() // Explicit save
+        try? modelContext.save()
         dismiss()
     }
     
     private var maxThreshold: Double {
         if metric == .cpu {
-            // If explicit limit exists and > 0, use it. Otherwise, assume up to 400% (4 cores) as reasonable default for unlimited/unset
             if let limit = server.limits.cpu, limit > 0 {
                 return Double(limit)
             }
             return 400.0
         }
-        // Memory/Disk are usually handled as % of limit in AlertEngine logic, so 100% is max
         return 100.0
+    }
+}
+
+// MARK: - Metric Selection Button
+struct MetricSelectionButton: View {
+    let metric: AlertMetric
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: iconFor(metric))
+                    .font(.title2)
+                Text(metric.displayName)
+                    .font(.caption)
+            }
+            .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .glassEffect(
+                isSelected ? .clear.interactive() : .clear,
+                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func iconFor(_ metric: AlertMetric) -> String {
+        switch metric {
+        case .cpu: return "cpu"
+        case .memory: return "memorychip"
+        case .disk: return "internaldrive"
+        case .offline: return "power"
+        }
+    }
+}
+
+// MARK: - Condition Selection Button
+struct ConditionSelectionButton: View {
+    let condition: AlertCondition
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: iconFor(condition))
+                    .font(.caption)
+                Text(condition.displayName)
+                    .font(.subheadline)
+            }
+            .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .glassEffect(
+                isSelected ? .clear.interactive() : .clear,
+                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func iconFor(_ condition: AlertCondition) -> String {
+        switch condition {
+        case .above: return "arrow.up"
+        case .below: return "arrow.down"
+        }
+    }
+}
+
+// MARK: - Glass Slider
+struct GlassSlider: View {
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let step: Double
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Track background
+                Capsule()
+                    .fill(.white.opacity(0.1))
+                    .frame(height: 8)
+                
+                // Filled track
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [.blue, .cyan],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: fillWidth(in: geometry.size.width), height: 8)
+                
+                // Thumb
+                Circle()
+                    .fill(.white)
+                    .frame(width: 28, height: 28)
+                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                    .offset(x: thumbOffset(in: geometry.size.width))
+                    .gesture(
+                        DragGesture()
+                            .onChanged { gesture in
+                                updateValue(from: gesture.location.x, in: geometry.size.width)
+                            }
+                    )
+            }
+            .frame(height: 28)
+        }
+        .frame(height: 28)
+    }
+    
+    private func fillWidth(in totalWidth: CGFloat) -> CGFloat {
+        let percentage = (value - range.lowerBound) / (range.upperBound - range.lowerBound)
+        return max(0, min(totalWidth, totalWidth * percentage))
+    }
+    
+    private func thumbOffset(in totalWidth: CGFloat) -> CGFloat {
+        let percentage = (value - range.lowerBound) / (range.upperBound - range.lowerBound)
+        let offset = (totalWidth - 28) * percentage
+        return max(0, min(totalWidth - 28, offset))
+    }
+    
+    private func updateValue(from x: CGFloat, in totalWidth: CGFloat) {
+        let percentage = max(0, min(1, x / totalWidth))
+        let rawValue = range.lowerBound + (range.upperBound - range.lowerBound) * percentage
+        let steppedValue = (rawValue / step).rounded() * step
+        value = max(range.lowerBound, min(range.upperBound, steppedValue))
     }
 }
