@@ -7,10 +7,10 @@ struct ConsoleView: View {
     var limits: ServerLimits?
     
     var body: some View {
-        VStack {
-            // Unified Terminal Box
-            ZStack(alignment: .bottom) {
-                // Logs Area - scrolls behind the input
+        VStack(spacing: 0) {
+            // Console glass container
+            VStack(spacing: 0) {
+                // Logs Area
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 2) {
@@ -22,8 +22,9 @@ struct ConsoleView: View {
                                     .id(index)
                             }
                         }
-                        .padding()
-                        .padding(.bottom, 70) // Extra padding so last logs aren't hidden behind input
+                        .padding(.horizontal)
+                        .padding(.top, 12)
+                        .padding(.bottom, 8)
                     }
                     .defaultScrollAnchor(.bottom)
                     .onChange(of: viewModel.logs.count) { oldCount, newCount in
@@ -34,56 +35,49 @@ struct ConsoleView: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
                 
-                // Input Area - overlays on top with opaque background
-                VStack(spacing: 0) {
-                    // Fade gradient so text smoothly disappears behind input
-                    LinearGradient(
-                        colors: [.clear, Color(red: 0.08, green: 0.08, blue: 0.12)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 30)
-                    
-                    HStack(spacing: 12) {
-                        // Connection Indication
-                        if !viewModel.isConnected {
-                            Button(action: { viewModel.connect() }) {
-                                 Image(systemName: "arrow.clockwise.circle.fill")
-                                    .font(.system(size: 18))
-                                    .foregroundStyle(.red)
-                            }
-                        } else {
-                             Circle()
-                                .fill(Color.green)
+                // Separator line
+                Rectangle()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(height: 0.5)
+                
+                // Input Area - simple inline design
+                HStack(spacing: 12) {
+                    // Connection indicator
+                    if viewModel.isConnected {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 8, height: 8)
+                            .shadow(color: .green, radius: 4)
+                    } else {
+                        Button(action: { viewModel.connect() }) {
+                            Circle()
+                                .fill(Color.red)
                                 .frame(width: 8, height: 8)
-                                .shadow(color: .green, radius: 4)
-                        }
-
-                        TextField("Type a command...", text: $viewModel.inputCommand)
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundStyle(.white)
-                            .tint(.blue)
-                            .submitLabel(.send)
-                            .onSubmit { viewModel.sendCommand() }
-                        
-                        Button(action: { viewModel.sendCommand() }) {
-                            Image(systemName: "paperplane.fill")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundStyle(.white)
-                                .padding(8)
-                                .background(Color.blue)
-                                .clipShape(Circle())
+                                .shadow(color: .red, radius: 4)
                         }
                     }
-                    .padding(12)
-                    .background(Color(red: 0.08, green: 0.08, blue: 0.12)) // Solid opaque dark background
+                    
+                    // Command input
+                    TextField("Type a command...", text: $viewModel.inputCommand)
+                        .font(.system(.body, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .tint(.cyan)
+                        .submitLabel(.send)
+                        .onSubmit { viewModel.sendCommand() }
+                    
+                    // Send button
+                    Button(action: { viewModel.sendCommand() }) {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.blue)
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
             }
-            .background(Color.black.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .liquidGlass(variant: .clear, cornerRadius: 16)
-            .padding()
-            .padding(.bottom, 16)
+            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .padding(.horizontal)
+            .padding(.bottom, 20)
         }
         .background(Color.clear)
         .navigationTitle("Console")
