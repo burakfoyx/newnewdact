@@ -4,7 +4,10 @@ import SwiftData
 struct NotificationsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \AlertEvent.triggeredAt, order: .reverse) private var events: [AlertEvent]
+    @Query(sort: \AlertEvent.timestamp, order: .reverse) private var events: [AlertEvent]
+    
+    // Add explicit init to avoid accessibility errors
+    init() {}
     
     var body: some View {
         NavigationStack {
@@ -98,7 +101,7 @@ struct NotificationCard: View {
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.7))
                 
-                Text(event.triggeredAt.formatted(date: .abbreviated, time: .shortened))
+                Text(event.timestamp.formatted(date: .abbreviated, time: .shortened))
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.5))
             }
@@ -137,18 +140,18 @@ struct NotificationCard: View {
 // MARK: - Notification Bell Button (for toolbar)
 
 public struct NotificationBellButton: View {
-    @Query(sort: \AlertEvent.triggeredAt, order: .reverse) private var events: [AlertEvent]
+    @Query(sort: \AlertEvent.timestamp, order: .reverse) private var events: [AlertEvent]
     @State private var showNotifications = false
     
     // Count unread (events from last 24 hours as "new")
     private var unreadCount: Int {
         let oneDayAgo = Date().addingTimeInterval(-86400)
-        return events.filter { $0.triggeredAt > oneDayAgo }.count
+        return events.filter { $0.timestamp > oneDayAgo }.count
     }
     
     public init() {}
     
-    var body: some View {
+    public var body: some View {
         Button {
             showNotifications = true
         } label: {

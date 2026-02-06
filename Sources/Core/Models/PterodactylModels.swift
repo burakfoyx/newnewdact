@@ -29,7 +29,8 @@ struct ServerData: Codable, Identifiable {
     var id: String { attributes.uuid }
 }
 
-struct ServerAttributes: Codable {
+struct ServerAttributes: Codable, Identifiable {
+    public var id: String { uuid }
     let serverOwner: Bool
     let identifier: String
     let uuid: String
