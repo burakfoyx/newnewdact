@@ -185,7 +185,7 @@ struct ServerDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .top)
             }
         }
-        .ignoresSafeArea(.container, edges: .top)
+        .ignoresSafeArea(.container, edges: .all)
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
     }
