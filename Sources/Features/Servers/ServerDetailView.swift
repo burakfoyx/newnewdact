@@ -46,8 +46,7 @@ struct ServerDetailView: View {
     
     var body: some View {
         ZStack {
-            LiquidBackgroundView()
-                .ignoresSafeArea()
+            // Background inherited from parent NavigationStack (ServerListView)
             
             VStack(spacing: 0) {
                  ServerDetailHeader(
