@@ -7,7 +7,8 @@ struct PterodactylFile: Codable, Identifiable {
     var id: String { attributes.name }
 }
 
-struct FileAttributes: Codable {
+struct FileAttributes: Codable, Identifiable {
+    var id: String { name }
     let name: String
     let mode: String
     let modeBits: String

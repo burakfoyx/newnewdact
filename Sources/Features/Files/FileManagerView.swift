@@ -174,13 +174,16 @@ struct FileManagerView: View {
                             }
                             
                             ForEach(viewModel.files) { file in
-                                FileRow(file: file) {
+                                FileRow(file: file, onCompress: {
+                                    // compress action
+                                }, onDecompress: {
                                     if !file.isFile {
-                                        Task { await viewModel.navigate(to: file.path) }
+                                        let newPath = viewModel.currentPath == "/" ? "/\(file.name)" : "\(viewModel.currentPath)/\(file.name)"
+                                        Task { await viewModel.navigate(to: newPath) }
                                     } else {
                                         // Edit file
                                     }
-                                }
+                                })
                             }
                         }
                     }
