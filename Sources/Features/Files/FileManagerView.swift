@@ -201,10 +201,6 @@ struct FileManagerView: View {
     }
 }
 
-// Ensure FileAttributes conforms to Identifiable for sheet item
-extension FileAttributes: Identifiable {
-    public var id: String { name }
-}
 
 struct FileRow: View {
     let file: FileAttributes
