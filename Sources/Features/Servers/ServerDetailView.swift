@@ -165,26 +165,24 @@ struct ServerDetailView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)
                 .animation(nil, value: selectedTab)
-                // Push content below header using contentMargins
+                // Push content below header and above bottom safe area
                 .contentMargins(.top, 200, for: .scrollContent)
+                .contentMargins(.bottom, 100, for: .scrollContent)
                 
-                // Header layer - overlaid on top
-                VStack(spacing: 0) {
-                    ServerDetailHeader(
-                        title: server.name,
-                        statusState: consoleViewModel.state,
-                        selectedTab: $selectedTab,
-                        onBack: { dismiss() },
-                        onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                        stats: consoleViewModel.stats,
-                        limits: server.limits
-                    )
-                    .padding(.horizontal)
-                    .padding(.top, geometry.safeAreaInsets.top + 10)
-                    .padding(.bottom, 10)
-                    
-                    Spacer()
-                }
+                // Header layer - overlaid on top, using frame instead of Spacer
+                ServerDetailHeader(
+                    title: server.name,
+                    statusState: consoleViewModel.state,
+                    selectedTab: $selectedTab,
+                    onBack: { dismiss() },
+                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
+                    stats: consoleViewModel.stats,
+                    limits: server.limits
+                )
+                .padding(.horizontal)
+                .padding(.top, geometry.safeAreaInsets.top + 10)
+                .padding(.bottom, 10)
+                .frame(maxWidth: .infinity, alignment: .top)
             }
         }
         .ignoresSafeArea(.container, edges: .top)

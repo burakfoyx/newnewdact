@@ -341,7 +341,8 @@ struct ServerListView: View {
                         .glassEffect(.clear.interactive(), in: Circle())
                         .shadow(color: .purple.opacity(0.5), radius: 10)
                 }
-                .padding()
+                .padding(.trailing, 16)
+                .padding(.bottom, 30) // Extra bottom padding for safe area
             }
         }
     }
