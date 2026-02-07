@@ -4,6 +4,7 @@ class StartupViewModel: ObservableObject {
     let serverId: String
     @Published var variables: [StartupVariable] = []
     @Published var isLoading = false
+    @Published var error: String?
     
     init(serverId: String) {
         self.serverId = serverId
@@ -16,9 +17,13 @@ class StartupViewModel: ObservableObject {
             await MainActor.run {
                 self.variables = fetched
                 self.isLoading = false
+                self.error = nil
             }
         } catch {
-             await MainActor.run { isLoading = false }
+             await MainActor.run {
+                 self.error = error.localizedDescription
+                 isLoading = false
+             }
         }
     }
     
@@ -134,7 +139,7 @@ struct VariableRow: View {
                     
                     if isEditing {
                         Button {
-                            onUpdate(text)
+                            onUpdate(variable.envVariable, text)
                             isEditing = false
                         } label: {
                             Image(systemName: "checkmark.circle.fill")

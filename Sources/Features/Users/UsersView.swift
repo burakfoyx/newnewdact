@@ -16,6 +16,17 @@ class UsersViewModel: ObservableObject {
         }
         isLoading = false
     }
+    
+    func delete(serverId: String, userUuid: String) async {
+        isLoading = true
+        do {
+            try await PterodactylClient.shared.deleteSubuser(serverId: serverId, userUuid: userUuid)
+            users.removeAll { $0.uuid == userUuid }
+        } catch {
+            self.error = error.localizedDescription
+        }
+        isLoading = false
+    }
 }
 
 struct UsersView: View {
@@ -58,7 +69,7 @@ struct UsersView: View {
                     .padding(.top, 40)
                 } else {
                     LazyVStack(spacing: 12) {
-                        ForEach(viewModel.users) { user in
+                        ForEach(viewModel.users, id: \.uuid) { user in
                             LiquidGlassCard {
                                 HStack(spacing: 16) {
                                     // Avatar placeholder

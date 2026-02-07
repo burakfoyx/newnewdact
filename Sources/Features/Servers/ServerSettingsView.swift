@@ -1,5 +1,27 @@
 import SwiftUI
 
+@MainActor
+class ServerSettingsViewModel: ObservableObject {
+    let server: ServerAttributes
+    @Published var isLoading = false
+    @Published var error: String?
+    
+    init(server: ServerAttributes) {
+        self.server = server
+    }
+    
+    func reinstallServer() async {
+        isLoading = true
+        do {
+            try await PterodactylClient.shared.reinstallServer(serverId: server.identifier)
+            error = nil
+        } catch {
+            self.error = error.localizedDescription
+        }
+        isLoading = false
+    }
+}
+
 struct ServerSettingsView: View {
     @StateObject private var viewModel: ServerSettingsViewModel
     
@@ -109,10 +131,10 @@ struct ServerSettingsView: View {
                     
                     Divider().overlay(.white.opacity(0.3))
                     
-                    InfoRow(label: "Memory", value: "\(server.limits.memory ?? 0) MB")
-                    InfoRow(label: "Disk", value: "\(server.limits.disk ?? 0) MB")
-                    InfoRow(label: "CPU", value: "\(server.limits.cpu ?? 0)%")
-                    InfoRow(label: "Swap", value: "\(server.limits.swap ?? 0) MB")
+                    InfoRow(label: "Memory", value: "\(viewModel.server.limits.memory ?? 0) MB")
+                    InfoRow(label: "Disk", value: "\(viewModel.server.limits.disk ?? 0) MB")
+                    InfoRow(label: "CPU", value: "\(viewModel.server.limits.cpu ?? 0)%")
+                    InfoRow(label: "Swap", value: "\(viewModel.server.limits.swap ?? 0) MB")
                 }
                 .padding()
                 .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
