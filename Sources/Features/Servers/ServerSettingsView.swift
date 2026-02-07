@@ -1,28 +1,60 @@
 import SwiftUI
 
 struct ServerSettingsView: View {
-    let server: ServerAttributes
+    @StateObject private var viewModel: ServerSettingsViewModel
+    
     let serverName: String
     let statusState: String
-    @Binding var selectedTab: ServerTab
-    let onBack: () -> Void
-    let onPowerAction: (String) -> Void
     var stats: WebsocketResponse.Stats?
     var limits: ServerLimits?
     
+    // Params removed: selectedTab, onBack, onPowerAction
+    
+    @State private var showingReinstallConfirm = false
+    
+    init(server: ServerAttributes, serverName: String, statusState: String, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
+        _viewModel = StateObject(wrappedValue: ServerSettingsViewModel(server: server))
+        self.serverName = serverName
+        self.statusState = statusState
+        self.stats = stats
+        self.limits = limits
+    }
+    
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                 ServerDetailHeader(
-                    title: serverName,
-                    statusState: statusState,
-                    selectedTab: $selectedTab,
-                    onBack: onBack,
-                    onPowerAction: onPowerAction,
-                    stats: stats,
-                    limits: limits
-                )
-                .padding(.bottom, 10)
+            VStack(spacing: 16) {
+                 // Header Hoisted
+                
+                // Settings Options
+                VStack(spacing: 12) {
+                    Button(role: .destructive) {
+                        showingReinstallConfirm = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                            Text("Reinstall Server")
+                            Spacer()
+                        }
+                        .padding()
+                        .glassEffect(.clear.interactive(), in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .confirmationDialog("Reinstall Server?", isPresented: $showingReinstallConfirm) {
+                         Button("Reinstall", role: .destructive) {
+                             Task { await viewModel.reinstallServer() }
+                         }
+                         Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("This will reinstall the server. Your files should be safe, but downtime will occur.")
+                    }
+                    
+                    if let error = viewModel.error {
+                        Text(error)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
+                }
+                .padding()
+                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
                 
                 // Info Card
                 VStack(spacing: 12) {
@@ -33,11 +65,11 @@ struct ServerSettingsView: View {
                     
                     Divider().overlay(.white.opacity(0.3))
                     
-                    InfoRow(label: "Server Name", value: server.name)
-                    InfoRow(label: "UUID", value: server.uuid)
-                    InfoRow(label: "Identifier", value: server.identifier)
-                    InfoRow(label: "Node", value: server.node)
-                    InfoRow(label: "Description", value: server.description)
+                    InfoRow(label: "Server Name", value: viewModel.server.name)
+                    InfoRow(label: "UUID", value: viewModel.server.uuid)
+                    InfoRow(label: "Identifier", value: viewModel.server.identifier)
+                    InfoRow(label: "Node", value: viewModel.server.node)
+                    InfoRow(label: "Description", value: viewModel.server.description)
                 }
                 .padding()
                 .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
@@ -51,12 +83,12 @@ struct ServerSettingsView: View {
                     
                     Divider().overlay(.white.opacity(0.3))
                     
-                    InfoRow(label: "Host", value: "\(server.sftpDetails.ip):\(server.sftpDetails.port)")
+                    InfoRow(label: "Host", value: "\(viewModel.server.sftpDetails.ip):\(viewModel.server.sftpDetails.port)")
                     // Simple prediction of username, can be inaccurate but helpful
-                    InfoRow(label: "Username", value: "<username>.\(server.identifier)")
+                    InfoRow(label: "Username", value: "<username>.\(viewModel.server.identifier)")
                     
                     Button(action: {
-                        UIPasteboard.general.string = "sftp://\(server.sftpDetails.ip):\(server.sftpDetails.port)"
+                        UIPasteboard.general.string = "sftp://\(viewModel.server.sftpDetails.ip):\(viewModel.server.sftpDetails.port)"
                     }) {
                         Label("Copy SFTP URL", systemImage: "doc.on.doc")
                             .font(.subheadline)
@@ -86,7 +118,7 @@ struct ServerSettingsView: View {
                 .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
             }
             .padding()
-            .padding(.bottom, 80)
+            .padding(.bottom, 20)
         }
     }
 }

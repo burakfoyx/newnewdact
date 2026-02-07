@@ -44,19 +44,13 @@ struct StartupView: View {
     
     let serverName: String
     let statusState: String
-    @Binding var selectedTab: ServerTab
-    let onBack: () -> Void
-    let onPowerAction: (String) -> Void
     var stats: WebsocketResponse.Stats?
     var limits: ServerLimits?
     
-    init(server: ServerAttributes, serverName: String, statusState: String, selectedTab: Binding<ServerTab>, onBack: @escaping () -> Void, onPowerAction: @escaping (String) -> Void, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
+    init(server: ServerAttributes, serverName: String, statusState: String, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
         _viewModel = StateObject(wrappedValue: StartupViewModel(serverId: server.identifier))
         self.serverName = serverName
         self.statusState = statusState
-        self._selectedTab = selectedTab
-        self.onBack = onBack
-        self.onPowerAction = onPowerAction
         self.stats = stats
         self.limits = limits
     }
@@ -64,46 +58,42 @@ struct StartupView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                 ServerDetailHeader(
-                    title: serverName,
-                    statusState: statusState,
-                    selectedTab: $selectedTab,
-                    onBack: onBack,
-                    onPowerAction: onPowerAction,
-                    stats: stats,
-                    limits: limits
-                )
-                .padding(.bottom, 10)
-                
-                if viewModel.isLoading {
+                if viewModel.isLoading && viewModel.variables.isEmpty {
                     ProgressView().tint(.white)
                         .padding(.top, 40)
+                } else if let error = viewModel.error {
+                    Text(error)
+                        .foregroundStyle(.red)
+                        .padding()
                 } else {
-                    ForEach(viewModel.variables) { variable in
-                        StartupVariableRow(variable: variable, onUpdate: { newValue in
-                            Task {
-                                await viewModel.updateVariable(key: variable.envVariable, value: newValue)
-                            }
-                        })
+                    LazyVStack(spacing: 12) {
+                        ForEach(viewModel.variables, id: \.envVariable) { variable in
+                            VariableRow(variable: variable, onUpdate: { key, value in
+                                Task { await viewModel.updateVariable(key: key, value: value) }
+                            })
+                        }
                     }
                 }
             }
             .padding()
-            .padding(.bottom, 80)
+            .padding(.bottom, 20)
         }
         .task {
+            await viewModel.loadVariables()
+        }
+        .refreshable {
             await viewModel.loadVariables()
         }
     }
 }
 
-struct StartupVariableRow: View {
+struct VariableRow: View {
     let variable: StartupVariable
-    let onUpdate: (String) -> Void
+    let onUpdate: (String, String) -> Void
     @State private var text: String
     @State private var isEditing = false
     
-    init(variable: StartupVariable, onUpdate: @escaping (String) -> Void) {
+    init(variable: StartupVariable, onUpdate: @escaping (String, String) -> Void) {
         self.variable = variable
         self.onUpdate = onUpdate
         _text = State(initialValue: variable.serverValue.isEmpty ? variable.defaultValue : variable.serverValue)

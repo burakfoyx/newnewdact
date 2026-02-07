@@ -67,107 +67,118 @@ class FileManagerViewModel: ObservableObject {
             await listFiles()
         } catch {
             print("Error decompressing: \(error)")
-            await MainActor.run { isLoading = false }
+            await MainActor.run {
+                self.error = error.localizedDescription
+                isLoading = false
+            }
         }
     }
 }
 
 struct FileManagerView: View {
-    @StateObject private var viewModel: FileManagerViewModel
-    @State private var selectedFileForEditing: FileAttributes?
-    
+    @StateObject var viewModel: FileViewModel
     let serverName: String
     let statusState: String
-    @Binding var selectedTab: ServerTab
-    let onBack: () -> Void
-    let onPowerAction: (String) -> Void
     var stats: WebsocketResponse.Stats?
     var limits: ServerLimits?
     
-    init(server: ServerAttributes, serverName: String, statusState: String, selectedTab: Binding<ServerTab>, onBack: @escaping () -> Void, onPowerAction: @escaping (String) -> Void, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
-        _viewModel = StateObject(wrappedValue: FileManagerViewModel(serverId: server.identifier))
+    // Params removed: selectedTab, onBack, onPowerAction
+    
+    @State private var pathComponents: [String] = []
+    
+    init(server: ServerAttributes, serverName: String, statusState: String, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
+        _viewModel = StateObject(wrappedValue: FileViewModel(serverId: server.identifier))
         self.serverName = serverName
         self.statusState = statusState
-        self._selectedTab = selectedTab
-        self.onBack = onBack
-        self.onPowerAction = onPowerAction
         self.stats = stats
         self.limits = limits
     }
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                 ServerDetailHeader(
-                    title: serverName,
-                    statusState: statusState,
-                    selectedTab: $selectedTab,
-                    onBack: onBack,
-                    onPowerAction: onPowerAction,
-                    stats: stats,
-                    limits: limits
-                )
-                .padding(.bottom, 10)
+            VStack(spacing: 16) {
+                // Header Hoisted
                 
-                // Path Breadcrumb
-                HStack {
-                    Button(action: { viewModel.navigateUp() }) {
-                        Image(systemName: "arrow.turn.up.left")
-                            .foregroundStyle(.white)
+                // Breadcrumbs and File List
+                VStack(alignment: .leading, spacing: 12) {
+                    // ... breadcrumbs logic ...
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 4) {
+                            Button {
+                                Task { await viewModel.navigateToRoot() }
+                            } label: {
+                                Image(systemName: "house.fill")
+                                    .foregroundStyle(.blue)
+                            }
+                            
+                            ForEach(0..<viewModel.currentPath.components(separatedBy: "/").filter({!$0.isEmpty}).count, id: \.self) { index in
+                                let components = viewModel.currentPath.components(separatedBy: "/").filter({!$0.isEmpty})
+                                Text("/")
+                                    .foregroundStyle(.secondary)
+                                Button {
+                                    // simple reconstruction
+                                    let newPath = "/" + components.prefix(index + 1).joined(separator: "/")
+                                    Task { await viewModel.navigate(to: newPath) }
+                                } label: {
+                                    Text(components[index])
+                                        .foregroundStyle(.primary)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
                     }
-                    .disabled(viewModel.currentPath == "/")
-                    .opacity(viewModel.currentPath == "/" ? 0.3 : 1.0)
+                    .frame(height: 30)
                     
-                    Text(viewModel.currentPath)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.white.opacity(0.8))
-                        .lineLimit(1)
-                    
-                    Spacer()
-                    
-                    Button(action: { Task { await viewModel.listFiles() } }) {
-                        Image(systemName: "arrow.clockwise")
-                            .foregroundStyle(.white)
-                    }
-                }
-                .padding()
-                .background(Color.white.opacity(0.05))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-                
-                if viewModel.isLoading {
-                    ProgressView()
-                        .tint(.white)
-                        .padding(.top, 40)
-                } else {
-                    LazyVStack(spacing: 8) {
-                        ForEach(viewModel.files, id: \.name) { file in
-                            FileRow(
-                                file: file,
-                                onCompress: { Task { await viewModel.compress(file: file) } },
-                                onDecompress: { Task { await viewModel.decompress(file: file) } }
-                            )
-                            .onTapGesture {
-                                if !file.isFile {
-                                    viewModel.navigate(to: file.name)
-                                } else {
-                                    selectedFileForEditing = file
+                    if viewModel.isLoading {
+                        ProgressView().tint(.white)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.top, 40)
+                    } else if let error = viewModel.error {
+                        Text(error)
+                            .foregroundStyle(.red)
+                            .padding()
+                    } else {
+                        LazyVStack(spacing: 2) {
+                            if viewModel.currentPath != "/" && !viewModel.currentPath.isEmpty {
+                                Button {
+                                     Task { await viewModel.navigateUp() }
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "arrow.turn.up.left")
+                                            .frame(width: 30)
+                                            .foregroundStyle(.blue)
+                                        Text("..")
+                                            .foregroundStyle(.white)
+                                        Spacer()
+                                    }
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .background(Color.white.opacity(0.05))
+                                    .cornerRadius(8)
+                                }
+                            }
+                            
+                            ForEach(viewModel.files) { file in
+                                FileRow(file: file) {
+                                    if file.isDirectory {
+                                        Task { await viewModel.navigate(to: file.path) }
+                                    } else {
+                                        // Edit file
+                                    }
                                 }
                             }
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom, 80)
                 }
+                .padding(.horizontal)
+                .padding(.bottom, 20)
             }
         }
-        .sheet(item: $selectedFileForEditing) { file in
-            let fullPath = viewModel.currentPath == "/" ? file.name : "\(viewModel.currentPath)/\(file.name)"
-            FileEditorView(serverId: viewModel.serverId, filePath: fullPath)
+        .refreshable {
+            await viewModel.loadFiles()
         }
         .task {
-            await viewModel.listFiles()
+             if viewModel.files.isEmpty { await viewModel.loadFiles() }
         }
     }
 }
@@ -179,20 +190,6 @@ extension FileAttributes: Identifiable {
 
 struct FileRow: View {
     let file: FileAttributes
-    let onCompress: () -> Void
-    let onDecompress: () -> Void
-    
-    var body: some View {
-        HStack {
-            Image(systemName: file.isFile ? "doc.text" : "folder.fill")
-                .foregroundStyle(file.isFile ? .white : .blue)
-                .font(.title3)
-                .frame(width: 30)
-            
-            VStack(alignment: .leading) {
-                Text(file.name)
-                    .foregroundStyle(.white)
-                    .font(.body)
                 
                 HStack {
                     Text(formatBytes(file.size))

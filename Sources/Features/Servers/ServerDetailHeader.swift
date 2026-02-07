@@ -73,30 +73,28 @@ struct ServerDetailHeader: View {
                     }
                 }
                 
-                // Row 2: Compact Metrics (New)
-                if let stats = stats, let limits = limits {
-                    HStack(spacing: 12) {
-                        CompactMetricBar(
-                            label: "CPU",
-                            value: stats.cpu_absolute,
-                            total: Double(limits.cpu ?? 100),
-                            color: .blue
-                        )
-                        
-                        CompactMetricBar(
-                            label: "RAM",
-                            value: Double(stats.memory_bytes) / 1024 / 1024,
-                            total: Double(limits.memory ?? 1024),
-                            color: .purple
-                        )
-                        
-                        CompactMetricBar(
-                            label: "DISK",
-                            value: Double(stats.disk_bytes) / 1024 / 1024,
-                            total: Double(limits.disk ?? 1024),
-                            color: .cyan
-                        )
-                    }
+                // Row 2: Compact Metrics (Always Visible)
+                HStack(spacing: 12) {
+                    CompactMetricBar(
+                        label: "CPU",
+                        value: stats?.cpu_absolute ?? 0,
+                        total: Double(limits?.cpu ?? 100),
+                        color: .blue
+                    )
+                    
+                    CompactMetricBar(
+                        label: "RAM",
+                        value: Double(stats?.memory_bytes ?? 0) / 1024 / 1024,
+                        total: Double(limits?.memory ?? 1024),
+                        color: .purple
+                    )
+                    
+                    CompactMetricBar(
+                        label: "DISK",
+                        value: Double(stats?.disk_bytes ?? 0) / 1024 / 1024,
+                        total: Double(limits?.disk ?? 1024),
+                        color: .cyan
+                    )
                 }
                 
                 // Row 3: Tabs

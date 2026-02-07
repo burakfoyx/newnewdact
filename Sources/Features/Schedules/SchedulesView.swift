@@ -24,19 +24,15 @@ struct SchedulesView: View {
     let serverId: String
     let serverName: String
     let statusState: String
-    @Binding var selectedTab: ServerTab
-    let onBack: () -> Void
-    let onPowerAction: (String) -> Void
     var stats: WebsocketResponse.Stats?
     var limits: ServerLimits?
     
-    init(serverId: String, serverName: String, statusState: String, selectedTab: Binding<ServerTab>, onBack: @escaping () -> Void, onPowerAction: @escaping (String) -> Void, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
+    @State private var showingCreate = false
+    
+    init(serverId: String, serverName: String, statusState: String, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
         self.serverId = serverId
         self.serverName = serverName
         self.statusState = statusState
-        self._selectedTab = selectedTab
-        self.onBack = onBack
-        self.onPowerAction = onPowerAction
         self.stats = stats
         self.limits = limits
     }
@@ -44,57 +40,23 @@ struct SchedulesView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                 ServerDetailHeader(
-                    title: serverName,
-                    statusState: statusState,
-                    selectedTab: $selectedTab,
-                    onBack: onBack,
-                    onPowerAction: onPowerAction,
-                    stats: stats,
-                    limits: limits
-                )
-                .padding(.bottom, 10)
+                // Header Hoisted
                 
                 if viewModel.isLoading {
-                    ProgressView().tint(.white).padding(.top, 40)
+                    ProgressView().tint(.white)
+                        .padding(.top, 40)
                 } else if let error = viewModel.error {
-                    VStack {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.title)
-                            .foregroundStyle(.orange)
-                        Text(error)
-                            .multilineTextAlignment(.center)
-                            .foregroundStyle(.white.opacity(0.8))
-                    }
-                    .padding()
+                    Text(error)
+                        .foregroundStyle(.red)
+                        .padding()
                 } else if viewModel.schedules.isEmpty {
-                     // Empty State
-                     VStack(spacing: 12) {
-                        Image(systemName: "clock.fill")
-                            .font(.system(size: 50))
-                            .foregroundStyle(.white.opacity(0.2))
-                        Text("No schedules found")
-                            .foregroundStyle(.white.opacity(0.6))
-                     }
-                     .frame(maxWidth: .infinity)
-                     .padding(.top, 60)
+                    ContentUnavailableView(
+                        "No Schedules",
+                        systemImage: "clock.badge.exclamationmark",
+                        description: Text("Create a schedule to automate server tasks.")
+                    )
+                    .padding(.top, 40)
                 } else {
-                    ForEach(viewModel.schedules, id: \.id) { schedule in
-                        LiquidGlassCard {
-                            VStack(alignment: .leading, spacing: 10) {
-                                HStack {
-                                    Text(schedule.name)
-                                        .font(.headline)
-                                        .foregroundStyle(.white)
-                                    Spacer()
-                                    if schedule.isActive {
-                                        Text("Active")
-                                            .font(.caption2.bold())
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.green.opacity(0.3))
-                                            .foregroundColor(.green)
-                                            .clipShape(Capsule())
                                     } else {
                                         Text("Inactive")
                                             .font(.caption2.bold())
@@ -124,7 +86,7 @@ struct SchedulesView: View {
                 }
             }
             .padding()
-            .padding(.bottom, 80)
+            .padding(.bottom, 20)
         }
         .task {
             if viewModel.schedules.isEmpty { await viewModel.fetch(serverId: serverId) }

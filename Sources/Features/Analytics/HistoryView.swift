@@ -3,12 +3,10 @@ import Charts
 
 // MARK: - History View (Analytics Dashboard)
 struct HistoryView: View {
+    // Params simplified
     let server: ServerAttributes
     let serverName: String
     let statusState: String
-    @Binding var selectedTab: ServerTab
-    let onBack: () -> Void
-    let onPowerAction: (String) -> Void
     var stats: WebsocketResponse.Stats?
     var limits: ServerLimits?
     
@@ -26,16 +24,6 @@ struct HistoryView: View {
     var body: some View {
         ScrollView {
                 VStack(spacing: 20) {
-                     ServerDetailHeader(
-                        title: serverName,
-                        statusState: statusState,
-                        selectedTab: $selectedTab,
-                        onBack: onBack,
-                        onPowerAction: onPowerAction,
-                        stats: stats,
-                        limits: limits
-                    )
-                    .padding(.bottom, 10)
                     
                     // Collection Status
                     VStack(spacing: 4) {
@@ -97,7 +85,7 @@ struct HistoryView: View {
                     }
             }
             .padding()
-            .padding(.bottom, 40)
+            .padding(.bottom, 20)
         }
         .refreshable {
             await refreshData()

@@ -5,9 +5,6 @@ struct AlertsListView: View {
     let server: ServerAttributes
     let serverName: String
     let statusState: String
-    @Binding var selectedTab: ServerTab
-    let onBack: () -> Void
-    let onPowerAction: (String) -> Void
     var stats: WebsocketResponse.Stats?
     var limits: ServerLimits?
     
@@ -15,13 +12,10 @@ struct AlertsListView: View {
     @Query private var rules: [AlertRule]
     @State private var showEditor = false
     
-    init(server: ServerAttributes, serverName: String, statusState: String, selectedTab: Binding<ServerTab>, onBack: @escaping () -> Void, onPowerAction: @escaping (String) -> Void, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
+    init(server: ServerAttributes, serverName: String, statusState: String, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
         self.server = server
         self.serverName = serverName
         self.statusState = statusState
-        self._selectedTab = selectedTab
-        self.onBack = onBack
-        self.onPowerAction = onPowerAction
         self.stats = stats
         self.limits = limits
         
@@ -40,16 +34,7 @@ struct AlertsListView: View {
         ZStack {
             ScrollView {
                 VStack(spacing: 12) {
-                     ServerDetailHeader(
-                        title: serverName,
-                        statusState: statusState,
-                        selectedTab: $selectedTab,
-                        onBack: onBack,
-                        onPowerAction: onPowerAction,
-                        stats: stats,
-                        limits: limits
-                    )
-                    .padding(.bottom, 10)
+                    // Header Hoisted
                     
                     if rules.isEmpty {
                         ContentUnavailableView(
@@ -79,7 +64,7 @@ struct AlertsListView: View {
                     }
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 80) // Tab bar clearance
+                .padding(.bottom, 20) // Tab bar clearance
             }
             
             // Floating Action Button
@@ -104,7 +89,7 @@ struct AlertsListView: View {
                 }
             }
         }
-        .navigationTitle("Alerts")
+        .navigationTitle("Alerts") // Kept for semantics, hidden elsewhere
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {

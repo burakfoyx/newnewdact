@@ -49,149 +49,121 @@ struct ServerDetailView: View {
             LiquidBackgroundView()
                 .ignoresSafeArea()
             
-            TabView(selection: $selectedTab) {
-                ConsoleView(
-                    viewModel: consoleViewModel, 
-                    limits: server.limits,
-                    serverName: server.name,
+            VStack(spacing: 0) {
+                 ServerDetailHeader(
+                    title: server.name,
+                    statusState: consoleViewModel.state,
                     selectedTab: $selectedTab,
                     onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) }
-                    // Note: ConsoleView takes stats from viewModel internally usually, but I updated it to use Header.
-                    // If ConsoleView signature needs stats for Header, I should pass it. 
-                    // But ConsoleView HAS viewModel, so it can pull stats from there for the Header?
-                    // I need to check ConsoleView signature again to be safe.
-                    // Wait, I updated ConsoleView effectively via tools but I don't see the file content here.
-                    // I will assume I need to pass stats if I updated it to take stats.
-                    // Actually, ConsoleView has viewModel, so maybe I didn't add `stats` param to ConsoleView?
-                    // Let's pass basic params. If compilation fails, I will fix. 
-                    // Actually, all other views DO take stats. ConsoleView might be the exception or I should have checked.
-                    // I'll stick to what I know for ConsoleView (it has viewModel) and update others.
+                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
+                    stats: consoleViewModel.stats,
+                    limits: server.limits
                 )
-                .tag(ServerTab.console)
+                .padding(.horizontal)
+                .padding(.top, 10) // Small top padding for aesthetics
+                .padding(.bottom, 10)
                 
-                HistoryView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
-                    onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.analytics)
-                
-                AlertsListView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
-                    onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.alerts)
-                
-                FileManagerView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
-                    onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.files)
+                TabView(selection: $selectedTab) {
+                    ConsoleView(
+                        viewModel: consoleViewModel,
+                        limits: server.limits,
+                        serverName: server.name
+                    )
+                    .tag(ServerTab.console)
                     
-                NetworkView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
-                    onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.network)
+                    HistoryView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .tag(ServerTab.analytics)
                     
-                BackupView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
-                    onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.backups)
+                    AlertsListView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .tag(ServerTab.alerts)
                     
-                StartupView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
-                    onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.startup)
+                    FileManagerView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .tag(ServerTab.files)
+                        
+                    NetworkView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .tag(ServerTab.network)
+                        
+                    BackupView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .tag(ServerTab.backups)
+                        
+                    StartupView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .tag(ServerTab.startup)
+                        
+                    SchedulesView(
+                        serverId: server.identifier,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .tag(ServerTab.schedules)
+                        
+                    DatabasesView(
+                        serverId: server.identifier,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .tag(ServerTab.databases)
+                        
+                    UsersView(
+                        serverId: server.identifier,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .tag(ServerTab.users)
                     
-                SchedulesView(
-                    serverId: server.identifier,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
-                    onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.schedules)
-                    
-                DatabasesView(
-                    serverId: server.identifier,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
-                    onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.databases)
-                    
-                UsersView(
-                    serverId: server.identifier,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
-                    onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.users)
-                
-                ServerSettingsView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
-                    onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.settings)
+                    ServerSettingsView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .tag(ServerTab.settings)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .animation(nil, value: selectedTab)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .animation(nil, value: selectedTab)
         }
         .background(Color.clear)
         .toolbar(.hidden, for: .navigationBar)

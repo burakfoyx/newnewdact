@@ -6,34 +6,15 @@ struct ConsoleView: View {
     @ObservedObject var viewModel: ConsoleViewModel
     var limits: ServerLimits?
     let serverName: String
-    @Binding var selectedTab: ServerTab
-    let onBack: () -> Void
-    let onPowerAction: (String) -> Void
+    
+    // Params removed: selectedTab, onBack, onPowerAction (handled by parent/viewModel)
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header (Scrolls naturally if we put everything in a ScrollView, but here logs are the scroll view)
-            // Wait, if logs are the scroll view, putting header above logs makes it "sticky" or "fixed". 
-            // The user wants it to "scroll with content".
-            // So `ServerDetailHeader` must be INSIDE the ScrollView?
-            // "Console" has a unique structure: Logs are a ScrollView.
-            // If I put Header in Logs ScrollView, it scrolls away. Excellent.
-            
-            // Log Area with Header inside
+            // Log Area
              ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 0) {
-                         ServerDetailHeader(
-                            title: serverName,
-                            statusState: viewModel.state,
-                            selectedTab: $selectedTab,
-                            onBack: onBack,
-                            onPowerAction: onPowerAction,
-                            stats: viewModel.stats,
-                            limits: limits
-                        )
-                        .padding(.bottom, 10)
-                        
                         LazyVStack(alignment: .leading, spacing: 2) {
                             ForEach(Array(viewModel.logs.enumerated()), id: \.offset) { index, log in
                                 Text(AnsiParser.parse(log))
@@ -44,16 +25,10 @@ struct ConsoleView: View {
                             }
                         }
                         .padding(.horizontal)
-                        .padding(.bottom, 80) // Clears the tab bar
+                        .padding(.bottom, 20) // Clears the tab bar
                     }
                 }
-                .defaultScrollAnchor(.bottom)
                 .onChange(of: viewModel.logs.count) { oldCount, newCount in
-                    // Only scroll to bottom if we are already near bottom or it's a new log
-                    // Actually, if header is at top, "bottom" is far away.
-                    // This auto-scroll might conflict with header visibility if log is huge.
-                    // But standard console behavior is to show latest logs.
-                    // If logs fill screen, header scrolls off. Correct.
                     withAnimation {
                         proxy.scrollTo(newCount - 1, anchor: .bottom)
                     }
@@ -95,8 +70,8 @@ struct ConsoleView: View {
                 // Send button
                 Button(action: { viewModel.sendCommand() }) {
                     Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundStyle(.blue)
+                    .font(.system(size: 28))
+                    .foregroundStyle(.blue)
                 }
             }
             .padding(.horizontal, 16)
@@ -107,9 +82,7 @@ struct ConsoleView: View {
             .padding(.bottom, 20)
         }
         .background(Color.clear)
-        .navigationTitle("Console")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar) // Hide Tab Bar
+        // Toolbar modifiers removed as they are handled by parent
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true // Keep screen awake
             viewModel.connect()

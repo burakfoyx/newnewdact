@@ -80,19 +80,15 @@ struct BackupView: View {
     
     let serverName: String
     let statusState: String
-    @Binding var selectedTab: ServerTab
-    let onBack: () -> Void
-    let onPowerAction: (String) -> Void
     var stats: WebsocketResponse.Stats?
     var limits: ServerLimits?
     
-    init(server: ServerAttributes, serverName: String, statusState: String, selectedTab: Binding<ServerTab>, onBack: @escaping () -> Void, onPowerAction: @escaping (String) -> Void, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
+    // Params removed: selectedTab, onBack, onPowerAction
+    
+    init(server: ServerAttributes, serverName: String, statusState: String, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
         _viewModel = StateObject(wrappedValue: BackupViewModel(serverId: server.identifier))
         self.serverName = serverName
         self.statusState = statusState
-        self._selectedTab = selectedTab
-        self.onBack = onBack
-        self.onPowerAction = onPowerAction
         self.stats = stats
         self.limits = limits
     }
@@ -101,16 +97,7 @@ struct BackupView: View {
         ZStack {
             ScrollView {
                 VStack(spacing: 16) {
-                     ServerDetailHeader(
-                        title: serverName,
-                        statusState: statusState,
-                        selectedTab: $selectedTab,
-                        onBack: onBack,
-                        onPowerAction: onPowerAction,
-                        stats: stats,
-                        limits: limits
-                    )
-                    .padding(.bottom, 10)
+                     // Header Hoisted
                     
                     if let error = viewModel.error {
                         Text(error)
@@ -176,7 +163,7 @@ struct BackupView: View {
                     }
                 }
                 .padding()
-                .padding(.bottom, 80) // Space for FAB
+                .padding(.bottom, 20) // Space for FAB
             }
             .refreshable {
                 await viewModel.loadBackups()
