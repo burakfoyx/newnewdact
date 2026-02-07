@@ -164,11 +164,10 @@ struct ServerDetailView: View {
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)
-                .containerBackground(.clear, for: .tabView)
                 .animation(nil, value: selectedTab)
             }
         }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .background(Color.clear)
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
     }
