@@ -162,6 +162,9 @@ struct ServerDetailView: View {
                     .tag(ServerTab.settings)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+                .clipped()
                 .animation(nil, value: selectedTab)
             }
         }
