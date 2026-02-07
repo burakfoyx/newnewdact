@@ -57,29 +57,54 @@ struct SchedulesView: View {
                     )
                     .padding(.top, 40)
                 } else {
-                                    } else {
-                                        Text("Inactive")
-                                            .font(.caption2.bold())
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(Color.gray.opacity(0.3))
-                                            .foregroundColor(.white.opacity(0.6))
-                                            .clipShape(Capsule())
+                    LazyVStack(spacing: 12) {
+                        ForEach(viewModel.schedules) { schedule in
+                            LiquidGlassCard {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    HStack {
+                                        Text(schedule.name)
+                                            .font(.headline)
+                                            .foregroundStyle(.white)
+                                        Spacer()
+                                        if schedule.isActive {
+                                            Text("Active")
+                                                .font(.caption2.bold())
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(Color.green.opacity(0.3))
+                                                .foregroundColor(.green)
+                                                .clipShape(Capsule())
+                                        } else {
+                                            Text("Inactive")
+                                                .font(.caption2.bold())
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
+                                                .background(Color.gray.opacity(0.3))
+                                                .foregroundColor(.white.opacity(0.6))
+                                                .clipShape(Capsule())
+                                        }
                                     }
-                                }
-                                
-                                Divider().background(Color.white.opacity(0.1))
-                                
-                                HStack {
-                                    Label(formatCron(schedule.cron), systemImage: "clock.arrow.circlepath")
-                                        .foregroundStyle(.blue.opacity(0.8))
-                                    Spacer()
-                                    if let lastRun = schedule.lastRunAt {
-                                        Text("Last: " + formatDate(lastRun))
-                                            .foregroundStyle(.white.opacity(0.5))
+                                    
+                                    Divider().background(Color.white.opacity(0.1))
+                                    
+                                    HStack {
+                                        Label(formatCron(schedule.cron), systemImage: "clock.arrow.circlepath")
+                                            .foregroundStyle(.blue.opacity(0.8))
+                                        Spacer()
+                                        if let lastRun = schedule.lastRunAt {
+                                            Text("Last: " + formatDate(lastRun))
+                                                .foregroundStyle(.white.opacity(0.5))
+                                        }
                                     }
+                                    .font(.caption)
                                 }
-                                .font(.caption)
+                            }
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    Task { await viewModel.delete(serverId: serverId, scheduleId: schedule.id) }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
                             }
                         }
                     }

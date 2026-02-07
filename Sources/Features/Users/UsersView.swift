@@ -57,18 +57,44 @@ struct UsersView: View {
                     )
                     .padding(.top, 40)
                 } else {
+                    LazyVStack(spacing: 12) {
+                        ForEach(viewModel.users) { user in
+                            LiquidGlassCard {
+                                HStack(spacing: 16) {
+                                    // Avatar placeholder
+                                    Circle()
+                                        .fill(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                        .frame(width: 40, height: 40)
+                                        .overlay(
+                                            Text(String(user.email.prefix(1)).uppercased())
+                                                .font(.headline)
+                                                .foregroundStyle(.white)
+                                        )
                                     
-                                    Text(user.email)
-                                        .font(.caption)
-                                        .foregroundStyle(.white.opacity(0.6))
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(user.username)
+                                            .font(.headline)
+                                            .foregroundStyle(.white)
+                                        
+                                        Text(user.email)
+                                            .font(.caption)
+                                            .foregroundStyle(.white.opacity(0.6))
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    if user.twoFactorEnabled {
+                                        Image(systemName: "lock.shield.fill")
+                                            .foregroundStyle(.green)
+                                            .font(.title3)
+                                    }
                                 }
-                                
-                                Spacer()
-                                
-                                if user.twoFactorEnabled {
-                                    Image(systemName: "lock.shield.fill")
-                                        .foregroundStyle(.green)
-                                        .font(.title3)
+                            }
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    Task { await viewModel.delete(serverId: serverId, userUuid: user.uuid) }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
                                 }
                             }
                         }
