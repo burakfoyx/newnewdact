@@ -165,9 +165,9 @@ struct ServerDetailView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)
                 .animation(nil, value: selectedTab)
-                // Push content below header and above bottom safe area
+                // Push content below header
                 .contentMargins(.top, 200, for: .scrollContent)
-                .contentMargins(.bottom, 100, for: .scrollContent)
+                .contentMargins(.bottom, 20, for: .scrollContent)
                 
                 // Header layer - overlaid on top, using frame instead of Spacer
                 ServerDetailHeader(
