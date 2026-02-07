@@ -180,7 +180,7 @@ struct ServerDetailView: View {
                     limits: server.limits
                 )
                 .padding(.horizontal)
-                .padding(.top, geometry.safeAreaInsets.top + 10)
+                .padding(.top, geometry.safeAreaInsets.top + 20)
                 .padding(.bottom, 10)
                 .frame(maxWidth: .infinity, alignment: .top)
             }
