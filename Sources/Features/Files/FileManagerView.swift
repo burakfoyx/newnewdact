@@ -190,6 +190,26 @@ extension FileAttributes: Identifiable {
 
 struct FileRow: View {
     let file: FileAttributes
+    let onCompress: () -> Void
+    let onDecompress: () -> Void
+    
+    init(file: FileAttributes, onCompress: @escaping () -> Void = {}, onDecompress: @escaping () -> Void = {}) {
+        self.file = file
+        self.onCompress = onCompress
+        self.onDecompress = onDecompress
+    }
+    
+    var body: some View {
+        HStack {
+            Image(systemName: file.isFile ? "doc.text" : "folder.fill")
+                .foregroundStyle(file.isFile ? .white : .blue)
+                .font(.title3)
+                .frame(width: 30)
+            
+            VStack(alignment: .leading) {
+                Text(file.name)
+                    .foregroundStyle(.white)
+                    .font(.body)
                 
                 HStack {
                     Text(formatBytes(file.size))
@@ -209,7 +229,7 @@ struct FileRow: View {
             }
         }
         .padding()
-        .liquidGlass(variant: .clear, cornerRadius: 12)
+        .glassEffect(.clear.interactive(), in: RoundedRectangle(cornerRadius: 12))
         .contextMenu {
             if file.isFile {
                  if file.name.hasSuffix(".tar.gz") || file.name.hasSuffix(".zip") || file.name.hasSuffix(".rar") {

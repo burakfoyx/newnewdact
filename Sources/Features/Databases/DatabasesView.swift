@@ -65,9 +65,41 @@ struct DatabasesView: View {
                     )
                     .padding(.top, 40)
                 } else {
+                    LazyVStack(spacing: 12) {
+                        ForEach(viewModel.databases) { database in
+                            LiquidGlassCard {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack {
+                                        Image(systemName: "cylinder.fill")
+                                            .foregroundStyle(.blue)
+                                        Text(database.name)
+                                            .font(.headline)
+                                            .foregroundStyle(.white)
+                                        Spacer()
+                                    }
+                                    
+                                    Divider().background(Color.white.opacity(0.1))
+                                    
+                                    HStack {
+                                        Label(database.host.address + ":" + String(database.host.port), systemImage: "network")
+                                        Spacer()
+                                        Label(database.username, systemImage: "person.circle")
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.white.opacity(0.7))
                                 }
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.7))
+                            }
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    Task { await viewModel.delete(serverId: serverId, databaseId: database.id) }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                Button {
+                                    Task { await viewModel.resetPassword(serverId: serverId, databaseId: database.id) }
+                                } label: {
+                                    Label("Reset Password", systemImage: "key")
+                                }
                             }
                         }
                     }
