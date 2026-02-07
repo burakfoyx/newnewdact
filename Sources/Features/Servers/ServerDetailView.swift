@@ -46,7 +46,8 @@ struct ServerDetailView: View {
     
     var body: some View {
         ZStack {
-            // Background inherited from parent NavigationStack (ServerListView)
+            LiquidBackgroundView()
+                .ignoresSafeArea(.all)
             
             VStack(spacing: 0) {
                  ServerDetailHeader(
@@ -163,11 +164,11 @@ struct ServerDetailView: View {
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)
-                .clipped()
+                .containerBackground(.clear, for: .tabView)
                 .animation(nil, value: selectedTab)
             }
         }
-        .background(Color.clear)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
     }
