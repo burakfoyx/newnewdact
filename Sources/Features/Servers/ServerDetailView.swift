@@ -45,129 +45,149 @@ struct ServerDetailView: View {
     // ... Tab Enum ...
     
     var body: some View {
-        ZStack {
-            LiquidBackgroundView()
-                .ignoresSafeArea()
-            
-            // TabView fills the entire area
-            TabView(selection: $selectedTab) {
-                ConsoleView(
-                    viewModel: consoleViewModel,
-                    limits: server.limits,
-                    serverName: server.name
-                )
-                .tag(ServerTab.console)
+        GeometryReader { geometry in
+            ZStack(alignment: .top) {
+                // Background layer
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
                 
-                HistoryView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.analytics)
+                // Content layer - TabView with top padding for header
+                TabView(selection: $selectedTab) {
+                    ConsoleView(
+                        viewModel: consoleViewModel,
+                        limits: server.limits,
+                        serverName: server.name
+                    )
+                    .background(Color.clear)
+                    .tag(ServerTab.console)
+                    
+                    HistoryView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .background(Color.clear)
+                    .tag(ServerTab.analytics)
+                    
+                    AlertsListView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .background(Color.clear)
+                    .tag(ServerTab.alerts)
+                    
+                    FileManagerView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .background(Color.clear)
+                    .tag(ServerTab.files)
+                        
+                    NetworkView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .background(Color.clear)
+                    .tag(ServerTab.network)
+                        
+                    BackupView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .background(Color.clear)
+                    .tag(ServerTab.backups)
+                        
+                    StartupView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .background(Color.clear)
+                    .tag(ServerTab.startup)
+                        
+                    SchedulesView(
+                        serverId: server.identifier,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .background(Color.clear)
+                    .tag(ServerTab.schedules)
+                        
+                    DatabasesView(
+                        serverId: server.identifier,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .background(Color.clear)
+                    .tag(ServerTab.databases)
+                        
+                    UsersView(
+                        serverId: server.identifier,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .background(Color.clear)
+                    .tag(ServerTab.users)
+                    
+                    ServerSettingsView(
+                        server: server,
+                        serverName: server.name,
+                        statusState: consoleViewModel.state,
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .background(Color.clear)
+                    .tag(ServerTab.settings)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+                .animation(nil, value: selectedTab)
+                // Push content below header using contentMargins
+                .contentMargins(.top, 200, for: .scrollContent)
                 
-                AlertsListView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.alerts)
-                
-                FileManagerView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.files)
+                // Header layer - overlaid on top
+                VStack(spacing: 0) {
+                    ServerDetailHeader(
+                        title: server.name,
+                        statusState: consoleViewModel.state,
+                        selectedTab: $selectedTab,
+                        onBack: { dismiss() },
+                        onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
+                        stats: consoleViewModel.stats,
+                        limits: server.limits
+                    )
+                    .padding(.horizontal)
+                    .padding(.top, geometry.safeAreaInsets.top + 10)
+                    .padding(.bottom, 10)
                     
-                NetworkView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.network)
-                    
-                BackupView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.backups)
-                    
-                StartupView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.startup)
-                    
-                SchedulesView(
-                    serverId: server.identifier,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.schedules)
-                    
-                DatabasesView(
-                    serverId: server.identifier,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.databases)
-                    
-                UsersView(
-                    serverId: server.identifier,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.users)
-                
-                ServerSettingsView(
-                    server: server,
-                    serverName: server.name,
-                    statusState: consoleViewModel.state,
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .tag(ServerTab.settings)
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .scrollContentBackground(.hidden)
-            .background(Color.clear)
-            .animation(nil, value: selectedTab)
-            // Header floats on top with proper spacing via safeAreaInset
-            .safeAreaInset(edge: .top) {
-                ServerDetailHeader(
-                    title: server.name,
-                    statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
-                    onBack: { dismiss() },
-                    onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
-                    stats: consoleViewModel.stats,
-                    limits: server.limits
-                )
-                .padding(.horizontal)
-                .padding(.top, 10)
-                .padding(.bottom, 10)
+                    Spacer()
+                }
             }
         }
+        .ignoresSafeArea(.container, edges: .top)
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
     }
