@@ -175,7 +175,7 @@ struct FileManagerView: View {
                             
                             ForEach(viewModel.files) { file in
                                 FileRow(file: file) {
-                                    if file.isDirectory {
+                                    if !file.isFile {
                                         Task { await viewModel.navigate(to: file.path) }
                                     } else {
                                         // Edit file
