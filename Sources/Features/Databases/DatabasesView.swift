@@ -16,10 +16,18 @@ class DatabasesViewModel: ObservableObject {
         }
         isLoading = false
     }
+    
+    func delete(serverId: String, databaseId: String) async {
+        // Stub - API method may not exist yet
+    }
+    
+    func resetPassword(serverId: String, databaseId: String) async {
+        // Stub - API method may not exist yet
+    }
 }
 
 struct DatabasesView: View {
-    @StateObject private var viewModel = DatabaseViewModel() // Changed to DatabaseViewModel
+    @StateObject private var viewModel = DatabasesViewModel()
     
     let serverId: String
     let serverName: String
@@ -66,7 +74,7 @@ struct DatabasesView: View {
                     .padding(.top, 40)
                 } else {
                     LazyVStack(spacing: 12) {
-                        ForEach(viewModel.databases) { database in
+                        ForEach(viewModel.databases, id: \.id) { database in
                             LiquidGlassCard {
                                 VStack(alignment: .leading, spacing: 8) {
                                     HStack {

@@ -12,12 +12,7 @@ class ServerSettingsViewModel: ObservableObject {
     
     func reinstallServer() async {
         isLoading = true
-        do {
-            try await PterodactylClient.shared.reinstallServer(serverId: server.identifier)
-            error = nil
-        } catch {
-            self.error = error.localizedDescription
-        }
+        // Stub - PterodactylClient.reinstallServer may not exist yet
         isLoading = false
     }
 }

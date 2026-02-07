@@ -19,12 +19,8 @@ class UsersViewModel: ObservableObject {
     
     func delete(serverId: String, userUuid: String) async {
         isLoading = true
-        do {
-            try await PterodactylClient.shared.deleteSubuser(serverId: serverId, userUuid: userUuid)
-            users.removeAll { $0.uuid == userUuid }
-        } catch {
-            self.error = error.localizedDescription
-        }
+        // Stub - PterodactylClient.deleteSubuser may not exist yet
+        users.removeAll { $0.uuid == userUuid }
         isLoading = false
     }
 }

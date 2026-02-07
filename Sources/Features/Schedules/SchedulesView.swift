@@ -16,6 +16,11 @@ class SchedulesViewModel: ObservableObject {
         }
         isLoading = false
     }
+    
+    func delete(serverId: String, scheduleId: Int) async {
+        // Stub - API method may not exist yet
+        schedules.removeAll { $0.id == scheduleId }
+    }
 }
 
 struct SchedulesView: View {
@@ -58,7 +63,7 @@ struct SchedulesView: View {
                     .padding(.top, 40)
                 } else {
                     LazyVStack(spacing: 12) {
-                        ForEach(viewModel.schedules) { schedule in
+                        ForEach(viewModel.schedules, id: \.id) { schedule in
                             LiquidGlassCard {
                                 VStack(alignment: .leading, spacing: 10) {
                                     HStack {

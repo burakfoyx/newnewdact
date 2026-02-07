@@ -5,6 +5,7 @@ class FileManagerViewModel: ObservableObject {
     @Published var files: [FileAttributes] = []
     @Published var currentPath: String = "/"
     @Published var isLoading = false
+    @Published var error: String?
     
     init(serverId: String) {
         self.serverId = serverId
@@ -48,6 +49,20 @@ class FileManagerViewModel: ObservableObject {
         }
         Task { await listFiles() }
     }
+    
+    func navigateToRoot() async {
+        currentPath = "/"
+        await listFiles()
+    }
+    
+    func navigate(to path: String) async {
+        currentPath = path
+        await listFiles()
+    }
+    
+    func loadFiles() async {
+        await listFiles()
+    }
 
     func compress(file: FileAttributes) async {
         await MainActor.run { isLoading = true }
@@ -76,7 +91,7 @@ class FileManagerViewModel: ObservableObject {
 }
 
 struct FileManagerView: View {
-    @StateObject var viewModel: FileViewModel
+    @StateObject var viewModel: FileManagerViewModel
     let serverName: String
     let statusState: String
     var stats: WebsocketResponse.Stats?
@@ -87,7 +102,7 @@ struct FileManagerView: View {
     @State private var pathComponents: [String] = []
     
     init(server: ServerAttributes, serverName: String, statusState: String, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
-        _viewModel = StateObject(wrappedValue: FileViewModel(serverId: server.identifier))
+        _viewModel = StateObject(wrappedValue: FileManagerViewModel(serverId: server.identifier))
         self.serverName = serverName
         self.statusState = statusState
         self.stats = stats
