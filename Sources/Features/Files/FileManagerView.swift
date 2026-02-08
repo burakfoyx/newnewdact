@@ -156,7 +156,7 @@ struct FileManagerView: View {
                         LazyVStack(spacing: 2) {
                             if viewModel.currentPath != "/" && !viewModel.currentPath.isEmpty {
                                 Button {
-                                     Task { await viewModel.navigateUp() }
+                                     viewModel.navigateUp()
                                 } label: {
                                     HStack {
                                         Image(systemName: "arrow.turn.up.left")

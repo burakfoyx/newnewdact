@@ -23,7 +23,6 @@ class NetworkViewModel: ObservableObject {
             }
         } catch {
             await MainActor.run { 
-                Color.clear.frame(height: 200) // Header spacer
                 self.error = "Failed to load allocations: \(error.localizedDescription)"
                 self.isLoading = false 
             }

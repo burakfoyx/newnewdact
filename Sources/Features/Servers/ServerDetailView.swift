@@ -43,6 +43,9 @@ struct ServerDetailView: View {
     }
     
     // ... Tab Enum ...
+    
+    @State private var headerHeight: CGFloat = 0
+
     var body: some View {
         ZStack(alignment: .top) {
             // 1. Background layer (Full Screen)
