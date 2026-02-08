@@ -47,7 +47,6 @@ struct ServerDetailView: View {
     @State private var headerHeight: CGFloat = 0
 
     var body: some View {
-    var body: some View {
         ZStack {
             // 1. Unified Background (Sibling, Full Screen)
             // Matches ServerListView implementation exactly
@@ -184,6 +183,7 @@ struct ServerDetailView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
+        }
     }
     
     // Kept helper for statusColor if needed by other logic, but used less now.
