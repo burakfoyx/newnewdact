@@ -79,7 +79,7 @@ struct ConsoleView: View {
             .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .padding(.horizontal)
             .padding(.top, 8)
-            .padding(.bottom, 20)
+            .padding(.bottom, 0)
         }
         .background(Color.clear)
         // Toolbar modifiers removed as they are handled by parent
