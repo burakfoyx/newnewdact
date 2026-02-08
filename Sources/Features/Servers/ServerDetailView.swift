@@ -179,13 +179,25 @@ struct ServerDetailView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 10)
             }
-            .mask(
-                VStack(spacing: 0) {
-                    LinearGradient(colors: [.black, .black], startPoint: .top, endPoint: .bottom)
-                    LinearGradient(colors: [.black, .black.opacity(0.0)], startPoint: .center, endPoint: .bottom)
-                        .frame(height: 40)
-                }
-            )
+            }
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+            
+            // 3. Minimal Bottom Blur Overlay
+            VStack {
+                 Spacer()
+                 Rectangle()
+                     .fill(.ultraThinMaterial)
+                     .mask(
+                         LinearGradient(
+                             colors: [.clear, .black],
+                             startPoint: .top,
+                             endPoint: .bottom
+                         )
+                     )
+                     .frame(height: 40)
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
         }
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)

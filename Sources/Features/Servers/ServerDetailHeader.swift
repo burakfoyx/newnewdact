@@ -129,8 +129,8 @@ struct ServerDetailHeader: View {
                 }
             }
             .padding(14)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background(.black.opacity(0.05)) // Subtle tint to reduce refraction artifacts
+            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
 }
