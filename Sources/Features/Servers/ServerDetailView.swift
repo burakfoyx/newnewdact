@@ -183,7 +183,6 @@ struct ServerDetailView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        }
     }
     
     // Kept helper for statusColor if needed by other logic, but used less now.
