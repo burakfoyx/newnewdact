@@ -129,7 +129,8 @@ struct ServerDetailHeader: View {
                 }
             }
             .padding(14)
-            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
 }

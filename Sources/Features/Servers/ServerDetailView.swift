@@ -166,7 +166,6 @@ struct ServerDetailView: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
             .background(Color.clear)
             .animation(nil, value: selectedTab)
-            // Header Placement
             .safeAreaInset(edge: .top) {
                 ServerDetailHeader(
                     title: server.name,
@@ -180,6 +179,13 @@ struct ServerDetailView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 10)
             }
+            .mask(
+                VStack(spacing: 0) {
+                    LinearGradient(colors: [.black, .black], startPoint: .top, endPoint: .bottom)
+                    LinearGradient(colors: [.black, .black.opacity(0.0)], startPoint: .center, endPoint: .bottom)
+                        .frame(height: 40)
+                }
+            )
         }
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
