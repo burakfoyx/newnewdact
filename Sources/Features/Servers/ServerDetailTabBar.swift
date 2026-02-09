@@ -1,15 +1,55 @@
+//
+//  ServerDetailTabBar.swift
+//  XYIdactyl
+//
+//  Created by Burak on 10.02.2026.
+//
+
 import SwiftUI
+
+enum ServerTab: String, CaseIterable, Identifiable {
+    case console = "Console"
+    case analytics = "Analytics"
+    case backups = "Backups"
+    case alerts = "Alerts"
+    case files = "Files"
+    case network = "Network"
+    case startup = "Startup"
+    case schedules = "Schedules"
+    case databases = "Databases"
+    case users = "Users"
+    case settings = "Settings"
+    
+    var id: String { rawValue }
+    
+    var icon: String {
+        switch self {
+        case .console: return "terminal.fill"
+        case .analytics: return "chart.xyaxis.line"
+        case .backups: return "archivebox.fill"
+        case .alerts: return "bell.fill"
+        case .files: return "folder.fill"
+        case .network: return "network"
+        case .startup: return "play.circle.fill"
+        case .schedules: return "clock.fill"
+        case .databases: return "cylinder.fill"
+        case .users: return "person.2.fill"
+        case .settings: return "gearshape.fill"
+        }
+    }
+}
 
 struct ServerDetailTabBar: View {
     @Binding var selectedTab: ServerTab
-    @Namespace private var animation // For smooth selection transition
+    @Namespace private var animation
     
-    // The main 4 tabs + "More"
+    // Main tabs to show directly
     private let mainTabs: [ServerTab] = [.console, .analytics, .backups, .alerts]
     
-    // The rest of the tabs for the "More" menu
+    // Tabs to show in "More" menu
     private let moreTabs: [ServerTab] = [
-        .files, .network, .startup, .schedules, .databases, .users, .settings
+        .files, .network, .startup, .schedules,
+        .databases, .users, .settings
     ]
     
     var body: some View {
@@ -19,16 +59,15 @@ struct ServerDetailTabBar: View {
                 TabBarButton(
                     tab: tab,
                     isSelected: selectedTab == tab,
-                    namespace: animation,
-                    action: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedTab = tab
-                        }
+                    namespace: animation
+                ) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        selectedTab = tab
                     }
-                )
+                }
             }
             
-            // More Tab
+            // "More" Tab
             Menu {
                 ForEach(moreTabs) { tab in
                     Button {
@@ -41,36 +80,46 @@ struct ServerDetailTabBar: View {
                 }
             } label: {
                 VStack(spacing: 4) {
-                    Image(systemName: "ellipsis.circle.fill")
-                        .font(.system(size: 20, weight: .semibold))
-                    Text("More")
-                        .font(.system(size: 10, weight: .medium))
+                    Image(systemName: isMoreTabSelected ? moreTabIcon : "ellipsis.circle")
+                        .font(.system(size: 20, weight: isMoreTabSelected ? .semibold : .regular))
+                        .symbolEffect(.bounce, value: isMoreTabSelected)
+                    
+                    Text(isMoreTabSelected ? selectedTab.rawValue : "More")
+                        .font(.system(size: 10, weight: isMoreTabSelected ? .semibold : .medium))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .contentShape(Rectangle())
-                // Selection logic for "More"
-                .foregroundStyle(isMoreTabSelected ? Color.blue : .white)
+                .foregroundStyle(isMoreTabSelected ? .white : .white.opacity(0.6))
                 .background {
                     if isMoreTabSelected {
                         Capsule()
-                            .fill(Color.white.opacity(0.1))
+                            .fill(.white.opacity(0.2))
                             .matchedGeometryEffect(id: "TabBackground", in: animation)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
                     }
                 }
             }
         }
-        .padding(.horizontal, 6)
+        .padding(.horizontal, 4)
         .padding(.vertical, 6)
-
-        .liquidGlass(variant: .heavy, cornerRadius: 100)
-        .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
-        .padding(.horizontal, 24)
-        .padding(.bottom, 20) // Floating higher as per typical iOS spacing
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+        .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8) // Lift slightly from bottom
     }
     
     private var isMoreTabSelected: Bool {
         moreTabs.contains(selectedTab)
+    }
+    
+    private var moreTabIcon: String {
+        if isMoreTabSelected {
+            return selectedTab.icon
+        }
+        return "ellipsis.circle"
     }
 }
 
@@ -93,32 +142,24 @@ private struct TabBarButton: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .contentShape(Rectangle())
-            // Selected: Blue, Unselected: White
-            .foregroundStyle(isSelected ? Color.blue : .white)
+            .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
             .background {
                 if isSelected {
                     Capsule()
-                        .fill(Color.white.opacity(0.1))
+                        .fill(.white.opacity(0.2))
                         .matchedGeometryEffect(id: "TabBackground", in: namespace)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                 }
             }
         }
+        .buttonStyle(.plain)
     }
 }
 
 #Preview {
     ZStack {
         Color.black.ignoresSafeArea()
-        // Mock background content
-        VStack {
-            ForEach(0..<10) { _ in
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.gray.opacity(0.2))
-                    .frame(height: 60)
-                    .padding(.horizontal)
-            }
-        }
-        
         VStack {
             Spacer()
             ServerDetailTabBar(selectedTab: .constant(.console))
