@@ -122,21 +122,8 @@ struct ServerDashboardView: View {
             // Ensure content isn't hidden by our custom bottom bar
             // We reserve 60pt for the bar base + safe area
             .safeAreaInset(edge: .bottom) {
-                 Color.clear.frame(height: 50)
+                 ServerDetailTabBar(selectedTab: $selectedTab)
             }
-
-            // MARK: 3. Custom Bottom Tab Bar
-            VStack(spacing: 0) {
-                Spacer()
-                
-                // Divider line for native feel
-                Divider()
-                    .background(Color.white.opacity(0.1))
-                
-                ScrollableTabBar(selectedTab: $selectedTab)
-                    .background(.ultraThinMaterial) // Native-like blur
-            }
-            .ignoresSafeArea(edges: .bottom) // Let background extend to bottom edge
         }
         // MARK: 4. Native Top Navigation
         .navigationTitle(server.name)
@@ -206,50 +193,4 @@ struct ServerDashboardView: View {
 
 // MARK: - Subcomponents
 
-struct ScrollableTabBar: View {
-    @Binding var selectedTab: ServerTab
-    @Namespace private var ns
-    
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 25) {
-                ForEach(ServerTab.allCases) { tab in
-                    Button {
-                        withAnimation(.snappy) {
-                            selectedTab = tab
-                        }
-                    } label: {
-                        VStack(spacing: 4) {
-                            // Icon
-                            Image(systemName: tab.icon)
-                                .font(.system(size: 20))
-                                .symbolVariant(selectedTab == tab ? .fill : .none)
-                            
-                            // Text
-                            Text(tab.rawValue)
-                                .font(.caption2)
-                                .fontWeight(selectedTab == tab ? .semibold : .regular)
-                        }
-                        .foregroundStyle(selectedTab == tab ? .blue : .secondary) // Highlight Color
-                        .frame(minWidth: 50)
-                        .padding(.vertical, 10)
-                        .overlay(alignment: .top) {
-                            if selectedTab == tab {
-                                // Optional Top Indicator line
-                                Capsule()
-                                    .fill(Color.blue)
-                                    .frame(width: 20, height: 3)
-                                    .offset(y: -10)
-                                    .matchedGeometryEffect(id: "Indicator", in: ns)
-                            }
-                        }
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-            }
-            .padding(.horizontal, 20)
-        }
-        .frame(height: 50) // Standard Tab Bar Height area (excluding safe area)
-        .padding(.bottom, 5) // Slight adjustment
-    }
-}
+// End of file
