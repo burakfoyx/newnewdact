@@ -45,9 +45,6 @@ struct ServerDetailTabBar: View {
             }
         }
         .padding(.horizontal, 4)
-        }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
     }
