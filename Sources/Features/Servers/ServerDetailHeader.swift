@@ -96,7 +96,7 @@ struct ServerDetailHeader: View {
                     )
                 }
                 
-                }
+
             }
             .padding(14)
             .background(.black.opacity(0.05)) // Subtle tint to reduce refraction artifacts
