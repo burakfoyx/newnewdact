@@ -181,11 +181,11 @@ struct ServerDetailView: View {
             }
 
             .transition(.move(edge: .bottom).combined(with: .opacity))
-            
-            .safeAreaInset(edge: .bottom) {
-                ServerDetailTabBar(selectedTab: $selectedTab)
-            }
         }
+        .overlay(alignment: .bottom) {
+            ServerDetailTabBar(selectedTab: $selectedTab)
+        }
+        .safeAreaPadding(.bottom, 90) // Ensure content can scroll above the floating tab bar
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
     }
