@@ -179,7 +179,7 @@ struct ServerDetailView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 10)
             }
-            }
+
             .transition(.move(edge: .bottom).combined(with: .opacity))
             
             // 3. Minimal Bottom Blur Overlay
