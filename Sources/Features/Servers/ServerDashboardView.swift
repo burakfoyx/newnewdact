@@ -141,6 +141,7 @@ struct ServerDashboardView: View {
         // MARK: 4. Native Top Navigation
         .navigationTitle(server.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar) // Fix: Hide system tab bar
         .toolbarBackground(.hidden, for: .navigationBar) // Transparent Nav Bar
         .toolbar {
             // Power / Settings Menu (Top Right)
@@ -156,9 +157,6 @@ struct ServerDashboardView: View {
                         Text("Power Controls")
                     }
                     
-                    // Actions (Contextual "Create" logic based on tab?) 
-                    // Or keep it simple.
-                    
                     // Settings Link
                     Section {
                         // Switch to Settings Tab
@@ -166,11 +164,8 @@ struct ServerDashboardView: View {
                     }
                 } label: {
                     Image(systemName: "gearshape")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold)) // Standard Icon Size
                         .foregroundStyle(.white)
-                        .padding(8)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
                 }
             }
             
@@ -181,9 +176,6 @@ struct ServerDashboardView: View {
                          Image(systemName: "plus")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.white)
-                            .padding(8)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
                      }
                 }
             }
