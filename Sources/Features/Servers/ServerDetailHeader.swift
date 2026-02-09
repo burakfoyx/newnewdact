@@ -3,7 +3,6 @@ import SwiftUI
 struct ServerDetailHeader: View {
     let title: String
     let statusState: String
-    @Binding var selectedTab: ServerTab
     let onBack: () -> Void
     let onPowerAction: (String) -> Void
     
@@ -97,35 +96,6 @@ struct ServerDetailHeader: View {
                     )
                 }
                 
-                // Row 3: Tabs
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(ServerTab.allCases) { tab in
-                            Button(action: {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    selectedTab = tab
-                                }
-                            }) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: tab.icon)
-                                    Text(tab.rawValue)
-                                }
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(selectedTab == tab ? .white : .white.opacity(0.6))
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 14)
-                                .background(
-                                    selectedTab == tab ? Color.white.opacity(0.2) : Color.clear
-                                )
-                                .clipShape(Capsule())
-                                .overlay(
-                                    Capsule()
-                                        .stroke(selectedTab == tab ? Color.white.opacity(0.3) : Color.clear, lineWidth: 1)
-                                )
-                            }
-                             .buttonStyle(PlainButtonStyle())
-                        }
-                    }
                 }
             }
             .padding(14)

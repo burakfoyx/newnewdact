@@ -167,10 +167,10 @@ struct ServerDetailView: View {
             .background(Color.clear)
             .animation(nil, value: selectedTab)
             .safeAreaInset(edge: .top) {
+
                 ServerDetailHeader(
                     title: server.name,
                     statusState: consoleViewModel.state,
-                    selectedTab: $selectedTab,
                     onBack: { dismiss() },
                     onPowerAction: { action in consoleViewModel.sendPowerAction(action) },
                     stats: consoleViewModel.stats,
@@ -182,22 +182,9 @@ struct ServerDetailView: View {
 
             .transition(.move(edge: .bottom).combined(with: .opacity))
             
-            // 3. Minimal Bottom Blur Overlay
-            VStack {
-                 Spacer()
-                 Rectangle()
-                     .fill(.ultraThinMaterial)
-                     .mask(
-                         LinearGradient(
-                             colors: [.clear, .black],
-                             startPoint: .top,
-                             endPoint: .bottom
-                         )
-                     )
-                     .frame(height: 40)
+            .safeAreaInset(edge: .bottom) {
+                ServerDetailTabBar(selectedTab: $selectedTab)
             }
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
         }
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
