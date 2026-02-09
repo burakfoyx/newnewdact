@@ -45,11 +45,9 @@ struct ServerDetailTabBar: View {
             }
         }
         .padding(.horizontal, 4)
-        .background {
-            Capsule()
-                .fill(.ultraThinMaterial.opacity(0.1)) // Subtle base
-                .liquidGlassEffect(in: Capsule()) // Native Liquid Glass
         }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
     }
