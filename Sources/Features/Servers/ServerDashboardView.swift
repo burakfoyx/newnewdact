@@ -136,7 +136,7 @@ struct ServerDashboardView: View {
                 ScrollableTabBar(selectedTab: $selectedTab)
                     .background(.ultraThinMaterial) // Native-like blur
             }
-            .ignoresSafeArea(.item, edges: .bottom) // Let background extend to bottom edge
+            .ignoresSafeArea(edges: .bottom) // Let background extend to bottom edge
         }
         // MARK: 4. Native Top Navigation
         .navigationTitle(server.name)
