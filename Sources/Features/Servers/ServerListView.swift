@@ -272,7 +272,7 @@ struct ServerListView: View {
     
     private func serverRowLink(for server: ServerAttributes) -> some View {
         ZStack {
-            NavigationLink(destination: ServerDetailView(server: server)) {
+            NavigationLink(destination: ServerDashboardView(server: server)) {
                 EmptyView()
             }
             .opacity(0)
