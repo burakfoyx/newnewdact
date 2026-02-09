@@ -252,7 +252,7 @@ struct ServerDashboardView: View {
     
     // MARK: - Helpers
     
-    @Namespace private var tabNamespace
+
     
     private var statusColor: Color {
         switch consoleViewModel.state {
