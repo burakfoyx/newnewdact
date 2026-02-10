@@ -1,5 +1,37 @@
 import SwiftUI
 
+public enum ServerTab: String, CaseIterable, Identifiable {
+    case console = "Console"
+    case analytics = "Analytics"
+    case backups = "Backups"
+    case alerts = "Alerts"
+    case files = "Files"
+    case network = "Network"
+    case startup = "Startup"
+    case schedules = "Schedules"
+    case databases = "Databases"
+    case users = "Users"
+    case settings = "Settings"
+    
+    public var id: String { rawValue }
+    
+    public var icon: String {
+        switch self {
+        case .console: return "terminal.fill"
+        case .analytics: return "chart.xyaxis.line"
+        case .backups: return "archivebox.fill"
+        case .alerts: return "bell.fill"
+        case .files: return "folder.fill"
+        case .network: return "network"
+        case .startup: return "play.circle.fill"
+        case .schedules: return "clock.fill"
+        case .databases: return "cylinder.fill"
+        case .users: return "person.2.fill"
+        case .settings: return "gearshape.fill"
+        }
+    }
+}
+
 struct ServerDashboardView: View {
     let server: ServerAttributes
     @StateObject private var consoleViewModel: ConsoleViewModel
