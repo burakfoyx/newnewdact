@@ -15,6 +15,7 @@ struct ServerDetailView: View {
     var limits: ServerLimits?
     
     @State private var selectedTab: ServerTab = .console
+    @Namespace private var animation // Add namespace for matched geometry
     @Environment(\.dismiss) private var dismiss
     
     // Initializer to match expected format
@@ -26,6 +27,15 @@ struct ServerDetailView: View {
         self.limits = limits ?? server.limits
     }
     
+    // Main tabs to show directly
+    private let mainTabs: [ServerTab] = [.console, .analytics, .backups, .alerts]
+    
+    // Tabs to show in "More" menu
+    private let moreTabs: [ServerTab] = [
+        .files, .network, .startup, .schedules,
+        .databases, .users, .settings
+    ]
+
     var body: some View {
         ZStack {
             // 1. Background Layer
@@ -54,16 +64,6 @@ struct ServerDetailView: View {
             // Switch based on tab
             switch selectedTab {
             case .console:
-                // ConsoleView requires ConsoleViewModel. We might need to construct it or
-                // ensure ConsoleView can handle it.
-                // Assuming ConsoleView init(server: ...) or similar based on previous file read.
-                // Re-reading ConsoleView init: init(viewModel: ConsoleViewModel, limits: ServerLimits?, serverName: String)
-                // We need to create specific view models if they aren't passed in.
-                // For simplicity here, we assume we can create them or adapt.
-                // Wait, ConsoleView.swift INIT was `init(serverId: String, limits: ServerLimits? = nil)` in ViewModel but View took `viewModel`.
-                // I will create the ViewModel inline here or pass it.
-                // Creating StateObject inside body is bad. We should wrapping content in a view that owns the state.
-                // Simple approach: Use lazy views via function construction or specialized wrappers.
                 ConsoleViewWrapper(server: server, limits: limits)
             case .analytics:
                 HistoryView(server: server, serverName: serverName, statusState: statusState, stats: stats, limits: limits)
@@ -95,11 +95,11 @@ struct ServerDetailView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(12)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(12)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Circle())
                     }
                     
                     Text(serverName)
@@ -111,9 +111,6 @@ struct ServerDetailView: View {
                         .clipShape(Capsule())
                     
                     Spacer()
-                    
-                    // Optional right side actions (e.g. power)
-                    // Could add power button here
                 }
                 .padding(.horizontal)
                 .padding(.top, 8) // Adjust for safe area
@@ -121,10 +118,64 @@ struct ServerDetailView: View {
                 Spacer()
                 
                 // Floating Tab Bar
-                ServerDetailTabBar(selectedTab: $selectedTab)
+                LiquidGlassDock {
+                    // Main Tabs
+                    ForEach(mainTabs) { tab in
+                        LiquidDockButton(
+                            title: tab.rawValue,
+                            icon: tab.icon,
+                            isSelected: selectedTab == tab,
+                            namespace: animation
+                        ) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                selectedTab = tab
+                            }
+                        }
+                    }
+                    
+                    // "More" Tab Menu
+                    Menu {
+                        ForEach(moreTabs) { tab in
+                            Button {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    selectedTab = tab
+                                }
+                            } label: {
+                                Label(tab.rawValue, systemImage: tab.icon)
+                            }
+                        }
+                    } label: {
+                        // Reuse LiquidDockButton visual manually for the menu trigger
+                        // since LiquidDockButton is a Button which might conflict with Menu label
+                        // We will use a custom view that matches LiquidDockButton visual perfectly
+                        VStack(spacing: 4) {
+                            Image(systemName: isMoreTabSelected ? selectedTab.icon : "ellipsis.circle")
+                                .font(.system(size: 20, weight: isMoreTabSelected ? .semibold : .regular))
+                                .symbolEffect(.bounce, value: isMoreTabSelected)
+                            
+                            Text(isMoreTabSelected ? selectedTab.rawValue : "More")
+                                .font(.system(size: 10, weight: isMoreTabSelected ? .semibold : .medium))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .contentShape(Rectangle())
+                        .foregroundStyle(isMoreTabSelected ? Color.blue : .white)
+                        .background {
+                            if isMoreTabSelected {
+                                Capsule()
+                                    .fill(Color.white.opacity(0.1))
+                                    .matchedGeometryEffect(id: "TabBackground", in: animation)
+                            }
+                        }
+                    }
+                }
             }
         }
         .navigationBarHidden(true)
+    }
+
+    private var isMoreTabSelected: Bool {
+        moreTabs.contains(selectedTab)
     }
 }
 

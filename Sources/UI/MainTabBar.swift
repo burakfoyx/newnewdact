@@ -18,27 +18,20 @@ struct MainTabBar: View {
     ]
     
     var body: some View {
-        HStack(spacing: 0) {
+        LiquidGlassDock {
             ForEach(tabs) { tab in
-                MainTabBarButton(
-                    tab: tab,
+                LiquidDockButton(
+                    title: tab.title,
+                    icon: tab.icon,
                     isSelected: selectedTab == tab.index,
-                    namespace: animation,
-                    action: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedTab = tab.index
-                        }
+                    namespace: animation
+                ) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        selectedTab = tab.index
                     }
-                )
+                }
             }
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 6)
-        // Use the exact same Heavy Glass + Clear Material style as ServerDetailTabBar
-        .liquidGlass(variant: .heavy, cornerRadius: 100)
-        .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
-        .padding(.horizontal, 24)
-        .padding(.bottom, 20)
     }
 }
 
@@ -47,38 +40,6 @@ struct MainTabItem: Identifiable {
     let title: String
     let icon: String
     var id: Int { index }
-}
-
-private struct MainTabBarButton: View {
-    let tab: MainTabItem
-    let isSelected: Bool
-    let namespace: Namespace.ID
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: tab.icon)
-                    .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
-                    .symbolEffect(.bounce, value: isSelected)
-                
-                Text(tab.title)
-                    .font(.system(size: 10, weight: isSelected ? .semibold : .medium))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
-            // Selected: Blue, Unselected: White (Matching Screenshot)
-            .foregroundStyle(isSelected ? Color.blue : .white)
-            .background {
-                if isSelected {
-                    Capsule()
-                        .fill(Color.white.opacity(0.1))
-                        .matchedGeometryEffect(id: "TabBackground", in: namespace)
-                }
-            }
-        }
-    }
 }
 
 #Preview {
