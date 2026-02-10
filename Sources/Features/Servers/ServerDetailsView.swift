@@ -10,6 +10,10 @@ struct ServerDetailsView: View {
     @State private var selectedTab: ServerTab = .console
     @Namespace private var animationNamespace
     
+    // Liquid Glass Dock State
+    @State private var isDockVisible = true
+    @State private var lastScrollOffset: CGFloat = 0
+    
     init(server: ServerAttributes) {
         self.server = server
         _alertManager = StateObject(wrappedValue: AlertManager(serverId: server.identifier))
@@ -101,6 +105,33 @@ struct ServerDetailsView: View {
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 100) // Spacer for Dock
+                    .background(
+                        GeometryReader { proxy in
+                            Color.clear
+                                .preference(key: ScrollOffsetPreferenceKey.self, value: proxy.frame(in: .named("scroll")).minY)
+                        }
+                    )
+                }
+            }
+            .coordinateSpace(name: "scroll")
+            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                // Determine scroll direction
+                let diff = value - lastScrollOffset
+                
+                // Threshold to avoid jitter
+                if abs(diff) > 10 {
+                    if diff < 0 {
+                         // Scrolling down (content moving up) -> Hide dock
+                         withAnimation {
+                             isDockVisible = false
+                         }
+                    } else {
+                         // Scrolling up (content moving down) -> Show dock
+                         withAnimation {
+                             isDockVisible = true
+                         }
+                    }
+                    lastScrollOffset = value
                 }
             }
             
@@ -158,6 +189,8 @@ struct ServerDetailsView: View {
                         }
                     }
                 }
+                .offset(y: isDockVisible ? 0 : 200) // Minimize dock
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isDockVisible)
             }
 
             
@@ -173,6 +206,7 @@ struct ServerDetailsView: View {
         }
         .navigationTitle(server.name)
         .navigationBarTitleDisplayMode(.large)
+        .toolbar(.hidden, for: .tabBar) // Hide main app dock
         // Hidden toolbar background for cleaner look on list? Or default.
         // Keeping default behavior for shrinking title effect.
         .onAppear {
