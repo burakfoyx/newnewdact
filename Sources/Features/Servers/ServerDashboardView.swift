@@ -11,6 +11,17 @@ struct ServerDashboardView: View {
         _consoleViewModel = StateObject(wrappedValue: ConsoleViewModel(serverId: server.identifier, limits: server.limits))
     }
     
+    @Namespace private var animation
+
+    // Main tabs to show directly
+    private let mainTabs: [ServerTab] = [.console, .analytics, .backups, .alerts]
+    
+    // Tabs to show in "More" menu
+    private let moreTabs: [ServerTab] = [
+        .files, .network, .startup, .schedules,
+        .databases, .users, .settings
+    ]
+    
     var body: some View {
         ZStack {
             // MARK: 1. Global Background
@@ -122,7 +133,54 @@ struct ServerDashboardView: View {
             // Ensure content isn't hidden by our custom bottom bar
             // We reserve 60pt for the bar base + safe area
             .safeAreaInset(edge: .bottom) {
-                 ServerDetailTabBar(selectedTab: $selectedTab)
+                 LiquidGlassDock {
+                    // Main Tabs
+                    ForEach(mainTabs) { tab in
+                        LiquidDockButton(
+                            title: tab.rawValue,
+                            icon: tab.icon,
+                            isSelected: selectedTab == tab,
+                            namespace: animation
+                        ) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                selectedTab = tab
+                            }
+                        }
+                    }
+                    
+                    // "More" Tab Menu
+                    Menu {
+                        ForEach(moreTabs) { tab in
+                            Button {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    selectedTab = tab
+                                }
+                            } label: {
+                                Label(tab.rawValue, systemImage: tab.icon)
+                            }
+                        }
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: isMoreTabSelected ? selectedTab.icon : "ellipsis.circle")
+                                .font(.system(size: 20, weight: isMoreTabSelected ? .semibold : .regular))
+                                .symbolEffect(.bounce, value: isMoreTabSelected)
+                            
+                            Text(isMoreTabSelected ? selectedTab.rawValue : "More")
+                                .font(.system(size: 10, weight: isMoreTabSelected ? .semibold : .medium))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .contentShape(Rectangle())
+                        .foregroundStyle(isMoreTabSelected ? Color.blue : .white)
+                        .background {
+                            if isMoreTabSelected {
+                                Capsule()
+                                    .fill(Color.white.opacity(0.1))
+                                    .matchedGeometryEffect(id: "TabBackground", in: animation)
+                            }
+                        }
+                    }
+                }
             }
         }
         // MARK: 4. Native Top Navigation
@@ -167,6 +225,10 @@ struct ServerDashboardView: View {
                 }
             }
         }
+    }
+    
+    private var isMoreTabSelected: Bool {
+        moreTabs.contains(selectedTab)
     }
     
     // Logic for "Plus" button visibility
