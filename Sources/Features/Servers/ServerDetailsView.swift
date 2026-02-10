@@ -20,10 +20,12 @@ struct ServerDetailsView: View {
     
     enum ServerTab: String, CaseIterable, Identifiable {
         case console = "Console"
-        case files = "Files"
         case analytics = "Stats"
-        case network = "Network"
+        case alerts = "Alerts" // New
         case backups = "Backups"
+        // Secondary Tabs
+        case files = "Files"
+        case network = "Network"
         case databases = "DBs"
         case schedules = "Schedules"
         case users = "Users"
@@ -33,14 +35,23 @@ struct ServerDetailsView: View {
         var icon: String {
             switch self {
             case .console: return "terminal"
-            case .files: return "folder"
             case .analytics: return "chart.xyaxis.line"
-            case .network: return "network"
+            case .alerts: return "exclamationmark.triangle"
             case .backups: return "archivebox"
+            case .files: return "folder"
+            case .network: return "network"
             case .databases: return "cylinder.split.1x2"
             case .schedules: return "clock"
             case .users: return "person.2"
             case .settings: return "gearshape"
+            }
+        }
+        
+        // Helper to determine if it's a primary tab
+        var isPrimary: Bool {
+            switch self {
+            case .console, .analytics, .alerts, .backups: return true
+            default: return false
             }
         }
     }
@@ -59,7 +70,8 @@ struct ServerDetailsView: View {
             // 2. Main Content
             VStack(spacing: 0) {
                 // Header (Back button + Server Name)
-                headerView
+                // Header
+                // Standard navigation title is used instead of custom headerView
                 
                 // Content Area
                 ScrollView {
@@ -71,6 +83,8 @@ struct ServerDetailsView: View {
                             FileManagerView(server: server)
                         case .analytics:
                             AnalyticsSection(server: server, viewModel: viewModel)
+                        case .alerts:
+                             AlertsSection(manager: alertManager)
                         case .network:
                             NetworkSection(server: server)
                         case .backups:
@@ -94,9 +108,9 @@ struct ServerDetailsView: View {
             VStack {
                 Spacer()
                 LiquidGlassDock {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(ServerTab.allCases) { tab in
+                    HStack(spacing: 0) {
+                        // 1. Primary Tabs
+                        ForEach(ServerTab.allCases.filter { $0.isPrimary }) { tab in
                             LiquidDockButton(
                                 title: tab.rawValue,
                                 icon: tab.icon,
@@ -107,11 +121,42 @@ struct ServerDetailsView: View {
                                     selectedTab = tab
                                 }
                             }
-                            .frame(width: 60)
+                            .frame(maxWidth: .infinity)
+                        }
+                        
+                        // 2. More Menu
+                        Menu {
+                            ForEach(ServerTab.allCases.filter { !$0.isPrimary }) { tab in
+                                Button {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        selectedTab = tab
+                                    }
+                                } label: {
+                                    Label(tab.rawValue, systemImage: tab.icon)
+                                }
+                            }
+                        } label: {
+                            VStack(spacing: 4) {
+                                Image(systemName: "square.grid.2x2")
+                                    .font(.system(size: 20, weight: !selectedTab.isPrimary ? .semibold : .regular))
+                                    .symbolEffect(.bounce, value: !selectedTab.isPrimary)
+                                
+                                Text("More")
+                                    .font(.system(size: 10, weight: !selectedTab.isPrimary ? .semibold : .medium))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .contentShape(Rectangle())
+                            .foregroundStyle(!selectedTab.isPrimary ? Color.blue : .white)
+                            .background {
+                                if !selectedTab.isPrimary {
+                                    Capsule()
+                                        .fill(Color.white.opacity(0.1))
+                                        .matchedGeometryEffect(id: "TabBackground", in: animationNamespace)
+                                }
+                            }
                         }
                     }
-                    .padding(.horizontal, 4)
-                }
                 }
             }
 
@@ -126,7 +171,10 @@ struct ServerDetailsView: View {
                 .zIndex(100)
             }
         }
-        .navigationBarHidden(true)
+        .navigationTitle(server.name)
+        .navigationBarTitleDisplayMode(.large)
+        // Hidden toolbar background for cleaner look on list? Or default.
+        // Keeping default behavior for shrinking title effect.
         .onAppear {
             Task {
                 await viewModel.connect(to: server)
@@ -137,61 +185,7 @@ struct ServerDetailsView: View {
         }
     }
     
-    private var headerView: some View {
-        HStack {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title3.weight(.medium))
-                    .foregroundStyle(.white)
-                    .padding(12)
-                    .glassEffect(.clear, in: Circle())
-            }
-            
-            Spacer()
-            
-            VStack(alignment: .center) {
-                Text(server.name)
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                
-                if let stats = viewModel.currentStats {
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(stats.currentState == "running" ? Color.green : Color.orange)
-                            .frame(width: 6, height: 6)
-                        Text(stats.currentState.capitalized)
-                            .font(.caption2)
-                            .foregroundStyle(.white.opacity(0.7))
-                        
-                        // Simple Summary
-                        if stats.resources.cpuAbsolute > 90 {
-                            Text("• High Load")
-                                .font(.caption2)
-                                .foregroundStyle(.red)
-                        } else if stats.resources.cpuAbsolute < 5 && stats.currentState == "running" {
-                             Text("• Idle")
-                                .font(.caption2)
-                                .foregroundStyle(.blue)
-                        }
-                    }
-                }
-            }
-            
-            Spacer()
-            
-            // Placeholder for right action (e.g. Power Menu if not in console)
-            Color.clear.frame(width: 44, height: 44)
-        }
-        .padding(.horizontal)
-        .padding(.top, 8)
-        .background(
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .opacity(0) // Keep transparent for liquid feel, or add subtle gradient
-        )
-    }
+    // Custom header view removed in favor of standard navigation bar
 }
 
 // MARK: - Sub-Sections
@@ -502,5 +496,107 @@ class ServerDetailsViewModel: ObservableObject {
     
     func sendPowerSignal(signal: String) {
         WebSocketClient.shared.sendPowerAction(signal)
+    }
+}
+
+struct AlertsSection: View {
+    @ObservedObject var manager: AlertManager
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            // 1. Active Alerts
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Active Alerts")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                
+                if manager.activeAlerts.isEmpty {
+                    HStack {
+                         Image(systemName: "checkmark.shield.fill")
+                            .foregroundStyle(.green)
+                         Text("No active alerts. System healthy.")
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(12)
+                } else {
+                    ForEach(manager.activeAlerts, id: \.self) { alert in
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                            Text(alert)
+                                .foregroundStyle(.white)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.red.opacity(0.2))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(Color.red.opacity(0.4), lineWidth: 1)
+                        )
+                    }
+                }
+            }
+            .liquidGlassEffect()
+            
+            // 2. Configuration (Embedded form style)
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Configuration")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    
+                Toggle(isOn: $manager.config.isEnabled) {
+                    Label("Enable Alerts", systemImage: "bell.badge")
+                        .foregroundStyle(.white)
+                }
+                .tint(.blue)
+                
+                if manager.config.isEnabled {
+                    Divider().background(Color.white.opacity(0.2))
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("CPU Limit")
+                            Spacer()
+                            Text("\(Int(manager.config.cpuThreshold))%")
+                                .monospacedDigit()
+                                .foregroundStyle(.blue)
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(.white)
+                        
+                        Slider(value: $manager.config.cpuThreshold, in: 50...200, step: 10)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                         HStack {
+                            Text("Memory Limit")
+                            Spacer()
+                            Text("\(Int(manager.config.memoryThreshold))%")
+                                .monospacedDigit()
+                                .foregroundStyle(.blue)
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(.white)
+                        
+                        Slider(value: $manager.config.memoryThreshold, in: 50...100, step: 5)
+                    }
+                    
+                    Button("Save Configuration") {
+                        manager.save()
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.blue)
+                    .padding(.top, 8)
+                }
+            }
+            .padding()
+            .background(Color.black.opacity(0.3))
+            .cornerRadius(16)
+            .liquidGlassEffect()
+        }
     }
 }
