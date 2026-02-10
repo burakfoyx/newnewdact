@@ -29,7 +29,7 @@ struct ServerData: Codable, Identifiable {
     var id: String { attributes.uuid }
 }
 
-struct ServerAttributes: Codable, Identifiable {
+struct ServerAttributes: Codable, Identifiable, Hashable {
     public var id: String { uuid }
     let serverOwner: Bool
     let identifier: String
@@ -53,6 +53,14 @@ struct ServerAttributes: Codable, Identifiable {
         case isSuspended = "is_suspended"
         case isInstalling = "is_installing"
         case relationships
+    }
+    
+    static func == (lhs: ServerAttributes, rhs: ServerAttributes) -> Bool {
+        lhs.uuid == rhs.uuid
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(uuid)
     }
 }
 

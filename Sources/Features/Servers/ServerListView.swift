@@ -125,6 +125,9 @@ struct ServerListView: View {
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar { toolbarContent }
             .environment(\.editMode, .constant(isEditing ? .active : .inactive))
+            .navigationDestination(for: ServerAttributes.self) { server in
+                ServerDashboardView(server: server)
+            }
         }
         .scrollContentBackground(.hidden)
         .background(Color.clear)
@@ -246,11 +249,10 @@ struct ServerListView: View {
     private func categoryHeader(_ title: String, icon: String, color: Color) -> some View {
         HStack {
             Image(systemName: icon)
-                .foregroundStyle(color)
             Text(title)
                 .font(.headline)
-                .foregroundStyle(.white)
         }
+        .foregroundStyle(color)
         .padding(.vertical, 8)
         .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
     }
@@ -272,7 +274,7 @@ struct ServerListView: View {
     
     private func serverRowLink(for server: ServerAttributes) -> some View {
         ZStack {
-            NavigationLink(destination: ServerDashboardView(server: server)) {
+            NavigationLink(value: server) {
                 EmptyView()
             }
             .opacity(0)
