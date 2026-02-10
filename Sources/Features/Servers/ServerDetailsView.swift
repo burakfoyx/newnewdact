@@ -8,11 +8,7 @@ struct ServerDetailsView: View {
     @StateObject private var viewModel = ServerDetailsViewModel()
     @StateObject private var alertManager: AlertManager
     @State private var selectedTab: ServerTab = .console
-    @Namespace private var animationNamespace
-    
-    // Liquid Glass Dock State
-    @State private var isDockVisible = true
-    @State private var lastScrollOffset: CGFloat = 0
+    // animationNamespace removed as not needed for native tabs
     
     init(server: ServerAttributes) {
         self.server = server
@@ -71,130 +67,41 @@ struct ServerDetailsView: View {
                     }
                 }
             
-            // 2. Main Content
-            VStack(spacing: 0) {
-                // Header (Back button + Server Name)
-                // Header
-                // Standard navigation title is used instead of custom headerView
-                
-                // Content Area
-                ScrollView {
-                    VStack(spacing: 20) {
-                        switch selectedTab {
+            // 2. Main Content using TabView
+            TabView(selection: $selectedTab) {
+                ForEach(ServerTab.allCases) { tab in
+                    Group {
+                        switch tab {
                         case .console:
-                            ConsoleSection(server: server, viewModel: viewModel)
+                            ScrollView { ConsoleSection(server: server, viewModel: viewModel) }
                         case .files:
                             FileManagerView(server: server)
                         case .analytics:
-                            AnalyticsSection(server: server, viewModel: viewModel)
+                            ScrollView { AnalyticsSection(server: server, viewModel: viewModel) }
                         case .alerts:
-                             AlertsSection(manager: alertManager)
-                        case .network:
-                            NetworkSection(server: server)
+                            ScrollView { AlertsSection(manager: alertManager) }
                         case .backups:
-                            BackupSection(server: server)
+                            ScrollView { BackupSection(server: server) }
+                        case .network:
+                            ScrollView { NetworkSection(server: server) }
                         case .databases:
-                            DatabaseSection(server: server)
+                            ScrollView { DatabaseSection(server: server) }
                         case .schedules:
-                            ScheduleSection(server: server)
+                            ScrollView { ScheduleSection(server: server) }
                         case .users:
-                            UserSection(server: server)
+                            ScrollView { UserSection(server: server) }
                         case .settings:
-                            SettingsSection(server: server, alertManager: alertManager)
+                            ScrollView { SettingsSection(server: server, alertManager: alertManager) }
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom, 100) // Spacer for Dock
-                    .background(
-                        GeometryReader { proxy in
-                            Color.clear
-                                .preference(key: ScrollOffsetPreferenceKey.self, value: proxy.frame(in: .named("scroll")).minY)
-                        }
-                    )
-                }
-            }
-            .coordinateSpace(name: "scroll")
-            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-                // Determine scroll direction
-                let diff = value - lastScrollOffset
-                
-                // Threshold to avoid jitter
-                if abs(diff) > 10 {
-                    if diff < 0 {
-                         // Scrolling down (content moving up) -> Hide dock
-                         withAnimation {
-                             isDockVisible = false
-                         }
-                    } else {
-                         // Scrolling up (content moving down) -> Show dock
-                         withAnimation {
-                             isDockVisible = true
-                         }
+                    .tabItem {
+                        Label(tab.rawValue, systemImage: tab.icon)
                     }
-                    lastScrollOffset = value
+                    .tag(tab)
                 }
             }
             
-            // 3. Floating Dock
-            VStack {
-                Spacer()
-                LiquidGlassDock {
-                    HStack(spacing: 0) {
-                        // 1. Primary Tabs
-                        ForEach(ServerTab.allCases.filter { $0.isPrimary }) { tab in
-                            LiquidDockButton(
-                                title: tab.rawValue,
-                                icon: tab.icon,
-                                isSelected: selectedTab == tab,
-                                namespace: animationNamespace
-                            ) {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    selectedTab = tab
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                        
-                        // 2. More Menu
-                        Menu {
-                            ForEach(ServerTab.allCases.filter { !$0.isPrimary }) { tab in
-                                Button {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        selectedTab = tab
-                                    }
-                                } label: {
-                                    Label(tab.rawValue, systemImage: tab.icon)
-                                }
-                            }
-                        } label: {
-                            VStack(spacing: 4) {
-                                Image(systemName: "square.grid.2x2")
-                                    .font(.system(size: 20, weight: !selectedTab.isPrimary ? .semibold : .regular))
-                                    .symbolEffect(.bounce, value: !selectedTab.isPrimary)
-                                
-                                Text("More")
-                                    .font(.system(size: 10, weight: !selectedTab.isPrimary ? .semibold : .medium))
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .contentShape(Rectangle())
-                            .foregroundStyle(!selectedTab.isPrimary ? Color.blue : .white)
-                            .background {
-                                if !selectedTab.isPrimary {
-                                    Capsule()
-                                        .fill(Color.white.opacity(0.1))
-                                        .matchedGeometryEffect(id: "TabBackground", in: animationNamespace)
-                                }
-                            }
-                        }
-                    }
-                }
-                .offset(y: isDockVisible ? 0 : 200) // Minimize dock
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isDockVisible)
-            }
-
-            
-            // 4. Alert Overlay
+            // 3. Alert Overlay
             if !alertManager.activeAlerts.isEmpty {
                 VStack {
                     ServerAlertOverlay(manager: alertManager)
