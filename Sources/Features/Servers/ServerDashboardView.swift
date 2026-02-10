@@ -128,12 +128,13 @@ struct ServerDashboardView: View {
                 .background(Color.clear)
                 .tag(ServerTab.alerts)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .animation(.easeInOut(duration: 0.2), value: selectedTab)
-            // Ensure content isn't hidden by our custom bottom bar
-            // We reserve 60pt for the bar base + safe area
-            .safeAreaInset(edge: .bottom) {
-                 LiquidGlassDock {
+            .animation(nil, value: selectedTab) // Ensure no implicit tab animation
+
+            // MARK: 3. Dock Overlay
+            VStack {
+                Spacer()
+                
+                LiquidGlassDock {
                     // Main Tabs
                     ForEach(mainTabs) { tab in
                         LiquidDockButton(
@@ -182,6 +183,7 @@ struct ServerDashboardView: View {
                     }
                 }
             }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
         }
         // MARK: 4. Native Top Navigation
         .navigationTitle(server.name)
