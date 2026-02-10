@@ -482,7 +482,7 @@ class ServerDetailsViewModel: ObservableObject {
     
     private func updateStatus(_ status: String) {
         // Only update status in current stats if we have stats, or create a placeholder
-        if var stats = currentStats {
+        if let stats = currentStats {
             // Need to create new struct since it's immutable
             self.currentStats = ServerStats(
                 currentState: status,

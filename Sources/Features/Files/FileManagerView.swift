@@ -198,71 +198,7 @@ struct FileRow: View {
 
 // MARK: - File Editor
 
-struct FileEditorView: View {
-    let server: ServerAttributes
-    let filePath: String
-    
-    @State private var content: String = ""
-    @State private var isLoading = true
-    @State private var isSaving = false
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                
-                if isLoading {
-                    ProgressView()
-                } else {
-                    TextEditor(text: $content)
-                        .font(.custom("Menlo", size: 14))
-                        .foregroundStyle(.white)
-                        .padding()
-                        .scrollContentBackground(.hidden)
-                }
-            }
-            .navigationTitle(filePath.components(separatedBy: "/").last ?? "Editor")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        saveFile()
-                    }
-                    .disabled(isLoading || isSaving)
-                }
-            }
-            .task {
-                await loadContent()
-            }
-        }
-    }
-    
-    func loadContent() async {
-        do {
-            content = try await PterodactylClient.shared.getFileContent(serverId: server.identifier, filePath: filePath)
-            isLoading = false
-        } catch {
-            print("Failed to load file: \(error)")
-        }
-    }
-    
-    func saveFile() {
-        Task {
-            isSaving = true
-            do {
-                try await PterodactylClient.shared.writeFileContent(serverId: server.identifier, filePath: filePath, content: content)
-                dismiss()
-            } catch {
-                print("Failed to save: \(error)")
-                isSaving = false
-            }
-        }
-    }
-}
+
 
 // MARK: - ViewModel
 
@@ -326,9 +262,7 @@ class FileListViewModel: ObservableObject {
         // Reconstruct path up to this component
         // E.g. /home/container/plugins -> click "container" -> /home/container
         if let range = currentPath.range(of: component) {
-            let newPath = String(currentPath[...range.upperBound])
-            // Ensure no trailing slash unless it's root (which is handled by path "/" check usually)
-            // Actually simpler: just find index in pathComponents
+            // Unused calculation removed
             if let index = pathComponents.firstIndex(of: component) {
                 let newComponents = pathComponents[0...index]
                 let path = "/" + newComponents.joined(separator: "/")

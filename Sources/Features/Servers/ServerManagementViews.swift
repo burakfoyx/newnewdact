@@ -111,7 +111,7 @@ struct BackupSection: View {
                                 .foregroundStyle(.white.opacity(0.7))
                         }
                         Spacer()
-                        if let completedAt = backup.completedAt {
+                        if backup.completedAt != nil {
                             // Simple text for now, real app would parse date
                             Text("Completed")
                                 .font(.caption)
@@ -296,6 +296,7 @@ struct SettingsSection: View {
     let server: ServerAttributes
     @ObservedObject var alertManager: AlertManager
     @State private var showingAlertConfig = false
+    @State private var username = "Loading..."
     
     var body: some View {
         VStack(spacing: 20) {
@@ -328,10 +329,15 @@ struct SettingsSection: View {
                 VStack(spacing: 12) {
                     InfoRow(label: "Host", value: server.sftpDetails.ip)
                     InfoRow(label: "Port", value: "\(server.sftpDetails.port)")
-                    InfoRow(label: "Username", value: (try? PterodactylClient.shared.getPanelURL()?.user) ?? "See Panel")
+                    InfoRow(label: "Username", value: username)
                 }
                 .padding()
                 .liquidGlassEffect()
+            }
+            .task {
+                if let url = await PterodactylClient.shared.getPanelURL() {
+                    username = url.user ?? "See Panel"
+                }
             }
             
             // Server Info
