@@ -129,6 +129,7 @@ struct ServerDashboardView: View {
                 .tag(ServerTab.alerts)
             }
             .animation(nil, value: selectedTab) // Ensure no implicit tab animation
+            .background(Color.clear) // Ensure TabView itself is transparent
 
             // MARK: 3. Dock Overlay
             VStack {
@@ -185,6 +186,7 @@ struct ServerDashboardView: View {
             }
             .ignoresSafeArea(.keyboard, edges: .bottom)
         }
+        .preferredColorScheme(.dark) // Force dark mode for Liquid Glass
         // MARK: 4. Native Top Navigation
         .navigationTitle(server.name)
         .navigationBarTitleDisplayMode(.inline)
