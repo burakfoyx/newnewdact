@@ -265,7 +265,6 @@ class FileListViewModel: ObservableObject {
                 let newComponents = pathComponents[0...index]
                 let path = "/" + newComponents.joined(separator: "/")
                 navigateTo(path: path)
-            }
         }
     }
     
