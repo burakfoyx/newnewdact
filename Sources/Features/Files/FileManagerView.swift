@@ -1,234 +1,178 @@
 import SwiftUI
 
-class FileManagerViewModel: ObservableObject {
-    let serverId: String
-    @Published var files: [FileAttributes] = []
-    @Published var currentPath: String = "/"
-    @Published var isLoading = false
-    @Published var error: String?
-    
-    init(serverId: String) {
-        self.serverId = serverId
-    }
-    
-    func listFiles() async {
-        await MainActor.run { isLoading = true }
-        
-        // Mock Implementation for now, as I need to add listFiles to Client
-        // In real web app, this would be: GET /api/client/servers/{id}/files/list?directory=...
-        
-        do {
-            let fetchedFiles = try await PterodactylClient.shared.listFiles(serverId: serverId, directory: currentPath)
-            
-            await MainActor.run {
-                self.files = fetchedFiles.sorted { !$0.isFile && $1.isFile } // Directories first
-                self.isLoading = false
-            }
-        } catch {
-            print("Error listing files: \(error)")
-            await MainActor.run { isLoading = false }
-        }
-    }
-    
-    func navigate(to folderName: String) {
-        if currentPath == "/" {
-            currentPath += folderName
-        } else {
-            currentPath += "/" + folderName
-        }
-        Task { await listFiles() }
-    }
-    
-    func navigateUp() {
-        guard currentPath != "/" else { return }
-        let components = currentPath.split(separator: "/").map(String.init)
-        if components.count <= 1 {
-            currentPath = "/"
-        } else {
-            currentPath = "/" + components.dropLast().joined(separator: "/")
-        }
-        Task { await listFiles() }
-    }
-    
-    func navigateToRoot() async {
-        currentPath = "/"
-        await listFiles()
-    }
-    
-    func navigate(to path: String) async {
-        currentPath = path
-        await listFiles()
-    }
-    
-    func loadFiles() async {
-        await listFiles()
-    }
-
-    func compress(file: FileAttributes) async {
-        await MainActor.run { isLoading = true }
-        do {
-            _ = try await PterodactylClient.shared.compressFiles(serverId: serverId, root: currentPath, files: [file.name])
-            await listFiles()
-        } catch {
-            print("Error compressing: \(error)")
-            await MainActor.run { isLoading = false }
-        }
-    }
-
-    func decompress(file: FileAttributes) async {
-        await MainActor.run { isLoading = true }
-        do {
-            try await PterodactylClient.shared.decompressFile(serverId: serverId, root: currentPath, file: file.name)
-            await listFiles()
-        } catch {
-            print("Error decompressing: \(error)")
-            await MainActor.run {
-                self.error = error.localizedDescription
-                isLoading = false
-            }
-        }
-    }
-}
-
 struct FileManagerView: View {
-    @StateObject var viewModel: FileManagerViewModel
-    let serverName: String
-    let statusState: String
-    var stats: WebsocketResponse.Stats?
-    var limits: ServerLimits?
-    
-    // Params removed: selectedTab, onBack, onPowerAction
-    
-    @State private var pathComponents: [String] = []
-    
-    init(server: ServerAttributes, serverName: String, statusState: String, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
-        _viewModel = StateObject(wrappedValue: FileManagerViewModel(serverId: server.identifier))
-        self.serverName = serverName
-        self.statusState = statusState
-        self.stats = stats
-        self.limits = limits
-    }
+    let server: ServerAttributes
+    @StateObject private var viewModel = FileListViewModel()
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Header Hoisted
-                
-                // Breadcrumbs and File List
-                VStack(alignment: .leading, spacing: 12) {
-                    // ... breadcrumbs logic ...
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 4) {
-                            Button {
-                                Task { await viewModel.navigateToRoot() }
-                            } label: {
-                                Image(systemName: "house.fill")
-                                    .foregroundStyle(.blue)
-                            }
-                            
-                            ForEach(0..<viewModel.currentPath.components(separatedBy: "/").filter({!$0.isEmpty}).count, id: \.self) { index in
-                                let components = viewModel.currentPath.components(separatedBy: "/").filter({!$0.isEmpty})
-                                Text("/")
-                                    .foregroundStyle(.secondary)
-                                Button {
-                                    // simple reconstruction
-                                    let newPath = "/" + components.prefix(index + 1).joined(separator: "/")
-                                    Task { await viewModel.navigate(to: newPath) }
-                                } label: {
-                                    Text(components[index])
-                                        .foregroundStyle(.primary)
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
+        VStack(spacing: 0) {
+            // Breadcrumbs / Path
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 4) {
+                    Button(action: { viewModel.navigateTo(path: "/") }) {
+                        Image(systemName: "house.fill")
+                            .font(.caption)
+                            .foregroundStyle(.blue)
+                            .padding(8)
+                            .glassEffect(.clear, in: Circle())
                     }
-                    .frame(height: 30)
                     
-                    if viewModel.isLoading {
-                        ProgressView().tint(.white)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.top, 40)
-                    } else if let error = viewModel.error {
-                        Text(error)
-                            .foregroundStyle(.red)
-                            .padding()
-                    } else {
-                        LazyVStack(spacing: 2) {
-                            if viewModel.currentPath != "/" && !viewModel.currentPath.isEmpty {
-                                Button {
-                                     viewModel.navigateUp()
-                                } label: {
-                                    HStack {
-                                        Image(systemName: "arrow.turn.up.left")
-                                            .frame(width: 30)
-                                            .foregroundStyle(.blue)
-                                        Text("..")
-                                            .foregroundStyle(.white)
-                                        Spacer()
-                                    }
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 12)
-                                    .background(Color.white.opacity(0.05))
-                                    .cornerRadius(8)
-                                }
-                            }
-                            
-                            ForEach(viewModel.files) { file in
-                                FileRow(file: file, onCompress: {
-                                    // compress action
-                                }, onDecompress: {
-                                    if !file.isFile {
-                                        let newPath = viewModel.currentPath == "/" ? "/\(file.name)" : "\(viewModel.currentPath)/\(file.name)"
-                                        Task { await viewModel.navigate(to: newPath) }
-                                    } else {
-                                        // Edit file
-                                    }
-                                })
-                            }
+                    ForEach(viewModel.pathComponents, id: \.self) { component in
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.3))
+                        
+                        Button(action: { viewModel.navigateTo(component: component) }) {
+                            Text(component)
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .glassEffect(.clear, in: Capsule())
                         }
                     }
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 20)
+                .padding()
+            }
+            .background(Color.black.opacity(0.2))
+            
+            // File List
+            if viewModel.isLoading {
+                Spacer()
+                ProgressView()
+                    .tint(.white)
+                Spacer()
+            } else if let error = viewModel.errorMessage {
+                Spacer()
+                VStack {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.title)
+                        .foregroundStyle(.orange)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .padding()
+                    Button("Reload") {
+                        Task { await viewModel.loadFiles() }
+                    }
+                    .buttonStyle(.bordered)
+                }
+                Spacer()
+            } else {
+                List {
+                    if viewModel.files.isEmpty {
+                        ContentUnavailableView("Folder is empty", systemImage: "folder")
+                            .listRowBackground(Color.clear)
+                    }
+                    
+                    ForEach(viewModel.files) { file in
+                        FileRow(file: file)
+                            .onTapGesture {
+                                if !file.isFile {
+                                    viewModel.enterDirectory(name: file.name)
+                                } else {
+                                    viewModel.openFile(file)
+                                }
+                            }
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    viewModel.deleteFile(file)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                
+                                Button {
+                                    viewModel.startRename(file)
+                                } label: {
+                                    Label("Rename", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+                            }
+                    }
+                }
+                .listStyle(.plain)
+                .refreshable {
+                    await viewModel.loadFiles()
+                }
             }
         }
-        .refreshable {
-            await viewModel.loadFiles()
+        .onAppear {
+            viewModel.server = server
+            Task { await viewModel.loadFiles() }
         }
-        .task {
-             if viewModel.files.isEmpty { await viewModel.loadFiles() }
+        .sheet(item: $viewModel.editingFile) { file in
+            FileEditorView(server: server, filePath: viewModel.currentPath + (viewModel.currentPath.hasSuffix("/") ? "" : "/") + file.name)
+        }
+        .alert("Rename \(viewModel.fileToRename?.name ?? "")", isPresented: $viewModel.showRenameAlert) {
+            TextField("New Name", text: $viewModel.renameInput)
+            Button("Cancel", role: .cancel) { }
+            Button("Rename") {
+                Task { await viewModel.performRename() }
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Button(action: { viewModel.showCreateFolderAlert = true }) {
+                        Label("New Folder", systemImage: "folder.badge.plus")
+                    }
+                    Button(action: { viewModel.showCreateFileAlert = true }) {
+                        Label("New File", systemImage: "doc.badge.plus")
+                    }
+                    Button(action: { Task { await viewModel.loadFiles() } }) {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .foregroundStyle(.white)
+                }
+            }
+        }
+        .alert("New Folder", isPresented: $viewModel.showCreateFolderAlert) {
+            TextField("Folder Name", text: $viewModel.newFolderInput)
+            Button("Cancel", role: .cancel) { }
+            Button("Create") {
+                Task { await viewModel.createFolder() }
+            }
         }
     }
 }
 
-
 struct FileRow: View {
     let file: FileAttributes
-    let onCompress: () -> Void
-    let onDecompress: () -> Void
     
-    init(file: FileAttributes, onCompress: @escaping () -> Void = {}, onDecompress: @escaping () -> Void = {}) {
-        self.file = file
-        self.onCompress = onCompress
-        self.onDecompress = onDecompress
+    var icon: String {
+        if !file.isFile { return "folder.fill" }
+        if file.name.hasSuffix(".json") || file.name.hasSuffix(".yml") { return "gearshape" }
+        if file.name.hasSuffix(".log") || file.name.hasSuffix(".txt") { return "doc.text" }
+        return "doc"
+    }
+    
+    var iconColor: Color {
+        if !file.isFile { return .yellow }
+        return .blue
     }
     
     var body: some View {
         HStack {
-            Image(systemName: file.isFile ? "doc.text" : "folder.fill")
-                .foregroundStyle(file.isFile ? .white : .blue)
-                .font(.title3)
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundStyle(iconColor)
                 .frame(width: 30)
             
             VStack(alignment: .leading) {
                 Text(file.name)
-                    .foregroundStyle(.white)
                     .font(.body)
+                    .foregroundStyle(.white)
                 
                 HStack {
                     Text(formatBytes(file.size))
                     Text("•")
-                    Text(file.modifiedAt)
+                    Text(file.modifiedAt) // In real app, parse ISO string to Date
                 }
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.5))
@@ -236,34 +180,210 @@ struct FileRow: View {
             
             Spacer()
             
-            if !file.isFile {
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.3))
-            }
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.3))
         }
-        .padding()
-        .glassEffect(.clear.interactive(), in: RoundedRectangle(cornerRadius: 12))
-        .contextMenu {
-            if file.isFile {
-                 if file.name.hasSuffix(".tar.gz") || file.name.hasSuffix(".zip") || file.name.hasSuffix(".rar") {
-                     Button(action: onDecompress) {
-                         Label("Unarchive", systemImage: "arrow.up.bin")
-                     }
-                 }
+        .padding(12)
+        .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+    
+    func formatBytes(_ bytes: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: Int64(bytes))
+    }
+}
+
+// MARK: - File Editor
+
+struct FileEditorView: View {
+    let server: ServerAttributes
+    let filePath: String
+    
+    @State private var content: String = ""
+    @State private var isLoading = true
+    @State private var isSaving = false
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                
+                if isLoading {
+                    ProgressView()
+                } else {
+                    TextEditor(text: $content)
+                        .font(.custom("Menlo", size: 14))
+                        .foregroundStyle(.white)
+                        .padding()
+                        .scrollContentBackground(.hidden)
+                }
             }
-            
-            Button(action: onCompress) {
-                Label("Archive", systemImage: "archivebox")
+            .navigationTitle(filePath.components(separatedBy: "/").last ?? "Editor")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveFile()
+                    }
+                    .disabled(isLoading || isSaving)
+                }
+            }
+            .task {
+                await loadContent()
             }
         }
     }
     
-    func formatBytes(_ bytes: Int) -> String {
-        let b = Int64(bytes)
-        let formatter = ByteCountFormatter()
-        formatter.allowedUnits = [.useAll]
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: b)
+    func loadContent() async {
+        do {
+            content = try await PterodactylClient.shared.getFileContent(serverId: server.identifier, filePath: filePath)
+            isLoading = false
+        } catch {
+            print("Failed to load file: \(error)")
+        }
+    }
+    
+    func saveFile() {
+        Task {
+            isSaving = true
+            do {
+                try await PterodactylClient.shared.writeFileContent(serverId: server.identifier, filePath: filePath, content: content)
+                dismiss()
+            } catch {
+                print("Failed to save: \(error)")
+                isSaving = false
+            }
+        }
+    }
+}
+
+// MARK: - ViewModel
+
+class FileListViewModel: ObservableObject {
+    @Published var files: [FileAttributes] = []
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    @Published var currentPath: String = "/"
+    
+    @Published var editingFile: FileAttributes?
+    @Published var fileToRename: FileAttributes?
+    @Published var showRenameAlert = false
+    @Published var renameInput = ""
+    
+    @Published var showCreateFolderAlert = false
+    @Published var showCreateFileAlert = false
+    @Published var newFolderInput = ""
+    
+    var server: ServerAttributes?
+    
+    var pathComponents: [String] {
+        currentPath.split(separator: "/").map(String.init)
+    }
+    
+    func loadFiles() async {
+        guard let server = server else { return }
+        
+        await MainActor.run {
+            self.isLoading = true
+            self.errorMessage = nil
+            self.files = []
+        }
+        
+        do {
+            let files = try await PterodactylClient.shared.listFiles(serverId: server.identifier, directory: currentPath)
+            
+            await MainActor.run {
+                // Sort: Folders first, then files. Alphabetical.
+                self.files = files.sorted {
+                    if $0.isFile != $1.isFile {
+                         return !$0.isFile // Folders (not file) first
+                    }
+                    return $0.name < $1.name
+                }
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
+        }
+    }
+    
+    func navigateTo(path: String) {
+        currentPath = path
+        Task { await loadFiles() }
+    }
+    
+    func navigateTo(component: String) {
+        // Reconstruct path up to this component
+        // E.g. /home/container/plugins -> click "container" -> /home/container
+        if let range = currentPath.range(of: component) {
+            let newPath = String(currentPath[...range.upperBound])
+            // Ensure no trailing slash unless it's root (which is handled by path "/" check usually)
+            // Actually simpler: just find index in pathComponents
+            if let index = pathComponents.firstIndex(of: component) {
+                let newComponents = pathComponents[0...index]
+                let path = "/" + newComponents.joined(separator: "/")
+                navigateTo(path: path)
+            }
+        }
+    }
+    
+    func enterDirectory(name: String) {
+        let separator = currentPath.hasSuffix("/") ? "" : "/"
+        let newPath = "\(currentPath)\(separator)\(name)"
+        navigateTo(path: newPath)
+    }
+    
+    func openFile(_ file: FileAttributes) {
+        editingFile = file
+    }
+    
+    func deleteFile(_ file: FileAttributes) {
+        guard let server = server else { return }
+        Task {
+            do {
+                try await PterodactylClient.shared.deleteFiles(serverId: server.identifier, root: currentPath, files: [file.name])
+                await loadFiles()
+            } catch {
+                print("Failed to delete: \(error)")
+            }
+        }
+    }
+    
+    func startRename(_ file: FileAttributes) {
+        fileToRename = file
+        renameInput = file.name
+        showRenameAlert = true
+    }
+    
+    func performRename() async {
+        guard let server = server, let file = fileToRename else { return }
+        do {
+            try await PterodactylClient.shared.renameFile(serverId: server.identifier, root: currentPath, files: [(from: file.name, to: renameInput)])
+            await loadFiles()
+        } catch {
+            print("Failed to rename: \(error)")
+        }
+        fileToRename = nil
+    }
+    
+    func createFolder() async {
+        guard let server = server, !newFolderInput.isEmpty else { return }
+        do {
+            try await PterodactylClient.shared.createDirectory(serverId: server.identifier, root: currentPath, name: newFolderInput)
+            await loadFiles()
+        } catch {
+             print("Failed to create folder: \(error)")
+        }
+        newFolderInput = ""
     }
 }

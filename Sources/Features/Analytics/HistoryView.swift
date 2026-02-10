@@ -85,7 +85,8 @@ struct HistoryView: View {
                     }
             }
             .padding()
-            .padding(.bottom, 20)
+            .padding()
+            .padding(.bottom, 120) // Fix: Ensure content clears the Liquid Glass Dock
         }
         .refreshable {
             await refreshData()

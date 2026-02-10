@@ -126,7 +126,7 @@ struct ServerListView: View {
             .toolbar { toolbarContent }
             .environment(\.editMode, .constant(isEditing ? .active : .inactive))
             .navigationDestination(for: ServerAttributes.self) { server in
-                ServerDashboardView(server: server)
+                ServerDetailsView(server: server)
             }
         }
         .scrollContentBackground(.hidden)

@@ -663,4 +663,72 @@ actor PterodactylClient {
         let decoded = try JSONDecoder().decode(StartupData.self, from: data)
         return decoded.attributes
     }
+
+    // MARK: - Extended File Management
+    
+    func deleteFiles(serverId: String, root: String, files: [String]) async throws {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/delete")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "root": root,
+            "files": files
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to delete files")
+        }
+    }
+    
+    func renameFile(serverId: String, root: String, files: [(from: String, to: String)]) async throws {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/rename")
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "root": root,
+            "files": files.map { ["from": $0.from, "to": $0.to] }
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to rename file")
+        }
+    }
+    
+    func createDirectory(serverId: String, root: String, name: String) async throws {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/create-folder")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "root": root,
+            "name": name
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to create directory")
+        }
+    }
 }
