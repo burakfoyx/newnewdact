@@ -114,7 +114,7 @@ struct ServerDetailsView: View {
                 }
                 }
             }
-            }
+
             
             // 4. Alert Overlay
             if !alertManager.activeAlerts.isEmpty {
