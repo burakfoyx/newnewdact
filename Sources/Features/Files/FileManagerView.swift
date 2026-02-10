@@ -105,7 +105,7 @@ struct FileManagerView: View {
             Task { await viewModel.loadFiles() }
         }
         .sheet(item: $viewModel.editingFile) { file in
-            FileEditorView(server: server, filePath: viewModel.currentPath + (viewModel.currentPath.hasSuffix("/") ? "" : "/") + file.name)
+            FileEditorView(serverId: server.identifier, filePath: viewModel.currentPath + (viewModel.currentPath.hasSuffix("/") ? "" : "/") + file.name)
         }
         .alert("Rename \(viewModel.fileToRename?.name ?? "")", isPresented: $viewModel.showRenameAlert) {
             TextField("New Name", text: $viewModel.renameInput)
@@ -261,9 +261,7 @@ class FileListViewModel: ObservableObject {
     func navigateTo(component: String) {
         // Reconstruct path up to this component
         // E.g. /home/container/plugins -> click "container" -> /home/container
-        if let range = currentPath.range(of: component) {
-            // Unused calculation removed
-            if let index = pathComponents.firstIndex(of: component) {
+        if let index = pathComponents.firstIndex(of: component) {
                 let newComponents = pathComponents[0...index]
                 let path = "/" + newComponents.joined(separator: "/")
                 navigateTo(path: path)

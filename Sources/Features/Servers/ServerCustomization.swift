@@ -77,7 +77,7 @@ struct ServerGroupsView: View {
     }
     
     private func createGroup() {
-        let group = ServerGroup(name: newGroupName, icon: newGroupIcon, colorHex: newGroupColor.toHex() ?? "#0000FF")
+        let group = ServerGroup(name: newGroupName, colorHex: newGroupColor.toHex() ?? "#0000FF", icon: newGroupIcon)
         group.sortOrder = groups.count
         modelContext.insert(group)
         newGroupName = ""
@@ -183,18 +183,4 @@ extension Color {
     }
 }
 
-extension String {
-    var asColor: Color {
-        var hexSanitized = self.trimmingCharacters(in: .whitespacesAndNewlines)
-        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
 
-        var rgb: UInt64 = 0
-        Scanner(string: hexSanitized).scanHexInt64(&rgb)
-
-        let r = Double((rgb & 0xFF0000) >> 16) / 255.0
-        let g = Double((rgb & 0x00FF00) >> 8) / 255.0
-        let b = Double(rgb & 0x0000FF) / 255.0
-
-        return Color(red: r, green: g, blue: b)
-    }
-}
