@@ -122,11 +122,6 @@ class AnalyticsViewModel: ObservableObject {
     }
 }
 
-struct ChartDataPoint: Identifiable {
-    let id = UUID()
-    let timestamp: Date
-    let value: Double
-}
 
 // MARK: - Main View
 struct ServerResourceUsageView: View {

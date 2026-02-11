@@ -731,4 +731,21 @@ actor PterodactylClient {
              throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to create directory")
         }
     }
+    
+    func reinstallServer(serverId: String) async throws {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        // Pterodactyl API: POST /api/client/servers/{id}/settings/reinstall
+        let url = baseURL.appendingPathComponent("api/client/servers/\(serverId)/settings/reinstall")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to reinstall server")
+        }
+    }
 }
