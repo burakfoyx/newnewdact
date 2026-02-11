@@ -83,6 +83,18 @@ class AlertManager: ObservableObject {
         rules.remove(atOffsets: offsets)
     }
     
+    func deleteRule(_ rule: AlertRule) {
+        if let index = rules.firstIndex(where: { $0.id == rule.id }) {
+            rules.remove(at: index)
+        }
+    }
+    
+    func toggleRule(_ rule: AlertRule) {
+        if let index = rules.firstIndex(where: { $0.id == rule.id }) {
+            rules[index].isEnabled.toggle()
+        }
+    }
+    
     func checkStats(_ stats: ServerStats, limits: ServerLimits) {
         guard areAlertsEnabled else {
              activeAlerts = []

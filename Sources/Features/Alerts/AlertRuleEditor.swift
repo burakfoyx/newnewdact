@@ -246,6 +246,7 @@ struct MetricSelectionButton: View {
         case .memory: return "memorychip"
         case .disk: return "internaldrive"
         case .offline: return "power"
+        case .network: return "network"
         }
     }
 }
