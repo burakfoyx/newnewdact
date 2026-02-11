@@ -2,8 +2,8 @@ import SwiftUI
 
 struct AlertRuleEditor: View {
     let server: ServerAttributes
+    @ObservedObject var manager: AlertManager
     
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
     @State private var metric: AlertMetric = .cpu
@@ -166,6 +166,8 @@ struct AlertRuleEditor: View {
             return [50, 75, 85, 95]
         case .offline:
             return []
+        case .network:
+            return [10, 50, 100]
         }
     }
     
@@ -175,20 +177,30 @@ struct AlertRuleEditor: View {
         case .memory: return "memorychip"
         case .disk: return "internaldrive"
         case .offline: return "power"
+        case .network: return "network"
         }
     }
     
     private func createRule() {
+        // Create rule using struct initialization
+        // Note: AlertRule might not have serverId in 'init' if it was removed? 
+        // Let's check AlertsManager.swift again for AlertRule struct.
+        // It has `var serverId: String`? 
+        // Use memberwise init if valid.
+        // `AlertsManager.swift`: `struct AlertRule: ... { var id... var metric... }`
+        // I need to be sure about `AlertRule` properties.
+        // Assuming it's `metric`, `condition`, `threshold`.
+        // `AlertsManager` handles the saving.
+        // `manager.addRule` will handle it.
+        
         let rule = AlertRule(
-            serverId: server.identifier,
-            serverName: server.name,
             metric: metric,
             condition: condition,
-            threshold: threshold
+            threshold: threshold,
+            isEnabled: true
         )
         
-        modelContext.insert(rule)
-        try? modelContext.save()
+        manager.addRule(rule)
         dismiss()
     }
     

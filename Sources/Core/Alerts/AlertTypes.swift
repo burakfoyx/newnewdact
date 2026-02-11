@@ -9,6 +9,8 @@ enum AlertMetric: String, Codable, CaseIterable, Identifiable {
     
     var id: String { rawValue }
     
+    var displayName: String { rawValue }
+    
     var unit: String {
         switch self {
         case .cpu: return "%"
@@ -25,6 +27,8 @@ enum AlertCondition: String, Codable, CaseIterable, Identifiable {
     case below = "Below"
     
     var id: String { rawValue }
+    
+    var displayName: String { rawValue }
     
     var symbol: String {
         switch self {

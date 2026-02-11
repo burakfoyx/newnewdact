@@ -185,6 +185,10 @@ enum AnalyticsTimeRange: String, CaseIterable, Identifiable {
         }
     }
     
+    var duration: TimeInterval {
+        seconds
+    }
+
     var startDate: Date {
         Date().addingTimeInterval(-seconds)
     }
@@ -198,6 +202,22 @@ enum AnalyticsTimeRange: String, CaseIterable, Identifiable {
             return .pro     // Pro gets 7 days
         case .days30:
             return .pro     // Pro gets 30 days
+        }
+    }
+}
+
+extension UserTier {
+    var retentionPeriod: TimeInterval {
+        switch self {
+        case .free: return 3600 * 24 // 24 Hours
+        case .pro: return 3600 * 24 * 7 // 7 Days
+        case .host: return 3600 * 24 * 30 // 30 Days
+        }
+    }
+    
+    var availableRanges: [AnalyticsTimeRange] {
+        AnalyticsTimeRange.allCases.filter { range in
+            self >= range.requiredTier
         }
     }
 }

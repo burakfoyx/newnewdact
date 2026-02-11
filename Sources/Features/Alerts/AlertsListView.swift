@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 
 struct AlertsListView: View {
     let server: ServerAttributes
@@ -7,22 +6,17 @@ struct AlertsListView: View {
     let statusState: String
     var stats: WebsocketResponse.Stats?
     var limits: ServerLimits?
+    @ObservedObject var manager: AlertManager
     
-    @Environment(\.modelContext) private var modelContext
-    @Query private var rules: [AlertRule]
     @State private var showEditor = false
     
-    init(server: ServerAttributes, serverName: String, statusState: String, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil) {
+    init(server: ServerAttributes, serverName: String, statusState: String, stats: WebsocketResponse.Stats? = nil, limits: ServerLimits? = nil, manager: AlertManager) {
         self.server = server
         self.serverName = serverName
         self.statusState = statusState
         self.stats = stats
         self.limits = limits
-        
-        let id = server.identifier
-        _rules = Query(filter: #Predicate<AlertRule> { rule in
-            rule.serverId == id
-        })
+        self.manager = manager
     }
     
     @State private var showPaywall = false
@@ -36,7 +30,7 @@ struct AlertsListView: View {
                 VStack(spacing: 12) {
                     // Header Hoisted
                     
-                    if rules.isEmpty {
+                    if manager.activeRules.isEmpty {
                         ContentUnavailableView(
                             "No Alerts",
                             systemImage: "bell.slash",
@@ -44,18 +38,18 @@ struct AlertsListView: View {
                         )
                         .padding(.top, 40)
                     } else {
-                        ForEach(rules) { rule in
+                        ForEach(manager.activeRules) { rule in
                             AlertRuleRow(rule: rule)
                                 .opacity(rule.isEnabled ? 1.0 : 0.6)
                                 .contextMenu {
                                     Button(role: .destructive) {
-                                        modelContext.delete(rule)
+                                        manager.deleteRule(rule)
                                     } label: {
                                         Label("Delete", systemImage: "trash")
                                     }
                                     
                                     Button {
-                                        rule.isEnabled.toggle()
+                                        manager.toggleRule(rule)
                                     } label: {
                                         Label(rule.isEnabled ? "Mute" : "Enable", systemImage: rule.isEnabled ? "bell.slash" : "bell")
                                     }
@@ -110,7 +104,7 @@ struct AlertsListView: View {
             }
         }
         .sheet(isPresented: $showEditor) {
-            AlertRuleEditor(server: server)
+            AlertRuleEditor(server: server, manager: manager)
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView(highlightedFeature: .customAlerts)
@@ -142,7 +136,7 @@ struct AlertsListView: View {
     
     var canCreateRule: Bool {
         guard let limit = FeatureFlags.shared.limit(for: .customAlerts) else { return true }
-        return rules.count < limit
+        return manager.activeRules.count < limit
     }
 }
 
@@ -190,6 +184,7 @@ struct AlertRuleRow: View {
         case .cpu: return "cpu"
         case .memory: return "memorychip"
         case .disk: return "internaldrive"
+        case .network: return "network"
         case .offline: return "power"
         }
     }
