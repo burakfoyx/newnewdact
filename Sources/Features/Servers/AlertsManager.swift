@@ -11,6 +11,12 @@ struct AlertRule: Codable, Identifiable, Equatable {
     var threshold: Double
     var isEnabled: Bool = true
     
+    // Properties required by AlertEngine
+    var serverId: String? // Optional because AlertEngine might need it but Manager implies context
+    var serverName: String?
+    var lastTriggeredAt: Date?
+    var durationSeconds: Int = 300 // Cooldown
+    
     var description: String {
         "\(metric.rawValue) \(condition.symbol) \(Int(threshold))\(metric.unit)"
     }
@@ -25,6 +31,8 @@ class AlertManager: ObservableObject {
         }
     }
     @Published var activeAlerts: [String] = []
+    
+    var activeRules: [AlertRule] { rules }
     
     // Global toggle for all alerts
     @Published var areAlertsEnabled: Bool = true {

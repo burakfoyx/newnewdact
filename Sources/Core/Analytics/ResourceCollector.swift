@@ -82,14 +82,13 @@ class ResourceCollector: ObservableObject {
                     )
                     
                     // Check Alerts
-                    if let context = ResourceStore.shared.modelContext {
-                        AlertEngine.shared.checkAlerts(
-                            server: server,
-                            stats: stats.resources,
-                            state: stats.currentState,
-                            context: context
-                        )
-                    }
+                    let alertManager = AlertManager(serverId: server.identifier)
+                    AlertEngine.shared.checkAlerts(
+                        server: server,
+                        stats: stats.resources,
+                        state: stats.currentState,
+                        rules: alertManager.rules
+                    )
                     
                 } catch {
                     print("Failed to poll stats for server \(server.name): \(error)")
