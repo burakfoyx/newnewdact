@@ -94,7 +94,7 @@ struct ServerDetailsView: View {
                             
                             switch tab {
                             case .console:
-                                ScrollView { ConsoleSection(server: server, viewModel: viewModel) }
+                                ConsoleSection(server: server, viewModel: viewModel)
                             case .files:
                                 FileManagerView(server: server)
                             case .analytics:
@@ -240,82 +240,81 @@ struct ConsoleSection: View {
     @FocusState private var isInputFocused: Bool
     
     var body: some View {
-        VStack(spacing: 20) {
-            // Terminal
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Text("Terminal")
-                        .font(.system(size: 13, weight: .semibold, design: .default))
-                        .foregroundStyle(.white.opacity(0.7))
-                    Spacer()
-                    if viewModel.isConnected {
-                        HStack(spacing: 6) {
-                            Circle().fill(Color.green).frame(width: 8, height: 8)
-                            Text("Live")
-                                .font(.caption2.bold())
-                                .foregroundStyle(.green)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.green.opacity(0.1), in: Capsule())
-                    } else {
-                         HStack(spacing: 6) {
-                            Circle().fill(Color.red).frame(width: 8, height: 8)
-                            Text("Offline")
-                                .font(.caption2.bold())
-                                .foregroundStyle(.red)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.red.opacity(0.1), in: Capsule())
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Terminal")
+                    .font(.system(size: 13, weight: .semibold, design: .default))
+                    .foregroundStyle(.white.opacity(0.7))
+                Spacer()
+                if viewModel.isConnected {
+                    HStack(spacing: 6) {
+                        Circle().fill(Color.green).frame(width: 8, height: 8)
+                        Text("Live")
+                            .font(.caption2.bold())
+                            .foregroundStyle(.green)
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.green.opacity(0.1), in: Capsule())
+                } else {
+                     HStack(spacing: 6) {
+                        Circle().fill(Color.red).frame(width: 8, height: 8)
+                        Text("Offline")
+                            .font(.caption2.bold())
+                            .foregroundStyle(.red)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.red.opacity(0.1), in: Capsule())
                 }
-                .padding()
-                .background(Color.black.opacity(0.4))
-                
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        Text(AnsiParser.parse(viewModel.consoleOutput))
-                            .font(.custom("Menlo", size: 12))
-                            .lineSpacing(4)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
-                            .id("bottom")
-                    }
-                    .frame(height: 400) // Increased height
-                    .onChange(of: viewModel.consoleOutput) { _, _ in
-                        withAnimation {
-                            proxy.scrollTo("bottom", anchor: .bottom)
-                        }
-                    }
-                    .onTapGesture {
-                        isInputFocused = false
-                    }
-                }
-                
-                // Input
-                HStack {
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(.white.opacity(0.5))
-                    TextField("Enter command...", text: $viewModel.commandInput)
-                        .focused($isInputFocused)
-                        .onSubmit {
-                            viewModel.sendCommand()
-                            // Keep focus? Maybe not on mobile
-                        }
-                        .submitLabel(.send)
-                        .foregroundStyle(.white)
-                        .font(.custom("Menlo", size: 14))
-                }
-                .padding()
-                .background(Color.white.opacity(0.05))
             }
-            .background(Color.black.opacity(0.6)) // Darker background for contrast
-            .cornerRadius(12)
-            .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+            .padding()
+            .background(Color.black.opacity(0.6))
+            
+            // Console Output (Scrollable)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    Text(AnsiParser.parse(viewModel.consoleOutput))
+                        .font(.custom("Menlo", size: 12))
+                        .lineSpacing(4)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .id("bottom")
+                }
+                .onChange(of: viewModel.consoleOutput) { _, _ in
+                    withAnimation {
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
+                }
+                .onTapGesture {
+                    isInputFocused = false
+                }
+            }
+            .background(Color.black.opacity(0.4))
+            
+            // Input Area
+            HStack {
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.white.opacity(0.5))
+                TextField("Enter command...", text: $viewModel.commandInput)
+                    .focused($isInputFocused)
+                    .onSubmit {
+                        viewModel.sendCommand()
+                        isInputFocused = true // Keep focus after send
+                    }
+                    .submitLabel(.send)
+                    .foregroundStyle(.white)
+                    .font(.custom("Menlo", size: 14))
+            }
+            .padding()
+            .background(Color.black.opacity(0.8))
         }
-        .padding(.horizontal)
+        .cornerRadius(12)
+        // .padding(.horizontal) // Remove horizontal padding to fill width if desired, or keep it
+        .padding(12)
+        .padding(.bottom, isInputFocused ? 0 : 0) // Adjust if needed
     }
 }
 
