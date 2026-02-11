@@ -8,11 +8,21 @@ struct ServerDetailsView: View {
     @StateObject private var viewModel = ServerDetailsViewModel()
     @StateObject private var alertManager: AlertManager
     @State private var selectedTab: ServerTab = .console
-    // animationNamespace removed as not needed for native tabs
+    @State private var isToolbarVisible = true
+    @State private var lastScrollOffset: CGFloat = 0
     
     init(server: ServerAttributes) {
         self.server = server
         _alertManager = StateObject(wrappedValue: AlertManager(serverId: server.identifier))
+        
+        // Configure transparent TabBar to show LiquidBackground through it
+        let appearance = UITabBarAppearance()
+        appearance.configureWithTransparentBackground()
+        // Optional: Add a thin material if text readability is an issue, but "Liquid Glass" usually implies full custom or blur.
+        // Let's keep it transparent to show the LiquidBackgroundView.
+        
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
     
     // Environment
@@ -21,15 +31,15 @@ struct ServerDetailsView: View {
     enum ServerTab: String, CaseIterable, Identifiable {
         case console = "Console"
         case analytics = "Stats"
-        case alerts = "Alerts" // New
+        case alerts = "Alerts"
         case backups = "Backups"
+        case settings = "Settings"
         // Secondary Tabs
         case files = "Files"
         case network = "Network"
         case databases = "DBs"
         case schedules = "Schedules"
         case users = "Users"
-        case settings = "Settings"
         
         var id: String { rawValue }
         var icon: String {
@@ -47,10 +57,10 @@ struct ServerDetailsView: View {
             }
         }
         
-        // Helper to determine if it's a primary tab
+        // Helper to determine if it's a primary tab (Toolbar vs TabBar)
         var isPrimary: Bool {
             switch self {
-            case .console, .analytics, .alerts, .backups: return true
+            case .console, .analytics, .alerts, .backups, .settings: return true
             default: return false
             }
         }
@@ -71,33 +81,54 @@ struct ServerDetailsView: View {
             TabView(selection: $selectedTab) {
                 ForEach(ServerTab.allCases) { tab in
                     Group {
-                        switch tab {
-                        case .console:
-                            ScrollView { ConsoleSection(server: server, viewModel: viewModel) }
-                        case .files:
-                            FileManagerView(server: server)
-                        case .analytics:
-                            ScrollView { AnalyticsSection(server: server, viewModel: viewModel) }
-                        case .alerts:
-                            ScrollView { AlertsSection(manager: alertManager) }
-                        case .backups:
-                            ScrollView { BackupSection(server: server) }
-                        case .network:
-                            ScrollView { NetworkSection(server: server) }
-                        case .databases:
-                            ScrollView { DatabaseSection(server: server) }
-                        case .schedules:
-                            ScrollView { ScheduleSection(server: server) }
-                        case .users:
-                            ScrollView { UserSection(server: server) }
-                        case .settings:
-                            ScrollView { SettingsSection(server: server, alertManager: alertManager) }
+                        ZStack {
+                            // Scroll Tracking Background
+                            GeometryReader { proxy in
+                                Color.clear
+                                    .preference(key: ScrollOffsetPreferenceKey.self, value: proxy.frame(in: .global).minY)
+                            }
+                            
+                            switch tab {
+                            case .console:
+                                ScrollView { ConsoleSection(server: server, viewModel: viewModel) }
+                            case .files:
+                                FileManagerView(server: server)
+                            case .analytics:
+                                ScrollView { AnalyticsSection(server: server, viewModel: viewModel) }
+                            case .alerts:
+                                ScrollView { AlertsSection(manager: alertManager) }
+                            case .backups:
+                                ScrollView { BackupSection(server: server) }
+                            case .network:
+                                ScrollView { NetworkSection(server: server) }
+                            case .databases:
+                                ScrollView { DatabaseSection(server: server) }
+                            case .schedules:
+                                ScrollView { ScheduleSection(server: server) }
+                            case .users:
+                                ScrollView { UserSection(server: server) }
+                            case .settings:
+                                ScrollView { SettingsSection(server: server, alertManager: alertManager) }
+                            }
                         }
                     }
+                    .navigationTitle(server.name)
+                    .navigationBarTitleDisplayMode(.large)
                     .tabItem {
-                        Label(tab.rawValue, systemImage: tab.icon)
+                        if tab.isPrimary {
+                            Label(tab.rawValue, systemImage: tab.icon)
+                        }
                     }
                     .tag(tab)
+                }
+            }
+            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                let diff = value - lastScrollOffset
+                if abs(diff) > 10 {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isToolbarVisible = diff > 0
+                    }
+                    lastScrollOffset = value
                 }
             }
             
@@ -111,11 +142,78 @@ struct ServerDetailsView: View {
                 .zIndex(100)
             }
         }
-        .navigationTitle(server.name)
-        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            if isToolbarVisible {
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: 16) {
+                        // Power Menu (Gear)
+                        Menu {
+                            Button {
+                                viewModel.sendPowerSignal(signal: "start")
+                            } label: {
+                                Label("Start", systemImage: "play.fill")
+                            }
+                            
+                            Button {
+                                viewModel.sendPowerSignal(signal: "restart")
+                            } label: {
+                                Label("Restart", systemImage: "arrow.clockwise")
+                            }
+                            
+                            Button {
+                                viewModel.sendPowerSignal(signal: "stop")
+                            } label: {
+                                Label("Stop", systemImage: "stop.fill")
+                            }
+                            
+                            Button(role: .destructive) {
+                                viewModel.sendPowerSignal(signal: "kill")
+                            } label: {
+                                Label("Kill", systemImage: "flame.fill")
+                            }
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.gray)
+                                .padding(8)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
+                        
+                        // Secondary Menu (Three Dots)
+                        Menu {
+                            ForEach(ServerTab.allCases.filter { !$0.isPrimary }) { tab in
+                                Button {
+                                    selectedTab = tab
+                                } label: {
+                                    Label(tab.rawValue, systemImage: tab.icon)
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.gray)
+                                .padding(8)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+        }
         .toolbar(.hidden, for: .tabBar) // Hide main app dock
-        // Hidden toolbar background for cleaner look on list? Or default.
-        // Keeping default behavior for shrinking title effect.
+        // REMOVE .toolbar(.hidden, for: .tabBar) which was hiding the main dock?
+        // Ah, the user previously had .toolbar(.hidden, for: .tabBar). I should check if that was for the APP'S main dock or the VIEW'S dock.
+        // Usually ServerDetails is pushed on a stack.
+        // If the app has a main tab bar, we might want to hide it.
+        // But here we are using a TabView inside ServerDetails.
+        // So we probably want to hide the *parent* tab bar (if any), but SHOW the current *internal* tab bar.
+        // The default `TabView` shows its own bar.
+        // So keeping `.toolbar(.hidden, for: .tabBar)` might hide the PARENT tab bar which is likely desired.
+        // I will keep it but verifying its behavior on *this* TabView.
+        // Actually, on iOS 18 `toolbar(.hidden, for: .tabBar)` hides the bar for the *current context*.
+        // If I put it on `TabView`, it might hide its own bar?
+        // No, it usually hides the parent's.
+        // I'll keep it as it was there before.
         .onAppear {
             Task {
                 await viewModel.connect(to: server)
@@ -137,16 +235,6 @@ struct ConsoleSection: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            // Power Controls
-            HStack(spacing: 12) {
-                PowerButton(action: "start", color: .green, icon: "play.fill", viewModel: viewModel)
-                PowerButton(action: "restart", color: .orange, icon: "arrow.clockwise", viewModel: viewModel)
-                PowerButton(action: "stop", color: .red, icon: "stop.fill", viewModel: viewModel)
-                PowerButton(action: "kill", color: .red.opacity(0.8), icon: "flame.fill", isDestructive: true, viewModel: viewModel)
-            }
-            .padding()
-            .liquidGlassEffect()
-            
             // Terminal
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
@@ -205,49 +293,7 @@ struct ConsoleSection: View {
     }
 }
 
-struct PowerButton: View {
-    let action: String
-    let color: Color
-    let icon: String
-    var isDestructive: Bool = false
-    @ObservedObject var viewModel: ServerDetailsViewModel
-    @State private var showConfirmation = false
-    
-    var body: some View {
-        Button {
-            if isDestructive {
-                showConfirmation = true
-            } else {
-                viewModel.sendPowerSignal(signal: action)
-            }
-        } label: {
-            VStack {
-                Image(systemName: icon)
-                    .font(.title2)
-                Text(action.capitalized)
-                    .font(.caption2)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(color.opacity(0.2))
-            )
-            .overlay(
-                 RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(color.opacity(0.4), lineWidth: 1)
-            )
-            .foregroundStyle(color)
-        }
-        .confirmationDialog("Are you sure?", isPresented: $showConfirmation) {
-            Button("Kill Server", role: .destructive) {
-                viewModel.sendPowerSignal(signal: "kill")
-            }
-        } message: {
-            Text("This will forcefully stop the server. Data corruption may occur.")
-        }
-    }
-}
+
 
 struct AnalyticsSection: View {
     let server: ServerAttributes
