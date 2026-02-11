@@ -79,7 +79,7 @@ class ResourceStore: ObservableObject {
     
     private func setupContainer() {
         do {
-            let schema = Schema([ResourceSnapshotEntity.self, AlertRule.self, AlertEvent.self, ServerGroup.self, ServerCustomization.self])
+            let schema = Schema([ResourceSnapshotEntity.self, AlertEvent.self, ServerGroup.self, ServerCustomization.self])
             let config = ModelConfiguration(isStoredInMemoryOnly: false)
             modelContainer = try ModelContainer(for: schema, configurations: config)
             if let container = modelContainer {

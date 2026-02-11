@@ -3,37 +3,6 @@ import Combine
 
 // MARK: - Alert Models
 
-enum AlertMetric: String, Codable, CaseIterable, Identifiable {
-    case cpu = "CPU"
-    case memory = "Memory"
-    case disk = "Disk"
-    case network = "Network In" // Simplified to Rx for now, or total? Let's say Total Network
-    
-    var id: String { rawValue }
-    
-    var unit: String {
-        switch self {
-        case .cpu: return "%"
-        case .memory: return "%"
-        case .disk: return "%"
-        case .network: return "MB/s"
-        }
-    }
-}
-
-enum AlertCondition: String, Codable, CaseIterable, Identifiable {
-    case above = "Above"
-    case below = "Below"
-    
-    var id: String { rawValue }
-    
-    var symbol: String {
-        switch self {
-        case .above: return ">"
-        case .below: return "<"
-        }
-    }
-}
 
 struct AlertRule: Codable, Identifiable, Equatable {
     var id: UUID = UUID()
@@ -160,6 +129,8 @@ class AlertManager: ObservableObject {
             // MB/s
             let totalBytes = stats.resources.networkRxBytes + stats.resources.networkTxBytes
             return Double(totalBytes) / 1024 / 1024
+        case .offline:
+            return stats.currentState.lowercased() == "offline" ? 1.0 : 0.0
         }
     }
 }

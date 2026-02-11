@@ -45,6 +45,6 @@ struct XYIdactylApp: App {
                     ResourceCollector.scheduleBackgroundTask() 
                 }
         }
-        .modelContainer(for: [ResourceSnapshotEntity.self, AlertRule.self, AlertEvent.self, ServerGroup.self, ServerCustomization.self])
+        .modelContainer(for: [ResourceSnapshotEntity.self, AlertEvent.self, ServerGroup.self, ServerCustomization.self])
     }
 }

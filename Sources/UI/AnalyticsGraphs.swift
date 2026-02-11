@@ -71,11 +71,11 @@ struct HistoryPoint: Codable, Identifiable {
 // MARK: - View Model
 class AnalyticsViewModel: ObservableObject {
     @Published var selectedResource: ResourceType = .cpu
-    @Published var selectedRange: GraphRange = .oneHour
+    @Published var selectedRange: AnalyticsTimeRange = .hour1
     @Published var history: [HistoryPoint] = []
     
     // Default to Free plan for now, could be injected
-    var userPlan: UserPlan = .free 
+    var userPlan: UserTier = .free 
     
     private var serverId: String
     private var timer: AnyCancellable?
@@ -245,12 +245,12 @@ private struct ChartControls: View {
                     Button {
                         vm.selectedRange = range
                     } label: {
-                        Label(range.rawValue, systemImage: "clock")
+                        Label(range.displayName, systemImage: "clock")
                     }
                 }
             } label: {
                 HStack(spacing: 4) {
-                    Text(vm.selectedRange.rawValue)
+                    Text(vm.selectedRange.displayName)
                     Image(systemName: "chevron.down")
                 }
                 .font(.subheadline.weight(.medium))

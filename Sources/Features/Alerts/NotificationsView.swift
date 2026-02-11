@@ -123,6 +123,7 @@ struct NotificationCard: View {
         case .cpu: return "cpu"
         case .memory: return "memorychip"
         case .disk: return "internaldrive"
+        case .network: return "network"
         case .offline: return "power"
         }
     }
@@ -132,6 +133,7 @@ struct NotificationCard: View {
         case .cpu: return .orange
         case .memory: return .purple
         case .disk: return .blue
+        case .network: return .cyan
         case .offline: return .red
         }
     }

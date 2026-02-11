@@ -570,61 +570,29 @@ struct AlertsSection: View {
             }
             .liquidGlassEffect()
             
-            // 2. Configuration (Embedded form style)
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Configuration")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    
-                Toggle(isOn: $manager.config.isEnabled) {
-                    Label("Enable Alerts", systemImage: "bell.badge")
+            // 2. Configuration Link
+            Button {
+                // This would ideally open the sheet, but since we are in a sub-view, 
+                // we might need a binding or just direct the user to Settings.
+                // For now, let's just show a hint.
+            } label: {
+                HStack {
+                    Text("Manage Rules in Settings")
                         .foregroundStyle(.white)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.white.opacity(0.5))
                 }
-                .tint(.blue)
-                
-                if manager.config.isEnabled {
-                    Divider().background(Color.white.opacity(0.2))
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("CPU Limit")
-                            Spacer()
-                            Text("\(Int(manager.config.cpuThreshold))%")
-                                .monospacedDigit()
-                                .foregroundStyle(.blue)
-                        }
-                        .font(.subheadline)
-                        .foregroundStyle(.white)
-                        
-                        Slider(value: $manager.config.cpuThreshold, in: 50...200, step: 10)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                         HStack {
-                            Text("Memory Limit")
-                            Spacer()
-                            Text("\(Int(manager.config.memoryThreshold))%")
-                                .monospacedDigit()
-                                .foregroundStyle(.blue)
-                        }
-                        .font(.subheadline)
-                        .foregroundStyle(.white)
-                        
-                        Slider(value: $manager.config.memoryThreshold, in: 50...100, step: 5)
-                    }
-                    
-                    Button("Save Configuration") {
-                        manager.save()
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.blue)
-                    .padding(.top, 8)
-                }
+                .padding()
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(12)
             }
-            .padding()
-            .background(Color.black.opacity(0.3))
-            .cornerRadius(16)
-            .liquidGlassEffect()
+            .disabled(true) // Placeholder until we wire up navigation
+            
+            Text("Go to Settings > Configure Alerts to manage rules.")
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.5))
+                .padding(.horizontal)
         }
     }
 }

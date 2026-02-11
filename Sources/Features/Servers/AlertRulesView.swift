@@ -161,12 +161,14 @@ struct AddRuleView: View {
         case .memory: return 0...100
         case .disk: return 0...100
         case .network: return 0...1000 // MB/s
+        case .offline: return 0...1
         }
     }
     
     var stepForMetric: Double {
         switch metric {
         case .network: return 1
+        case .offline: return 1
         default: return 5
         }
     }
