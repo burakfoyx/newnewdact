@@ -317,7 +317,7 @@ struct SettingsSection: View {
                 .liquidGlassEffect()
             }
             .sheet(isPresented: $showingAlertConfig) {
-                AlertConfigView(manager: alertManager)
+                AlertRulesView(manager: alertManager)
             }
             
             // SFTP Details

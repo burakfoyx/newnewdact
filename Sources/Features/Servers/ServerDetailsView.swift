@@ -69,8 +69,8 @@ struct ServerDetailsView: View {
     var body: some View {
         ZStack {
             // 0. Base Background (Fallback)
-            Color.black
-                .ignoresSafeArea()
+            // 0. Base Background (Removed to ensure LiquidBackground is visible)
+            // Color.black.ignoresSafeArea()
             
             // 1. Global Liquid Background
             LiquidBackgroundView()
@@ -327,7 +327,7 @@ struct AnalyticsSection: View {
     var body: some View {
         VStack(spacing: 20) {
             if let stats = viewModel.currentStats {
-                ServerResourceUsageView(stats: stats, limits: server.limits)
+                ServerResourceUsageView(stats: stats, limits: server.limits, serverId: server.identifier)
             } else {
                 ProgressView()
                     .frame(height: 200)
