@@ -385,6 +385,19 @@ class ServerDetailsViewModel: ObservableObject {
             self.consoleOutput = "Connecting to \(server.name)...\n"
             self.isConnected = false
             self.errorMessage = nil
+            // Don't clear currentStats immediately to avoid flickering if re-connecting
+        }
+        
+        // 0. Fetch Initial Stats via HTTP (Fast load)
+        Task {
+            do {
+                let stats = try await PterodactylClient.shared.fetchResources(serverId: server.identifier)
+                await MainActor.run {
+                    self.currentStats = stats
+                }
+            } catch {
+                print("Failed to fetch initial stats: \(error)")
+            }
         }
         
         do {
@@ -396,7 +409,10 @@ class ServerDetailsViewModel: ObservableObject {
                 throw PterodactylError.serializationError
             }
             
-            WebSocketClient.shared.connect(url: url, token: token)
+            // Get Panel URL for Origin header
+            let origin = await PterodactylClient.shared.getPanelURL()?.absoluteString
+            
+            WebSocketClient.shared.connect(url: url, token: token, origin: origin)
             
             // 3. Subscribe to events
             setupSubscriptions()
