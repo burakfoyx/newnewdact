@@ -160,80 +160,11 @@ struct ServerResourceUsageView: View {
             // Main Chart Card
             VStack(spacing: 16) {
                 // Controls
-                HStack {
-                    Picker("Resource", selection: $vm.selectedResource) {
-                        ForEach(ResourceType.allCases) { type in
-                            Text(type.rawValue).tag(type)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    
-                    Spacer()
-                    
-                    Menu {
-                        ForEach(vm.userPlan.availableRanges) { range in
-                            Button {
-                                vm.selectedRange = range
-                            } label: {
-                                Label(range.rawValue, systemImage: "clock")
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(vm.selectedRange.rawValue)
-                            Image(systemName: "chevron.down")
-                        }
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Material.thin)
-                        .clipShape(Capsule())
-                    }
-                }
+                ChartControls(vm: vm)
                 
                 // Chart
-                Chart(vm.filteredData) { point in
-                    let value = getValue(for: point, type: vm.selectedResource)
-                    
-                    LineMark(
-                        x: .value("Time", point.id),
-                        y: .value("Value", value)
-                    )
-                    .interpolationMethod(.catmullRom)
-                    .foregroundStyle(vm.selectedResource.color)
-                    
-                    AreaMark(
-                        x: .value("Time", point.id),
-                        y: .value("Value", value)
-                    )
-                    .interpolationMethod(.catmullRom)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [vm.selectedResource.color.opacity(0.3), vm.selectedResource.color.opacity(0.0)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                }
-                .chartXAxis {
-                    AxisMarks(values: .automatic(desiredCount: 5)) { value in
-                        if let date = value.as(Date.self) {
-                            AxisValueLabel {
-                                Text(date, format: .dateTime.hour().minute())
-                                    .foregroundStyle(.white.opacity(0.5))
-                            }
-                        }
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks { value in
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4])).foregroundStyle(.white.opacity(0.1))
-                        AxisValueLabel()
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                }
-                .frame(height: 250)
+                ResourceChartView(data: vm.filteredData, resourceType: vm.selectedResource)
+                    .frame(height: 250)
                 
                 // Current Value Display
                 HStack {
@@ -259,14 +190,6 @@ struct ServerResourceUsageView: View {
         .onAppear {
              // In a real app we would pass the actual server ID
              // For now we might reset or load basics
-        }
-    }
-    
-    func getValue(for point: HistoryPoint, type: ResourceType) -> Double {
-        switch type {
-        case .cpu: return point.cpu
-        case .memory: return point.memory
-        case .network: return point.totalNetwork
         }
     }
     
@@ -300,6 +223,100 @@ struct ServerResourceUsageView: View {
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
         return "\(hours)h \(minutes)m"
+    }
+}
+
+private struct ChartControls: View {
+    @ObservedObject var vm: AnalyticsViewModel
+    
+    var body: some View {
+        HStack {
+            Picker("Resource", selection: $vm.selectedResource) {
+                ForEach(ResourceType.allCases) { type in
+                    Text(type.rawValue).tag(type)
+                }
+            }
+            .pickerStyle(.segmented)
+            
+            Spacer()
+            
+            Menu {
+                ForEach(vm.userPlan.availableRanges) { range in
+                    Button {
+                        vm.selectedRange = range
+                    } label: {
+                        Label(range.rawValue, systemImage: "clock")
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(vm.selectedRange.rawValue)
+                    Image(systemName: "chevron.down")
+                }
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Material.thin)
+                .clipShape(Capsule())
+            }
+        }
+    }
+}
+
+private struct ResourceChartView: View {
+    let data: [HistoryPoint]
+    let resourceType: ResourceType
+    
+    var body: some View {
+        Chart(data) { point in
+            let value = getValue(for: point, type: resourceType)
+            
+            LineMark(
+                x: .value("Time", point.id),
+                y: .value("Value", value)
+            )
+            .interpolationMethod(.catmullRom)
+            .foregroundStyle(resourceType.color)
+            
+            AreaMark(
+                x: .value("Time", point.id),
+                y: .value("Value", value)
+            )
+            .interpolationMethod(.catmullRom)
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [resourceType.color.opacity(0.3), resourceType.color.opacity(0.0)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+        }
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 5)) { value in
+                if let date = value.as(Date.self) {
+                    AxisValueLabel {
+                        Text(date, format: .dateTime.hour().minute())
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                }
+            }
+        }
+        .chartYAxis {
+            AxisMarks { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4])).foregroundStyle(.white.opacity(0.1))
+                AxisValueLabel()
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+        }
+    }
+    
+    func getValue(for point: HistoryPoint, type: ResourceType) -> Double {
+        switch type {
+        case .cpu: return point.cpu
+        case .memory: return point.memory
+        case .network: return point.totalNetwork
+        }
     }
 }
 
