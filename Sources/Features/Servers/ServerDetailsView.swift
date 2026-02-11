@@ -202,7 +202,6 @@ struct ServerDetailsView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
-        }
         .toolbar(.hidden, for: .tabBar) // Hide main app dock
         // REMOVE .toolbar(.hidden, for: .tabBar) which was hiding the main dock?
         // Ah, the user previously had .toolbar(.hidden, for: .tabBar). I should check if that was for the APP'S main dock or the VIEW'S dock.
