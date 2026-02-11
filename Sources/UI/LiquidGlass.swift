@@ -145,15 +145,43 @@ struct AppBackgroundView: View {
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
             } else {
-                // Fallback gradient if image not found
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.05, green: 0.05, blue: 0.15),
-                        Color(red: 0.10, green: 0.06, blue: 0.20)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                // Fallback: Modern Ambient Background
+                ZStack {
+                    // Deep Space Base
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.02, green: 0.02, blue: 0.05), // #05050D
+                            Color(red: 0.05, green: 0.05, blue: 0.15)  // #0D0D26
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    
+                    // Ambient Orbs
+                    GeometryReader { proxy in
+                        // Top Left - Blue/Purple
+                        Circle()
+                            .fill(Color.blue.opacity(0.2))
+                            .frame(width: proxy.size.width * 0.8)
+                            .blur(radius: 80)
+                            .offset(x: -proxy.size.width * 0.2, y: -proxy.size.height * 0.1)
+                        
+                        // Bottom Right - Purple/Pink
+                        Circle()
+                            .fill(Color.purple.opacity(0.2))
+                            .frame(width: proxy.size.width * 0.8)
+                            .blur(radius: 80)
+                            .offset(x: proxy.size.width * 0.4, y: proxy.size.height * 0.6)
+                        
+                        // Center - Cyan
+                        Circle()
+                            .fill(Color.cyan.opacity(0.15))
+                            .frame(width: proxy.size.width * 0.6)
+                            .blur(radius: 60)
+                            .offset(x: proxy.size.width * 0.2, y: proxy.size.height * 0.3)
+                    }
+                }
+                .ignoresSafeArea()
             }
         }
         .ignoresSafeArea()

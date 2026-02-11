@@ -95,6 +95,7 @@ struct FileManagerView: View {
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
                 .refreshable {
                     await viewModel.loadFiles()
                 }
