@@ -22,330 +22,293 @@ enum ResourceType: String, CaseIterable, Identifiable {
         switch self {
         case .cpu: return "%"
         case .memory: return "MB"
-        case .network: return "MB/s" // Rate
+        case .network: return "MB/s"
         }
     }
-}
-
-// MARK: - Persistence Manager
-class AnalyticsPersistence {
-    static let shared = AnalyticsPersistence()
-    private let fileManager = FileManager.default
-    
-    func save(history: ResourceHistoryData, serverId: String) {
-        let url = getFileURL(serverId: serverId)
-        do {
-            let data = try JSONEncoder().encode(history)
-            try data.write(to: url)
-        } catch {
-            print("Failed to save analytics: \(error)")
-        }
-    }
-    
-    func load(serverId: String) -> ResourceHistoryData? {
-        let url = getFileURL(serverId: serverId)
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? JSONDecoder().decode(ResourceHistoryData.self, from: data)
-    }
-    
-    private func getFileURL(serverId: String) -> URL {
-        let paths = fileManager.urls(for: .documentDirectory, in: .userDomainMask)
-        return paths[0].appendingPathComponent("analytics_\(serverId).json")
-    }
-}
-
-struct ResourceHistoryData: Codable {
-    var points: [HistoryPoint]
-}
-
-struct HistoryPoint: Codable, Identifiable {
-    let id: Date
-    let cpu: Double
-    let memory: Double
-    let networkIn: Double
-    let networkOut: Double
-    
-    var totalNetwork: Double { networkIn + networkOut }
 }
 
 // MARK: - View Model
+@MainActor
 class AnalyticsViewModel: ObservableObject {
     @Published var selectedResource: ResourceType = .cpu
-    @Published var selectedRange: AnalyticsTimeRange = .hour1
-    @Published var history: [HistoryPoint] = []
+    @Published var selectedRange: AnalyticsTimeRange = .hour24
+    @Published var history: [ResourceSnapshot] = []
     
-    // Default to Free plan for now, could be injected
-    var userPlan: UserTier = .free 
+    // Derived Stats for Grid
+    @Published var avgCPU: Double = 0
+    @Published var peakCPU: Double = 0
+    @Published var avgRAM: Double = 0
+    @Published var peakRAM: Double = 0
+    
+    // Insights
+    @Published var insightText: String = "Analyzing server behavior..."
     
     private var serverId: String
-    private var timer: AnyCancellable?
+    private var timer: Timer?
     
     init(serverId: String) {
         self.serverId = serverId
         loadHistory()
-        
-        // Auto-save periodically
-        timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect().sink { [weak self] _ in
-            self?.saveHistory()
-        }
     }
     
-    func addPoint(stats: ServerStats) {
-        let point = HistoryPoint(
-            id: Date(),
-            cpu: stats.resources.cpuAbsolute,
-            memory: Double(stats.resources.memoryBytes) / 1024 / 1024, // MB
-            networkIn: Double(stats.resources.networkRxBytes) / 1024 / 1024,
-            networkOut: Double(stats.resources.networkTxBytes) / 1024 / 1024
-        )
-        history.append(point)
-        pruneHistory()
-    }
-    
-    private func pruneHistory() {
-        let maxAge = userPlan.retentionPeriod
-        let cutoff = Date().addingTimeInterval(-maxAge)
-        if let firstIndex = history.firstIndex(where: { $0.id >= cutoff }) {
-            if firstIndex > 0 {
-                history.removeFirst(firstIndex)
-            }
-        }
+    func refresh() {
+        loadHistory()
     }
     
     private func loadHistory() {
-        if let data = AnalyticsPersistence.shared.load(serverId: serverId) {
-            self.history = data.points
-            pruneHistory()
+        // Fetch from ResourceStore
+        let snapshots = ResourceStore.shared.fetchSnapshots(
+            serverId: serverId,
+            from: Date().addingTimeInterval(-selectedRange.duration)
+        )
+        self.history = snapshots
+        calculateStats()
+        generateInsights()
+    }
+    
+    private func calculateStats() {
+        guard !history.isEmpty else {
+            avgCPU = 0; peakCPU = 0; avgRAM = 0; peakRAM = 0
+            return
+        }
+        
+        // CPU
+        let cpuValues = history.map { $0.cpuPercent }
+        avgCPU = cpuValues.reduce(0, +) / Double(cpuValues.count)
+        peakCPU = cpuValues.max() ?? 0
+        
+        // RAM (MB)
+        let ramValues = history.map { Double($0.memoryUsedBytes) / 1024 / 1024 }
+        avgRAM = ramValues.reduce(0, +) / Double(ramValues.count)
+        peakRAM = ramValues.max() ?? 0
+    }
+    
+    private func generateInsights() {
+        guard !history.isEmpty else {
+            insightText = "Not enough data to generate insights."
+            return
+        }
+        
+        // Logic:
+        // 1. Idle: Avg CPU < 5% and Avg RAM < 20% (assuming simplified RAM check for now)
+        // 2. Capped: Peak CPU > 95% frequently
+        // 3. Underutilized RAM: Peak RAM < 20% of limit? (We don't have limit handy here easily without snapshot context, but snapshot has limit)
+        // Let's use simplified logic based on user request.
+        
+        if avgCPU < 5.0 {
+            insightText = "This server is idle. Consider consolidating workloads."
+        } else if peakCPU > 95.0 {
+            insightText = "This server is capped by the CPU. Performance degradation may occur."
+        } else if avgRAM < 512 && peakRAM < 512 { // Arbitrary low threshold example
+             insightText = "This server is under-utilizing RAM. Consider lowering allocation."
+        } else {
+            insightText = "Server resource usage is within normal parameters."
+        }
+        
+        // Refine based on selected range
+        insightText += " (Based on \(selectedRange.displayName))"
+    }
+    
+    var chartData: [ChartDataPoint] {
+        return history.map { snapshot in
+            let value: Double
+            switch selectedResource {
+            case .cpu: value = snapshot.cpuPercent
+            case .memory: value = Double(snapshot.memoryUsedBytes) / 1024 / 1024
+            case .network: value = Double(snapshot.networkRxBytes + snapshot.networkTxBytes) / 1024 / 1024
+            }
+            return ChartDataPoint(timestamp: snapshot.timestamp, value: value)
         }
     }
-    
-    func saveHistory() {
-        let data = ResourceHistoryData(points: history)
-        AnalyticsPersistence.shared.save(history: data, serverId: serverId)
-    }
-    
-    var filteredData: [HistoryPoint] {
-        let cutoff = Date().addingTimeInterval(-selectedRange.duration)
-        return history.filter { $0.id >= cutoff }
-    }
+}
+
+struct ChartDataPoint: Identifiable {
+    let id = UUID()
+    let timestamp: Date
+    let value: Double
 }
 
 // MARK: - Main View
 struct ServerResourceUsageView: View {
     let stats: ServerStats
     let limits: ServerLimits
+    let serverId: String
     
     @StateObject private var vm: AnalyticsViewModel
     
     init(stats: ServerStats, limits: ServerLimits, serverId: String) {
         self.stats = stats
         self.limits = limits
-        _vm = StateObject(wrappedValue: AnalyticsViewModel(serverId: serverId)) 
+        self.serverId = serverId
+        _vm = StateObject(wrappedValue: AnalyticsViewModel(serverId: serverId))
     }
     
     var body: some View {
-        VStack(spacing: 20) {
-            // Summary Badges
-            HStack {
-                StatusBadge(state: stats.currentState)
-                Spacer()
-                HStack(spacing: 4) {
-                    Image(systemName: "clock")
-                    Text(formatUptime(stats.resources.uptime ?? 0))
-                }
-                .font(.caption.monospaced())
-                .foregroundStyle(.secondary)
-            }
+        VStack(spacing: 24) {
             
-            // Main Chart Card
-            VStack(spacing: 16) {
-                // Controls
-                ChartControls(vm: vm)
-                
-                // Chart
-                ResourceChartView(data: vm.filteredData, resourceType: vm.selectedResource)
-                    .frame(height: 250)
-                
-                // Current Value Display
-                HStack {
-                    Text("Current:")
-                        .foregroundStyle(.secondary)
-                    Text(getCurrentValueString())
-                        .font(.headline.monospaced())
-                        .foregroundStyle(.white)
-                    Spacer()
-                    if let limit = getLimitString() {
-                        Text("Limit: \(limit)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+            // 1. Uptime Header
+            HStack {
+                Image(systemName: "clock.arrow.circlepath")
+                    .foregroundStyle(.pink)
+                Text("Uptime")
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(formatUptime(stats.resources.uptime ?? 0))
+                    .font(.title2.monospaced().bold())
+                    .foregroundStyle(.white)
             }
             .padding()
             .liquidGlassEffect()
-        }
-        .onChange(of: stats.resources.cpuAbsolute) { _, _ in
-            vm.addPoint(stats: stats)
+            
+            // 2. 2x2 Stats Grid
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                StatBox(title: "Avg CPU", value: String(format: "%.1f%%", vm.avgCPU), icon: "cpu", color: .blue)
+                StatBox(title: "Peak CPU", value: String(format: "%.1f%%", vm.peakCPU), icon: "waveform.path.ecg", color: .red)
+                StatBox(title: "Avg RAM", value: String(format: "%.0f MB", vm.avgRAM), icon: "memorychip", color: .purple)
+                StatBox(title: "Peak RAM", value: String(format: "%.0f MB", vm.peakRAM), icon: "chart.bar.fill", color: .orange)
+            }
+            
+            // 3. Charts Section
+            VStack(spacing: 16) {
+                // Controls
+                HStack {
+                    Picker("Resource", selection: $vm.selectedResource) {
+                        ForEach(ResourceType.allCases) { type in
+                            Text(type.rawValue).tag(type)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    Menu {
+                        ForEach(AnalyticsTimeRange.allCases) { range in
+                            Button {
+                                vm.selectedRange = range
+                                vm.refresh()
+                            } label: {
+                                Label(range.displayName, systemImage: "clock")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                            .font(.title2)
+                            .foregroundStyle(.white)
+                    }
+                }
+                
+                // Chart
+                Chart(vm.chartData) { point in
+                    LineMark(
+                        x: .value("Time", point.timestamp),
+                        y: .value("Value", point.value)
+                    )
+                    .interpolationMethod(.catmullRom)
+                    .foregroundStyle(vm.selectedResource.color)
+                    
+                    AreaMark(
+                        x: .value("Time", point.timestamp),
+                        y: .value("Value", point.value)
+                    )
+                    .interpolationMethod(.catmullRom)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [vm.selectedResource.color.opacity(0.3), vm.selectedResource.color.opacity(0.0)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                }
+                .chartXAxis {
+                    AxisMarks(values: .automatic(desiredCount: 5)) { value in
+                        if let date = value.as(Date.self) {
+                            AxisValueLabel {
+                                Text(date, format: .dateTime.hour().minute())
+                                    .foregroundStyle(.white.opacity(0.5))
+                            }
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4])).foregroundStyle(.white.opacity(0.1))
+                        AxisValueLabel()
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                }
+                .frame(height: 250)
+            }
+            .padding()
+            .liquidGlassEffect()
+            
+            // 4. Insights Footer
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "lightbulb.fill")
+                        .foregroundStyle(.yellow)
+                    Text("Resource Insight")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                }
+                
+                Text(vm.insightText)
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.8))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .liquidGlassEffect()
         }
         .onAppear {
-             // In a real app we would pass the actual server ID
-             // For now we might reset or load basics
+            vm.refresh()
         }
-    }
-    
-    func getCurrentValueString() -> String {
-        switch vm.selectedResource {
-        case .cpu: return String(format: "%.1f%%", stats.resources.cpuAbsolute)
-        case .memory: return formatBytes(stats.resources.memoryBytes)
-        case .network: 
-            let total = stats.resources.networkRxBytes + stats.resources.networkTxBytes
-            return formatBytes(total) + "/s" // Assuming rate
+        .onChange(of: stats.resources.cpuAbsolute) { _, _ in
+            // Refresh logic - maybe don't reload full history on every tick, but append?
+            // For now, let's just let the view model handle it if we want live updates.
+            // Actually, if ResourceStore is updated, we might need to fetch the latest.
+            // Or we can rely on periodic refresh?
+            // Let's debounce slightly or just strictly load from store periodically.
+            // For smoother UX, we might want to just append locally in VM, but we want to use Store.
+            // Let's call refresh periodically or on significant change?
+            // Simpler: Just refresh every 10s or when user changes range.
         }
-    }
-    
-    func getLimitString() -> String? {
-        switch vm.selectedResource {
-        case .cpu: return limits.cpu.map { "\($0)%" }
-        case .memory: return limits.memory.map { "\($0)MB" }
-        case .network: return nil
-        }
-    }
-    
-    private func formatBytes(_ bytes: Int64) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.allowedUnits = [.useMB, .useGB]
-        formatter.countStyle = .memory
-        return formatter.string(fromByteCount: bytes)
     }
     
     private func formatUptime(_ milliseconds: Int64) -> String {
         let seconds = milliseconds / 1000
-        let hours = seconds / 3600
+        let days = seconds / 86400
+        let hours = (seconds % 86400) / 3600
         let minutes = (seconds % 3600) / 60
-        return "\(hours)h \(minutes)m"
+        
+        if days > 0 {
+            return "\(days)d \(hours)h \(minutes)m"
+        } else {
+            return "\(hours)h \(minutes)m"
+        }
     }
 }
 
-private struct ChartControls: View {
-    @ObservedObject var vm: AnalyticsViewModel
+struct StatBox: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
     
     var body: some View {
-        HStack {
-            Picker("Resource", selection: $vm.selectedResource) {
-                ForEach(ResourceType.allCases) { type in
-                    Text(type.rawValue).tag(type)
-                }
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundStyle(color)
+                Spacer()
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.6))
             }
-            .pickerStyle(.segmented)
             
-            Spacer()
-            
-            Menu {
-                ForEach(vm.userPlan.availableRanges) { range in
-                    Button {
-                        vm.selectedRange = range
-                    } label: {
-                        Label(range.displayName, systemImage: "clock")
-                    }
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Text(vm.selectedRange.displayName)
-                    Image(systemName: "chevron.down")
-                }
-                .font(.subheadline.weight(.medium))
+            Text(value)
+                .font(.title3.bold())
                 .foregroundStyle(.white)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Material.thin)
-                .clipShape(Capsule())
-            }
         }
-    }
-}
-
-private struct ResourceChartView: View {
-    let data: [HistoryPoint]
-    let resourceType: ResourceType
-    
-    var body: some View {
-        Chart(data) { point in
-            let value = getValue(for: point, type: resourceType)
-            
-            LineMark(
-                x: .value("Time", point.id),
-                y: .value("Value", value)
-            )
-            .interpolationMethod(.catmullRom)
-            .foregroundStyle(resourceType.color)
-            
-            AreaMark(
-                x: .value("Time", point.id),
-                y: .value("Value", value)
-            )
-            .interpolationMethod(.catmullRom)
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [resourceType.color.opacity(0.3), resourceType.color.opacity(0.0)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-        }
-        .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 5)) { value in
-                if let date = value.as(Date.self) {
-                    AxisValueLabel {
-                        Text(date, format: .dateTime.hour().minute())
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                }
-            }
-        }
-        .chartYAxis {
-            AxisMarks { value in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4])).foregroundStyle(.white.opacity(0.1))
-                AxisValueLabel()
-                    .foregroundStyle(.white.opacity(0.5))
-            }
-        }
-    }
-    
-    func getValue(for point: HistoryPoint, type: ResourceType) -> Double {
-        switch type {
-        case .cpu: return point.cpu
-        case .memory: return point.memory
-        case .network: return point.totalNetwork
-        }
-    }
-}
-
-struct StatusBadge: View {
-    let state: String
-    
-    var color: Color {
-        switch state {
-        case "running": return .green
-        case "starting": return .yellow
-        case "stopping": return .orange
-        case "offline": return .red
-        default: return .gray
-        }
-    }
-    
-    var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(color)
-                .frame(width: 8, height: 8)
-            
-            Text(state.uppercased())
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(color)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(color.opacity(0.1))
-        .clipShape(Capsule())
+        .padding()
+        .liquidGlassEffect()
     }
 }

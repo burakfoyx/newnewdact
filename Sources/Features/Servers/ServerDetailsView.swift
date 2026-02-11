@@ -33,7 +33,7 @@ struct ServerDetailsView: View {
         case analytics = "Stats"
         case alerts = "Alerts"
         case backups = "Backups"
-        case settings = "Settings"
+        case details = "Details"
         // Secondary Tabs
         case files = "Files"
         case network = "Network"
@@ -53,14 +53,14 @@ struct ServerDetailsView: View {
             case .databases: return "cylinder.split.1x2"
             case .schedules: return "clock"
             case .users: return "person.2"
-            case .settings: return "gearshape"
+            case .details: return "info.circle"
             }
         }
         
         // Helper to determine if it's a primary tab (Toolbar vs TabBar)
         var isPrimary: Bool {
             switch self {
-            case .console, .analytics, .alerts, .backups, .settings: return true
+            case .console, .analytics, .alerts, .backups, .details: return true
             default: return false
             }
         }
@@ -68,16 +68,28 @@ struct ServerDetailsView: View {
     
     var body: some View {
         ZStack {
-            // 0. Base Background (Fallback)
-            // 0. Base Background (Removed to ensure LiquidBackground is visible)
-            // Color.black.ignoresSafeArea()
-            
             // 1. Global Liquid Background
             LiquidBackgroundView()
                 .ignoresSafeArea()
                 .onReceive(viewModel.$currentStats) { stats in
                     if let stats = stats {
                         alertManager.checkStats(stats, limits: server.limits)
+                        
+                        // Record stats for Analytics
+                        Task { @MainActor in
+                            ResourceCollector.shared.recordFromStats(
+                                serverId: server.identifier,
+                                panelId: "current", // ResourceCollector handles looking up if needed, or we can improve this later
+                                cpu: stats.resources.cpuAbsolute,
+                                memory: stats.resources.memoryBytes,
+                                memoryLimit: Int64((server.limits.memory ?? 0) * 1024 * 1024),
+                                disk: stats.resources.diskBytes,
+                                diskLimit: Int64((server.limits.disk ?? 0) * 1024 * 1024),
+                                networkRx: stats.resources.networkRxBytes,
+                                networkTx: stats.resources.networkTxBytes,
+                                uptimeMs: stats.resources.uptime ?? 0
+                            )
+                        }
                     }
                 }
             
@@ -86,12 +98,7 @@ struct ServerDetailsView: View {
                 ForEach(ServerTab.allCases) { tab in
                     Group {
                         ZStack {
-                            // Scroll Tracking Background
-                            GeometryReader { proxy in
-                                Color.clear
-                                    .preference(key: ScrollOffsetPreferenceKey.self, value: proxy.frame(in: .global).minY)
-                            }
-                            
+                             // No scroll preference needed if we always show toolbar
                             switch tab {
                             case .console:
                                 ConsoleSection(server: server, viewModel: viewModel)
@@ -111,8 +118,8 @@ struct ServerDetailsView: View {
                                 ScrollView { ScheduleSection(server: server) }
                             case .users:
                                 ScrollView { UserSection(server: server) }
-                            case .settings:
-                                ScrollView { SettingsSection(server: server, alertManager: alertManager) }
+                            case .details:
+                                ServerDetailsInfoView(server: server, viewModel: viewModel)
                             }
                         }
                     }
@@ -127,15 +134,6 @@ struct ServerDetailsView: View {
                 }
             }
             .background(Color.clear)
-            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-                let diff = value - lastScrollOffset
-                if abs(diff) > 10 {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isToolbarVisible = diff > 0
-                    }
-                    lastScrollOffset = value
-                }
-            }
             
             // 3. Alert Overlay
             if !alertManager.activeAlerts.isEmpty {
@@ -148,8 +146,8 @@ struct ServerDetailsView: View {
             }
         }
         .toolbar {
-            if isToolbarVisible {
-                ToolbarItem(placement: .topBarTrailing) {
+            // Always visible
+            ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
                         // Power Menu (Gear)
                         Menu {
@@ -529,55 +527,16 @@ class ServerDetailsViewModel: ObservableObject {
 
 struct AlertsSection: View {
     @ObservedObject var manager: AlertManager
+    @State private var showingAlertConfig = false
     
     var body: some View {
         VStack(spacing: 20) {
-            // 1. Active Alerts
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Active Alerts")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                
-                if manager.activeAlerts.isEmpty {
-                    HStack {
-                         Image(systemName: "checkmark.shield.fill")
-                            .foregroundStyle(.green)
-                         Text("No active alerts. System healthy.")
-                            .foregroundStyle(.white.opacity(0.7))
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.05))
-                    .cornerRadius(12)
-                } else {
-                    ForEach(manager.activeAlerts, id: \.self) { alert in
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.orange)
-                            Text(alert)
-                                .foregroundStyle(.white)
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.red.opacity(0.2))
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .strokeBorder(Color.red.opacity(0.4), lineWidth: 1)
-                        )
-                    }
-                }
-            }
-            .liquidGlassEffect()
-            
-            // 2. Configuration Link
+            // 1. Configuration Link
             Button {
-                // This would ideally open the sheet, but since we are in a sub-view, 
-                // we might need a binding or just direct the user to Settings.
-                // For now, let's just show a hint.
+                showingAlertConfig = true
             } label: {
                 HStack {
-                    Text("Manage Rules in Settings")
+                    Text("Manage Rules")
                         .foregroundStyle(.white)
                     Spacer()
                     Image(systemName: "chevron.right")
@@ -587,12 +546,17 @@ struct AlertsSection: View {
                 .background(Color.white.opacity(0.05))
                 .cornerRadius(12)
             }
-            .disabled(true) // Placeholder until we wire up navigation
+            .sheet(isPresented: $showingAlertConfig) {
+                AlertRulesView(manager: manager)
+            }
             
-            Text("Go to Settings > Configure Alerts to manage rules.")
+            Text("Set up custom triggers for CPU, RAM, and Disk usage.")
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.5))
                 .padding(.horizontal)
+            
+            Spacer()
         }
+        .padding()
     }
 }
