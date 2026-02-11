@@ -20,8 +20,14 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
     }
     
     private var webSocketTask: URLSessionWebSocketTask?
-    private let session = URLSession(configuration: .default)
+    private var session: URLSession!
     private var isConnected = false
+    
+    override init() {
+        super.init()
+        let config = URLSessionConfiguration.default
+        self.session = URLSession(configuration: config, delegate: self, delegateQueue: OperationQueue())
+    }
     
     // Subject to publish events
     private let eventSubject = PassthroughSubject<WebSocketEvent, Never>()

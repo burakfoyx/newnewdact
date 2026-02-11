@@ -198,6 +198,106 @@ struct FileRow: View {
 
 // MARK: - File Editor
 
+struct FileEditorView: View {
+    let serverId: String
+    let filePath: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var content: String = ""
+    @State private var originalContent: String = ""
+    @State private var isLoading = true
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                if isLoading {
+                    ProgressView("Loading file...")
+                        .tint(.white)
+                } else if let error = errorMessage {
+                    VStack(spacing: 16) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.largeTitle)
+                            .foregroundStyle(.orange)
+                        Text(error)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
+                        Button("Retry") {
+                            Task { await loadContent() }
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .padding()
+                } else {
+                    TextEditor(text: $content)
+                        .font(.custom("Menlo", size: 14))
+                        .scrollContentBackground(.hidden)
+                        .background(Color.black.opacity(0.8)) // Dark editor background
+                        .foregroundStyle(.white)
+                        .padding(4)
+                }
+            }
+            .background(Color.black.ignoresSafeArea())
+            .navigationTitle(URL(fileURLWithPath: filePath).lastPathComponent)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        if content != originalContent {
+                            // In a real app, show confirmation dialog
+                            dismiss()
+                        } else {
+                            dismiss()
+                        }
+                    }
+                }
+                
+                ToolbarItem(placement: .primaryAction) {
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Button("Save") {
+                            Task { await saveContent() }
+                        }
+                        .disabled(content == originalContent || isLoading)
+                        .fontWeight(.bold)
+                    }
+                }
+            }
+            .task {
+                await loadContent()
+            }
+        }
+    }
+    
+    // Logic inside view for simplicity, or move to ViewModel
+    func loadContent() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            content = try await PterodactylClient.shared.getFileContent(serverId: serverId, path: filePath)
+            originalContent = content
+            isLoading = false
+        } catch {
+            errorMessage = "Failed to load file: \(error.localizedDescription)"
+            isLoading = false
+        }
+    }
+    
+    func saveContent() async {
+        isSaving = true
+        do {
+            try await PterodactylClient.shared.writeFileContent(serverId: serverId, path: filePath, content: content)
+            originalContent = content
+            isSaving = false
+            dismiss()
+        } catch {
+            errorMessage = "Failed to save: \(error.localizedDescription)"
+            isSaving = false
+        }
+    }
+}
+
 
 
 // MARK: - ViewModel

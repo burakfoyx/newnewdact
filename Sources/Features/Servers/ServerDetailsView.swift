@@ -68,6 +68,10 @@ struct ServerDetailsView: View {
     
     var body: some View {
         ZStack {
+            // 0. Base Background (Fallback)
+            Color.black
+                .ignoresSafeArea()
+            
             // 1. Global Liquid Background
             LiquidBackgroundView()
                 .ignoresSafeArea()
@@ -122,6 +126,7 @@ struct ServerDetailsView: View {
                     .tag(tab)
                 }
             }
+            .background(Color.clear)
             .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
                 let diff = value - lastScrollOffset
                 if abs(diff) > 10 {
@@ -232,6 +237,7 @@ struct ServerDetailsView: View {
 struct ConsoleSection: View {
     let server: ServerAttributes
     @ObservedObject var viewModel: ServerDetailsViewModel
+    @FocusState private var isInputFocused: Bool
     
     var body: some View {
         VStack(spacing: 20) {
@@ -239,36 +245,52 @@ struct ConsoleSection: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     Text("Terminal")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.5))
+                        .font(.system(size: 13, weight: .semibold, design: .default))
+                        .foregroundStyle(.white.opacity(0.7))
                     Spacer()
                     if viewModel.isConnected {
-                        Label("Live", systemImage: "circle.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.green)
+                        HStack(spacing: 6) {
+                            Circle().fill(Color.green).frame(width: 8, height: 8)
+                            Text("Live")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.green)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.green.opacity(0.1), in: Capsule())
                     } else {
-                         Label("Offline", systemImage: "circle.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.red)
+                         HStack(spacing: 6) {
+                            Circle().fill(Color.red).frame(width: 8, height: 8)
+                            Text("Offline")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.red)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.red.opacity(0.1), in: Capsule())
                     }
                 }
                 .padding()
-                .background(Color.black.opacity(0.2))
+                .background(Color.black.opacity(0.4))
                 
                 ScrollViewReader { proxy in
                     ScrollView {
-                        Text(viewModel.consoleOutput)
+                        Text(AnsiParser.parse(viewModel.consoleOutput))
                             .font(.custom("Menlo", size: 12))
+                            .lineSpacing(4)
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding()
                             .id("bottom")
                     }
-                    .frame(height: 300)
+                    .frame(height: 400) // Increased height
                     .onChange(of: viewModel.consoleOutput) { _, _ in
                         withAnimation {
                             proxy.scrollTo("bottom", anchor: .bottom)
                         }
+                    }
+                    .onTapGesture {
+                        isInputFocused = false
                     }
                 }
                 
@@ -277,19 +299,23 @@ struct ConsoleSection: View {
                     Image(systemName: "chevron.right")
                         .foregroundStyle(.white.opacity(0.5))
                     TextField("Enter command...", text: $viewModel.commandInput)
+                        .focused($isInputFocused)
                         .onSubmit {
                             viewModel.sendCommand()
+                            // Keep focus? Maybe not on mobile
                         }
                         .submitLabel(.send)
                         .foregroundStyle(.white)
+                        .font(.custom("Menlo", size: 14))
                 }
                 .padding()
                 .background(Color.white.opacity(0.05))
             }
-            .background(Color.black.opacity(0.3))
-            .cornerRadius(16)
-            .liquidGlassEffect()
+            .background(Color.black.opacity(0.6)) // Darker background for contrast
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
         }
+        .padding(.horizontal)
     }
 }
 
