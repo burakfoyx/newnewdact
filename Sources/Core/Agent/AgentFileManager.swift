@@ -178,7 +178,7 @@ actor AgentFileManager {
         control.automations.removeAll { $0.id == id }
         try await writeControlFile(control)
     }
-}
+
 
     // MARK: - Metrics
     
