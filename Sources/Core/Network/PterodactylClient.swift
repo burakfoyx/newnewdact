@@ -606,6 +606,8 @@ actor PterodactylClient {
         
         let decoded = try JSONDecoder().decode(ApplicationAllocationResponse.self, from: data)
         return decoded.data.map { $0.attributes }
+    }
+
     // MARK: - Application Server Management
     
     /// Fetch all servers (Application API)
