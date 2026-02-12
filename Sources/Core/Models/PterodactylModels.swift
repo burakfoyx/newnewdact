@@ -465,6 +465,17 @@ struct ApplicationUser: Codable, Identifiable {
 }
 
 // MARK: - Application Server Models (For Create Response)
+struct ApplicationServerListResponse: Codable {
+    let object: String
+    let data: [ApplicationServerData]
+    let meta: PterodactylMeta
+}
+
+struct ApplicationServerData: Codable {
+    let object: String
+    let attributes: ApplicationServerAttributes
+}
+
 struct ApplicationServerResponse: Codable {
     let object: String
     let attributes: ApplicationServerAttributes

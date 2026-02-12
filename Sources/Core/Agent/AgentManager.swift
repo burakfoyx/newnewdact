@@ -280,9 +280,30 @@ class AgentManager: ObservableObject {
         
         // Get user's accessible servers
         print("🔍 Fetching accessible servers for agent...")
-        let servers = try await client.fetchServers()
-        let serverIDs = servers.map { $0.identifier }
-        print("🔍 Found \(serverIDs.count) servers: \(serverIDs)")
+        // Start with Client API (preferred)
+        var serverIDs: [String] = []
+        
+        do {
+            let servers = try await client.fetchServers()
+            serverIDs = servers.map { $0.identifier }
+            print("🔍 Found \(serverIDs.count) servers via Client API")
+        } catch {
+            print("⚠️ Client API fetch failed: \(error)")
+        }
+        
+        // Fallback to Application API if empty and user is admin
+        if serverIDs.isEmpty && account.hasAdminAccess {
+            print("⚠️ No servers found via Client API. Attempting Application API (Admin)...")
+            do {
+                let appServers = try await client.fetchApplicationServers()
+                serverIDs = appServers.map { $0.identifier }
+                print("🔍 Found \(serverIDs.count) servers via Application API")
+            } catch {
+                print("❌ Application API fetch failed: \(error)")
+            }
+        }
+        
+        print("🔍 Final Server List (\(serverIDs.count)): \(serverIDs)")
         
         if serverIDs.isEmpty {
             print("⚠️ Warning: No servers found for this user. Agent will monitor 0 servers.")

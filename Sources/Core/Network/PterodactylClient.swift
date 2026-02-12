@@ -606,9 +606,7 @@ actor PterodactylClient {
         
         let decoded = try JSONDecoder().decode(ApplicationAllocationResponse.self, from: data)
         return decoded.data.map { $0.attributes }
-    }
-    
-    func createNest(name: String, description: String, author: String) async throws -> NestAttributes {
+
         guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
         
         let url = baseURL.appendingPathComponent("api/application/nests")
