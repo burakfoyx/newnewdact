@@ -10,7 +10,7 @@
     "description": "Self-hosted monitoring, alerting, and automation agent for the XYIDactyl iOS app. Runs as a background worker with zero inbound networking.",
     "features": [],
     "docker_images": {
-        "ghcr.io/xyidactyl/agent:latest": "ghcr.io/xyidactyl/agent:latest"
+        "ghcr.io/burakfoyx/newnewdact/agent:latest": "ghcr.io/burakfoyx/newnewdact/agent:latest"
     },
     "file_denylist": [],
     "startup": "./entrypoint.sh",
