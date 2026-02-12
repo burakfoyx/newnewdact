@@ -307,6 +307,9 @@ class AgentManager: ObservableObject {
         
         if serverIDs.isEmpty {
             print("⚠️ Warning: No servers found for this user. Agent will monitor 0 servers.")
+            if !account.hasAdminAccess {
+                print("💡 Hint: If you are an admin and want to monitor all servers, please log in with an Application API Key.")
+            }
         }
         
         // Register in control.json

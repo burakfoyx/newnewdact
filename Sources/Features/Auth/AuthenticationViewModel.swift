@@ -35,7 +35,26 @@ class AuthenticationViewModel: ObservableObject {
         await tempClient.configure(url: hostURL, key: apiKey)
         
         do {
-            let isValid = try await tempClient.validateConnection()
+            // Try Client API first
+            var isValid = false
+            var isAppKey = false
+            
+            do {
+                isValid = try await tempClient.validateConnection()
+            } catch {
+                // If Client API fails, check if it's an Application Key
+                print("Client API validation failed: \(error). Checking Application API...")
+            }
+            
+            if !isValid {
+                // Check Application API
+                let appAccess = await tempClient.checkAdminAccess()
+                if appAccess {
+                    isValid = true
+                    isAppKey = true
+                }
+            }
+            
             if isValid {
                 // Connection valid - now check for admin access
                 await MainActor.run { keyCheckState = .checkingPermissions }
@@ -44,7 +63,7 @@ class AuthenticationViewModel: ObservableObject {
                 try? await Task.sleep(nanoseconds: 800_000_000)
                 
                 // Check if this is an admin key
-                let hasAdminAccess = await tempClient.checkAdminAccess()
+                let hasAdminAccess = isAppKey ? true : await tempClient.checkAdminAccess()
                 
                 await MainActor.run {
                     if hasAdminAccess {
@@ -69,6 +88,8 @@ class AuthenticationViewModel: ObservableObject {
                     isLoading = false
                     keyCheckState = .idle
                 }
+            } else {
+                throw PterodactylError.apiError(401, "Invalid API Key or URL")
             }
         } catch {
             await MainActor.run {
