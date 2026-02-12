@@ -279,10 +279,17 @@ class AgentManager: ObservableObject {
         }
         
         // Get user's accessible servers
+        print("🔍 Fetching accessible servers for agent...")
         let servers = try await client.fetchServers()
         let serverIDs = servers.map { $0.identifier }
+        print("🔍 Found \(serverIDs.count) servers: \(serverIDs)")
+        
+        if serverIDs.isEmpty {
+            print("⚠️ Warning: No servers found for this user. Agent will monitor 0 servers.")
+        }
         
         // Register in control.json
+        print("📝 Updating control.json with user \(account.id.uuidString)...")
         try await fileManager?.upsertUser(
             userUUID: account.id.uuidString,
             apiKey: account.apiKey,
@@ -291,6 +298,7 @@ class AgentManager: ObservableObject {
             allowedServers: serverIDs,
             deviceToken: nil
         )
+        print("✅ User registered in control.json")
         
         agentState = .connected
         await refreshStatus()

@@ -23,7 +23,7 @@ struct AgentSettingsView: View {
                 dangerSection
             }
             
-            if agentManager.agentState == .notFound || agentManager.agentState == .unknown {
+            if agentManager.agentState == .notFound || agentManager.agentState == .unknown || agentManager.agentState == .detected {
                 setupSection
             }
         }
