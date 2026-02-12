@@ -312,7 +312,7 @@ struct ConsoleSection: View {
             // .background(Color.black.opacity(0.8)) // Removed opaque background
             .glassEffect(.regular, in: Rectangle())
         }
-        }
+
         .cornerRadius(12)
         // .padding(.horizontal) // Remove horizontal padding to fill width if desired, or keep it
         .padding(12)
