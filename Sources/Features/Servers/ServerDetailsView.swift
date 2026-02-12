@@ -56,34 +56,15 @@ struct ServerDetailsView: View {
             }
         }
     }
-    
     var body: some View {
         ZStack {
             // 1. Main Content using TabView
             TabView(selection: $selectedTab) {
                 ForEach(ServerTab.allCases.filter { $0.isPrimary }) { tab in
                     ZStack {
-                        // Background INSIDE each tab page (TabView pages have opaque system backgrounds)
                         LiquidBackgroundView()
                             .ignoresSafeArea()
-                        
-                        switch tab {
-                        case .console:
-                            ConsoleSection(server: server, viewModel: viewModel)
-                        case .analytics:
-                            ScrollView { AnalyticsSection(server: server, viewModel: viewModel) }
-                                .scrollContentBackground(.hidden)
-                        case .alerts:
-                            ScrollView { AlertsSection(manager: alertManager) }
-                                .scrollContentBackground(.hidden)
-                        case .backups:
-                            ScrollView { BackupSection(server: server) }
-                                .scrollContentBackground(.hidden)
-                        case .details:
-                            ServerDetailsInfoView(server: server, viewModel: viewModel)
-                        default:
-                            EmptyView()
-                        }
+                        primaryTabContent(for: tab)
                     }
                     .background(Color.clear)
                     .navigationTitle(server.name)
@@ -99,7 +80,6 @@ struct ServerDetailsView: View {
                 if let stats = stats {
                     alertManager.checkStats(stats, limits: server.limits)
                     
-                    // Record stats for Analytics
                     Task { @MainActor in
                         ResourceCollector.shared.recordFromStats(
                             serverId: server.identifier,
@@ -117,7 +97,7 @@ struct ServerDetailsView: View {
                 }
             }
             
-            // 3. Alert Overlay
+            // 2. Alert Overlay
             if !alertManager.activeAlerts.isEmpty {
                 VStack {
                     ServerAlertOverlay(manager: alertManager)
@@ -132,7 +112,6 @@ struct ServerDetailsView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
-            // Always visible
             ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
                         // Power Menu (Gear)
@@ -186,30 +165,12 @@ struct ServerDetailsView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
-        .toolbar(.hidden, for: .tabBar) // Hide main app dock
+        .toolbar(.hidden, for: .tabBar)
         .navigationDestination(for: ServerTab.self) { tab in
             ZStack {
                 LiquidBackgroundView()
                     .ignoresSafeArea()
-                
-                switch tab {
-                case .files:
-                    FileManagerView(server: server)
-                case .network:
-                    ScrollView { NetworkSection(server: server) }
-                        .scrollContentBackground(.hidden)
-                case .databases:
-                    ScrollView { DatabaseSection(server: server) }
-                        .scrollContentBackground(.hidden)
-                case .schedules:
-                    ScrollView { ScheduleSection(server: server) }
-                        .scrollContentBackground(.hidden)
-                case .users:
-                    ScrollView { UserSection(server: server) }
-                        .scrollContentBackground(.hidden)
-                default:
-                    EmptyView()
-                }
+                secondaryTabContent(for: tab)
             }
             .background(Color.clear)
             .navigationTitle(tab.rawValue)
@@ -224,6 +185,51 @@ struct ServerDetailsView: View {
         }
         .onDisappear {
             viewModel.disconnect()
+        }
+    }
+    
+    // MARK: - Tab Content Helpers (broken out to help Swift type-checker)
+    
+    @ViewBuilder
+    private func primaryTabContent(for tab: ServerTab) -> some View {
+        switch tab {
+        case .console:
+            ConsoleSection(server: server, viewModel: viewModel)
+        case .analytics:
+            ScrollView { AnalyticsSection(server: server, viewModel: viewModel) }
+                .scrollContentBackground(.hidden)
+        case .alerts:
+            ScrollView { AlertsSection(manager: alertManager) }
+                .scrollContentBackground(.hidden)
+        case .backups:
+            ScrollView { BackupSection(server: server) }
+                .scrollContentBackground(.hidden)
+        case .details:
+            ServerDetailsInfoView(server: server, viewModel: viewModel)
+        default:
+            EmptyView()
+        }
+    }
+    
+    @ViewBuilder
+    private func secondaryTabContent(for tab: ServerTab) -> some View {
+        switch tab {
+        case .files:
+            FileManagerView(server: server)
+        case .network:
+            ScrollView { NetworkSection(server: server) }
+                .scrollContentBackground(.hidden)
+        case .databases:
+            ScrollView { DatabaseSection(server: server) }
+                .scrollContentBackground(.hidden)
+        case .schedules:
+            ScrollView { ScheduleSection(server: server) }
+                .scrollContentBackground(.hidden)
+        case .users:
+            ScrollView { UserSection(server: server) }
+                .scrollContentBackground(.hidden)
+        default:
+            EmptyView()
         }
     }
     
