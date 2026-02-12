@@ -9,10 +9,6 @@ struct NetworkSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Network Allocations")
-                .font(.headline)
-                .foregroundStyle(.white)
-            
             if isLoading {
                 ProgressView().tint(.white)
             } else if allocations.isEmpty {
@@ -53,6 +49,26 @@ struct NetworkSection: View {
                     }
                     .padding()
                     .liquidGlassEffect()
+                }
+                
+                // Add allocation button (shown if server has room for more)
+                if server.featureLimits.allocations > allocations.count {
+                    Button {
+                        // TODO: Wire up allocation assignment API
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(.blue)
+                            Text("Add Allocation")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.white.opacity(0.8))
+                            Spacer()
+                        }
+                        .padding()
+                        .liquidGlassEffect()
+                    }
                 }
             }
         }
@@ -180,10 +196,6 @@ struct DatabaseSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-             Text("Databases")
-                .font(.headline)
-                .foregroundStyle(.white)
-            
             ForEach(databases, id: \.id) { db in
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
@@ -218,10 +230,6 @@ struct ScheduleSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-             Text("Schedules")
-                .font(.headline)
-                .foregroundStyle(.white)
-            
             ForEach(schedules, id: \.id) { schedule in
                 HStack {
                     VStack(alignment: .leading) {
@@ -258,10 +266,6 @@ struct UserSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-             Text("Subusers")
-                .font(.headline)
-                .foregroundStyle(.white)
-            
             ForEach(users, id: \.uuid) { user in
                 HStack {
                     AsyncImage(url: URL(string: user.image ?? "")) { img in

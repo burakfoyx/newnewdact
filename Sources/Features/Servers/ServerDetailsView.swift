@@ -28,7 +28,7 @@ struct ServerDetailsView: View {
         // Secondary Tabs
         case files = "Files"
         case network = "Network"
-        case databases = "DBs"
+        case databases = "Databases"
         case schedules = "Schedules"
         case users = "Users"
         
@@ -175,7 +175,7 @@ struct ServerDetailsView: View {
             .background(Color.clear)
             .navigationTitle(tab.rawValue)
             .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .onAppear {

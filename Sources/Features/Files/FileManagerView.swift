@@ -35,7 +35,7 @@ struct FileManagerView: View {
                 }
                 .padding()
             }
-            .background(Color.black.opacity(0.2))
+
             
             // File List
             if viewModel.isLoading {
@@ -185,7 +185,7 @@ struct FileRow: View {
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.3))
         }
-        .padding(12)
+        .padding(8)
         .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
     
