@@ -95,40 +95,30 @@ struct ServerDetailsView: View {
             
             // 2. Main Content using TabView
             TabView(selection: $selectedTab) {
-                ForEach(ServerTab.allCases) { tab in
+                ForEach(ServerTab.allCases.filter { $0.isPrimary }) { tab in
                     Group {
                         ZStack {
                              // No scroll preference needed if we always show toolbar
                             switch tab {
                             case .console:
                                 ConsoleSection(server: server, viewModel: viewModel)
-                            case .files:
-                                FileManagerView(server: server)
                             case .analytics:
                                 ScrollView { AnalyticsSection(server: server, viewModel: viewModel) }
                             case .alerts:
                                 ScrollView { AlertsSection(manager: alertManager) }
                             case .backups:
                                 ScrollView { BackupSection(server: server) }
-                            case .network:
-                                ScrollView { NetworkSection(server: server) }
-                            case .databases:
-                                ScrollView { DatabaseSection(server: server) }
-                            case .schedules:
-                                ScrollView { ScheduleSection(server: server) }
-                            case .users:
-                                ScrollView { UserSection(server: server) }
                             case .details:
                                 ServerDetailsInfoView(server: server, viewModel: viewModel)
+                            default:
+                                EmptyView()
                             }
                         }
                     }
                     .navigationTitle(server.name)
                     .navigationBarTitleDisplayMode(.large)
                     .tabItem {
-                        if tab.isPrimary {
-                            Label(tab.rawValue, systemImage: tab.icon)
-                        }
+                        Label(tab.rawValue, systemImage: tab.icon)
                     }
                     .tag(tab)
                 }
@@ -185,9 +175,7 @@ struct ServerDetailsView: View {
                         // Secondary Menu (Three Dots)
                         Menu {
                             ForEach(ServerTab.allCases.filter { !$0.isPrimary }) { tab in
-                                Button {
-                                    selectedTab = tab
-                                } label: {
+                                NavigationLink(value: tab) {
                                     Label(tab.rawValue, systemImage: tab.icon)
                                 }
                             }
@@ -203,19 +191,29 @@ struct ServerDetailsView: View {
                 }
             }
         .toolbar(.hidden, for: .tabBar) // Hide main app dock
-        // REMOVE .toolbar(.hidden, for: .tabBar) which was hiding the main dock?
-        // Ah, the user previously had .toolbar(.hidden, for: .tabBar). I should check if that was for the APP'S main dock or the VIEW'S dock.
-        // Usually ServerDetails is pushed on a stack.
-        // If the app has a main tab bar, we might want to hide it.
-        // But here we are using a TabView inside ServerDetails.
-        // So we probably want to hide the *parent* tab bar (if any), but SHOW the current *internal* tab bar.
-        // The default `TabView` shows its own bar.
-        // So keeping `.toolbar(.hidden, for: .tabBar)` might hide the PARENT tab bar which is likely desired.
-        // I will keep it but verifying its behavior on *this* TabView.
-        // Actually, on iOS 18 `toolbar(.hidden, for: .tabBar)` hides the bar for the *current context*.
-        // If I put it on `TabView`, it might hide its own bar?
-        // No, it usually hides the parent's.
-        // I'll keep it as it was there before.
+        .navigationDestination(for: ServerTab.self) { tab in
+            ZStack {
+                LiquidBackgroundView()
+                    .ignoresSafeArea()
+                
+                switch tab {
+                case .files:
+                    FileManagerView(server: server)
+                case .network:
+                    ScrollView { NetworkSection(server: server) }
+                case .databases:
+                    ScrollView { DatabaseSection(server: server) }
+                case .schedules:
+                    ScrollView { ScheduleSection(server: server) }
+                case .users:
+                    ScrollView { UserSection(server: server) }
+                default:
+                    EmptyView()
+                }
+            }
+            .navigationTitle(tab.rawValue)
+            .navigationBarTitleDisplayMode(.inline)
+        }
         .onAppear {
             Task {
                 await viewModel.connect(to: server)
