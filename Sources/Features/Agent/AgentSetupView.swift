@@ -444,7 +444,6 @@ struct AgentDeploySheet: View {
                 try await agentManager.deployAgent(
                     nodeId: nodeId,
                     allocationId: allocation.id,
-                    eggId: 1, // Agent egg — should be found dynamically in production
                     userId: userId
                 )
                 

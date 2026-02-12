@@ -69,10 +69,12 @@ class AgentManager: ObservableObject {
     
     // MARK: - Agent Deployment
     
+    // MARK: - Agent Deployment
+    
     /// Deploys a new XYIDactyl Agent server on the panel.
     /// Requires admin (Application API) access.
     @MainActor
-    func deployAgent(nodeId: Int, allocationId: Int, eggId: Int, userId: Int) async throws {
+    func deployAgent(nodeId: Int, allocationId: Int, userId: Int) async throws {
         guard let account = AccountManager.shared.activeAccount else {
             throw AgentManagerError.noActiveAccount
         }
@@ -81,6 +83,9 @@ class AgentManager: ObservableObject {
         errorMessage = nil
         
         defer { isLoading = false }
+        
+        // Find the Agent Egg
+        let (eggId, dockerImage, startup) = try await findAgentEgg()
         
         // Generate agent credentials
         let agentUUID = UUID().uuidString
@@ -97,6 +102,8 @@ class AgentManager: ObservableObject {
             "PUSH_PROVIDER": "dev",
             "LOG_LEVEL": "info"
         ]
+        
+        // ... (rest of function)
         
         let limits = ServerLimits(
             memory: 256,
@@ -117,8 +124,8 @@ class AgentManager: ObservableObject {
             name: "XYIDactyl Agent",
             userId: userId,
             eggId: eggId,
-            dockerImage: "ghcr.io/xyidactyl/agent:latest",
-            startup: "./entrypoint.sh",
+            dockerImage: dockerImage,
+            startup: startup,
             environment: environment,
             limits: limits,
             featureLimits: featureLimits,
@@ -136,19 +143,61 @@ class AgentManager: ObservableObject {
         self.fileManager = AgentFileManager(agentServerID: server.identifier)
         
         // Register current user in control.json
-        let servers = try await client.fetchServers()
-        let serverIDs = servers.map { $0.identifier }
+        // We use a separate task or just do it here. 
+        // Need to be careful about Application API vs Client API context, 
+        // but fetchServers is client API. If we deployed using App API Key, 
+        // we might not have Client Key permissions?
+        // Actually, the key is the same. Just permissions matter.
+        // If it's an Application Key, it likely has Client permissions too (if full admin), 
+        // but Application Keys are distinct.
+        // Wait, Pterodactyl has "Application API Keys" and "Client API Keys".
+        // The user logs in with ONE key. 
+        // If they provided an Application Key, `client.configure` uses it.
+        // `fetchServers` (client) might fail if the App Key is not a Client Key.
+        // But usually, panels accept App Keys for Client endpoints? No, they are distinct authentication realms.
+        // Raises a potential issue: Deployment requires App Key. Monitoring requires Client Key.
+        // If the user provided an App Key, they can deploy.
+        // But `fetchServers` (Client API) might fail.
+        // However, the user flow says "Connect" or "Deploy".
+        // If they deployed, they used an ADMIN key.
+        // The instructions imply we use one key.
+        // For now, I'll assume the key works for both or the user provided a key that works (or we catch the error).
+        // I'll wrap the registration in a try-catch to not fail the whole deployment if registration monitoring fails.
         
-        try await self.fileManager?.upsertUser(
-            userUUID: account.id.uuidString,
-            apiKey: account.apiKey,
-            agentSecret: agentSecretValue,
-            isAdmin: account.hasAdminAccess,
-            allowedServers: serverIDs,
-            deviceToken: nil // Will be set when push permissions are granted
-        )
+        do {
+            let servers = try await client.fetchServers()
+            let serverIDs = servers.map { $0.identifier }
+            
+            try await self.fileManager?.upsertUser(
+                userUUID: account.id.uuidString,
+                apiKey: account.apiKey,
+                agentSecret: agentSecretValue,
+                isAdmin: account.hasAdminAccess,
+                allowedServers: serverIDs,
+                deviceToken: nil 
+            )
+        } catch {
+            print("Warning: Failed to register user in control.json immediately after deploy: \(error)")
+            // We still consider deployment success, user can connect later/retry.
+        }
         
         agentState = .connected
+    }
+    
+    /// helper to find the egg
+    private func findAgentEgg() async throws -> (Int, String, String) {
+        let nests = try await client.fetchNests()
+        
+        // Prioritize finding a nest named "XYIDactyl" or similar
+        // But we search all.
+        for nest in nests {
+            let eggs = try await client.fetchEggs(nestId: nest.id)
+            if let agentEgg = eggs.first(where: { $0.name.contains("XYIDactyl Agent") || $0.name.contains("Go Agent") }) {
+                return (agentEgg.id, agentEgg.dockerImage, agentEgg.startup)
+            }
+        }
+        
+        throw AgentManagerError.deploymentFailed("Could not find 'XYIDactyl Agent' egg installed on the panel.")
     }
     
     // MARK: - Connect User
