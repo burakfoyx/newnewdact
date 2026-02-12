@@ -138,6 +138,9 @@ struct ServerDetailsView: View {
                 .zIndex(100)
             }
         }
+        .background(Color.clear)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
             // Always visible
             ToolbarItem(placement: .topBarTrailing) {
@@ -204,18 +207,25 @@ struct ServerDetailsView: View {
                     FileManagerView(server: server)
                 case .network:
                     ScrollView { NetworkSection(server: server) }
+                        .scrollContentBackground(.hidden)
                 case .databases:
                     ScrollView { DatabaseSection(server: server) }
+                        .scrollContentBackground(.hidden)
                 case .schedules:
                     ScrollView { ScheduleSection(server: server) }
+                        .scrollContentBackground(.hidden)
                 case .users:
                     ScrollView { UserSection(server: server) }
+                        .scrollContentBackground(.hidden)
                 default:
                     EmptyView()
                 }
             }
+            .background(Color.clear)
             .navigationTitle(tab.rawValue)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .onAppear {
             Task {
