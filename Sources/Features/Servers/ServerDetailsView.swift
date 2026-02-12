@@ -59,56 +59,33 @@ struct ServerDetailsView: View {
     
     var body: some View {
         ZStack {
-            // 1. Global Liquid Background
-            LiquidBackgroundView()
-                .ignoresSafeArea()
-                .onReceive(viewModel.$currentStats) { stats in
-                    if let stats = stats {
-                        alertManager.checkStats(stats, limits: server.limits)
-                        
-                        // Record stats for Analytics
-                        Task { @MainActor in
-                            ResourceCollector.shared.recordFromStats(
-                                serverId: server.identifier,
-                                panelId: "current", // ResourceCollector handles looking up if needed, or we can improve this later
-                                cpu: stats.resources.cpuAbsolute,
-                                memory: stats.resources.memoryBytes,
-                                memoryLimit: Int64((server.limits.memory ?? 0) * 1024 * 1024),
-                                disk: stats.resources.diskBytes,
-                                diskLimit: Int64((server.limits.disk ?? 0) * 1024 * 1024),
-                                networkRx: stats.resources.networkRxBytes,
-                                networkTx: stats.resources.networkTxBytes,
-                                uptimeMs: stats.resources.uptime ?? 0
-                            )
-                        }
-                    }
-                }
-            
-            // 2. Main Content using TabView
+            // 1. Main Content using TabView
             TabView(selection: $selectedTab) {
                 ForEach(ServerTab.allCases.filter { $0.isPrimary }) { tab in
-                    Group {
-                        ZStack {
-                             // No scroll preference needed if we always show toolbar
-                            switch tab {
-                            case .console:
-                                ConsoleSection(server: server, viewModel: viewModel)
-                            case .analytics:
-                                ScrollView { AnalyticsSection(server: server, viewModel: viewModel) }
-                                    .scrollContentBackground(.hidden)
-                            case .alerts:
-                                ScrollView { AlertsSection(manager: alertManager) }
-                                    .scrollContentBackground(.hidden)
-                            case .backups:
-                                ScrollView { BackupSection(server: server) }
-                                    .scrollContentBackground(.hidden)
-                            case .details:
-                                ServerDetailsInfoView(server: server, viewModel: viewModel)
-                            default:
-                                EmptyView()
-                            }
+                    ZStack {
+                        // Background INSIDE each tab page (TabView pages have opaque system backgrounds)
+                        LiquidBackgroundView()
+                            .ignoresSafeArea()
+                        
+                        switch tab {
+                        case .console:
+                            ConsoleSection(server: server, viewModel: viewModel)
+                        case .analytics:
+                            ScrollView { AnalyticsSection(server: server, viewModel: viewModel) }
+                                .scrollContentBackground(.hidden)
+                        case .alerts:
+                            ScrollView { AlertsSection(manager: alertManager) }
+                                .scrollContentBackground(.hidden)
+                        case .backups:
+                            ScrollView { BackupSection(server: server) }
+                                .scrollContentBackground(.hidden)
+                        case .details:
+                            ServerDetailsInfoView(server: server, viewModel: viewModel)
+                        default:
+                            EmptyView()
                         }
                     }
+                    .background(Color.clear)
                     .navigationTitle(server.name)
                     .navigationBarTitleDisplayMode(.large)
                     .tabItem {
@@ -118,6 +95,27 @@ struct ServerDetailsView: View {
                 }
             }
             .background(Color.clear)
+            .onReceive(viewModel.$currentStats) { stats in
+                if let stats = stats {
+                    alertManager.checkStats(stats, limits: server.limits)
+                    
+                    // Record stats for Analytics
+                    Task { @MainActor in
+                        ResourceCollector.shared.recordFromStats(
+                            serverId: server.identifier,
+                            panelId: "current",
+                            cpu: stats.resources.cpuAbsolute,
+                            memory: stats.resources.memoryBytes,
+                            memoryLimit: Int64((server.limits.memory ?? 0) * 1024 * 1024),
+                            disk: stats.resources.diskBytes,
+                            diskLimit: Int64((server.limits.disk ?? 0) * 1024 * 1024),
+                            networkRx: stats.resources.networkRxBytes,
+                            networkTx: stats.resources.networkTxBytes,
+                            uptimeMs: stats.resources.uptime ?? 0
+                        )
+                    }
+                }
+            }
             
             // 3. Alert Overlay
             if !alertManager.activeAlerts.isEmpty {
@@ -215,7 +213,7 @@ struct ServerDetailsView: View {
             }
             .background(Color.clear)
             .navigationTitle(tab.rawValue)
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
