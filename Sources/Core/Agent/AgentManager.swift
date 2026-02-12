@@ -169,12 +169,23 @@ class AgentManager: ObservableObject {
         var nestId = nests.first(where: { $0.name == "XYIDactyl" })?.id
         
         if nestId == nil {
-            let newNest = try await client.createNest(
-                name: "XYIDactyl",
-                description: "Nests for XYIDactyl App",
-                author: "support@xyidactyl.com"
-            )
-            nestId = newNest.id
+            do {
+                let newNest = try await client.createNest(
+                    name: "XYIDactyl",
+                    description: "Nests for XYIDactyl App",
+                    author: "support@xyidactyl.com"
+                )
+                nestId = newNest.id
+            } catch {
+                print("Failed to create XYIDactyl nest: \(error). Trying fallback to 'Generic'.")
+                // Fallback: Use "Generic" nest if available (standard Pterodactyl nest)
+                if let genericNest = nests.first(where: { $0.name == "Generic" }) {
+                     nestId = genericNest.id
+                } else {
+                     // If we can't create and can't find fallback, fail.
+                     throw AgentManagerError.deploymentFailed("Failed to create 'XYIDactyl' nest and could not find 'Generic' nest fallback. Error: \(error.localizedDescription)")
+                }
+            }
         }
         
         guard let finalNestId = nestId else {
