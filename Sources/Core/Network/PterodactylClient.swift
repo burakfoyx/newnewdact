@@ -608,6 +608,104 @@ actor PterodactylClient {
         return decoded.data.map { $0.attributes }
     }
     
+    func createNest(name: String, description: String, author: String) async throws -> NestAttributes {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/application/nests")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "name": name,
+            "description": description,
+            "author": author
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to create nest")
+        }
+        
+        let decoded = try JSONDecoder().decode(NestData.self, from: data)
+        return decoded.attributes
+    }
+    
+    func createEgg(nestId: Int, name: String, description: String, dockerImage: String, startup: String, config: [String: Any], scripts: [String: Any], author: String) async throws -> EggAttributes {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/application/nests/\(nestId)/eggs")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Ensure scripts and config are properly nested
+        // The API expects 'docker_images' as a map or array?
+        // AgentEggDefinition.dockerImage is a string. API expects 'docker_images' map { "actual": "display" } usually.
+        // Let's wrap the dockerImage.
+        
+        let body: [String: Any] = [
+            "name": name,
+            "description": description,
+            "docker_image": dockerImage, // Deprecated but often used, or use docker_images
+            "docker_images": [dockerImage: dockerImage], // Valid map
+            "startup": startup,
+            "config": config,
+            "scripts": scripts,
+            "author": author
+        ]
+        
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (201...299).contains(http.statusCode) else {
+             // Print response body for debugging if possible, but localized error handles it
+             if let str = String(data: data, encoding: .utf8) {
+                 print("Create Egg Error Body: \(str)")
+             }
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to create egg")
+        }
+        
+        let decoded = try JSONDecoder().decode(EggData.self, from: data)
+        return decoded.attributes
+    }
+    
+    func createEggVariable(nestId: Int, eggId: Int, name: String, description: String, envVariable: String, defaultValue: String, rules: String, userViewable: Bool, userEditable: Bool) async throws {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        let url = baseURL.appendingPathComponent("api/application/nests/\(nestId)/eggs/\(eggId)/variables")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "name": name,
+            "description": description,
+            "env_variable": envVariable,
+            "default_value": defaultValue,
+            "user_viewable": userViewable,
+            "user_editable": userEditable,
+            "rules": rules
+        ]
+        
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+             if let str = String(data: data, encoding: .utf8) {
+                 print("Create Variable Error Body: \(str)")
+             }
+             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to create variable \(envVariable)")
+        }
+    }
+    
     /// Create a new server (Application API)
     func createServer(
         name: String,

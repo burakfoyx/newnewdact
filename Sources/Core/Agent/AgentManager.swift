@@ -84,8 +84,8 @@ class AgentManager: ObservableObject {
         
         defer { isLoading = false }
         
-        // Find the Agent Egg
-        let (eggId, dockerImage, startup) = try await findAgentEgg()
+        // Find or Create the Agent Egg
+        let (eggId, dockerImage, startup) = try await ensureAgentEgg()
         
         // Generate agent credentials
         let agentUUID = UUID().uuidString
@@ -143,27 +143,6 @@ class AgentManager: ObservableObject {
         self.fileManager = AgentFileManager(agentServerID: server.identifier)
         
         // Register current user in control.json
-        // We use a separate task or just do it here. 
-        // Need to be careful about Application API vs Client API context, 
-        // but fetchServers is client API. If we deployed using App API Key, 
-        // we might not have Client Key permissions?
-        // Actually, the key is the same. Just permissions matter.
-        // If it's an Application Key, it likely has Client permissions too (if full admin), 
-        // but Application Keys are distinct.
-        // Wait, Pterodactyl has "Application API Keys" and "Client API Keys".
-        // The user logs in with ONE key. 
-        // If they provided an Application Key, `client.configure` uses it.
-        // `fetchServers` (client) might fail if the App Key is not a Client Key.
-        // But usually, panels accept App Keys for Client endpoints? No, they are distinct authentication realms.
-        // Raises a potential issue: Deployment requires App Key. Monitoring requires Client Key.
-        // If the user provided an App Key, they can deploy.
-        // But `fetchServers` (Client API) might fail.
-        // However, the user flow says "Connect" or "Deploy".
-        // If they deployed, they used an ADMIN key.
-        // The instructions imply we use one key.
-        // For now, I'll assume the key works for both or the user provided a key that works (or we catch the error).
-        // I'll wrap the registration in a try-catch to not fail the whole deployment if registration monitoring fails.
-        
         do {
             let servers = try await client.fetchServers()
             let serverIDs = servers.map { $0.identifier }
@@ -178,26 +157,83 @@ class AgentManager: ObservableObject {
             )
         } catch {
             print("Warning: Failed to register user in control.json immediately after deploy: \(error)")
-            // We still consider deployment success, user can connect later/retry.
         }
         
         agentState = .connected
     }
     
-    /// helper to find the egg
-    private func findAgentEgg() async throws -> (Int, String, String) {
+    /// Ensures the XYIDactyl Nest and Egg exist, creating them if necessary.
+    private func ensureAgentEgg() async throws -> (Int, String, String) {
+        // 1. Ensure Nest
         let nests = try await client.fetchNests()
+        var nestId = nests.first(where: { $0.name == "XYIDactyl" })?.id
         
-        // Prioritize finding a nest named "XYIDactyl" or similar
-        // But we search all.
-        for nest in nests {
-            let eggs = try await client.fetchEggs(nestId: nest.id)
-            if let agentEgg = eggs.first(where: { $0.name.contains("XYIDactyl Agent") || $0.name.contains("Go Agent") }) {
-                return (agentEgg.id, agentEgg.dockerImage, agentEgg.startup)
+        if nestId == nil {
+            let newNest = try await client.createNest(
+                name: "XYIDactyl",
+                description: "Nests for XYIDactyl App",
+                author: "support@xyidactyl.com"
+            )
+            nestId = newNest.id
+        }
+        
+        guard let finalNestId = nestId else {
+            throw AgentManagerError.deploymentFailed("Failed to find or create Nest")
+        }
+        
+        // 2. Ensure Egg
+        let eggs = try await client.fetchEggs(nestId: finalNestId)
+        var egg = eggs.first(where: { $0.name == AgentEggDefinition.name })
+        
+        if egg == nil {
+            let scripts: [String: Any] = [
+                "installation": [
+                    "script": AgentEggDefinition.script,
+                    "container": "alpine:3.19",
+                    "entrypoint": "ash"
+                ]
+            ]
+            
+            let newEgg = try await client.createEgg(
+                nestId: finalNestId,
+                name: AgentEggDefinition.name,
+                description: AgentEggDefinition.description,
+                dockerImage: AgentEggDefinition.dockerImage,
+                startup: AgentEggDefinition.startup,
+                config: AgentEggDefinition.config,
+                scripts: scripts,
+                author: "support@xyidactyl.com"
+            )
+            egg = newEgg
+        }
+        
+        guard let finalEgg = egg else {
+            throw AgentManagerError.deploymentFailed("Failed to find or create Egg")
+        }
+        
+        // 3. Ensure Variables
+        // Note: fetchEggs includes variables if requested, PterodactylClient.fetchEggs does include=variables
+        let existingVars = finalEgg.relationships?.variables?.data.map { $0.attributes.envVariable } ?? []
+        
+        for variableDef in AgentEggDefinition.variables {
+            guard let envVar = variableDef["env_variable"] as? String else { continue }
+            
+            if !existingVars.contains(envVar) {
+                try await client.createEggVariable(
+                    nestId: finalNestId,
+                    eggId: finalEgg.id,
+                    name: variableDef["name"] as? String ?? "",
+                    description: variableDef["description"] as? String ?? "",
+                    envVariable: envVar,
+                    defaultValue: variableDef["default_value"] as? String ?? "",
+                    rules: variableDef["rules"] as? String ?? "",
+                    userViewable: variableDef["user_viewable"] as? Bool ?? true,
+                    userEditable: variableDef["user_editable"] as? Bool ?? true
+                )
             }
         }
         
-        throw AgentManagerError.deploymentFailed("Could not find 'XYIDactyl Agent' egg installed on the panel.")
+        return (finalEgg.id, finalEgg.dockerImage, finalEgg.startup)
     }
     
     // MARK: - Connect User
