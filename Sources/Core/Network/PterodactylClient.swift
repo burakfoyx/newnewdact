@@ -717,7 +717,7 @@ actor PterodactylClient {
         limits: ServerLimits,
         featureLimits: FeatureLimits,
         allocationId: Int
-    ) async throws -> ServerAttributes {
+    ) async throws -> ApplicationServerAttributes {
         guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
         
         let url = baseURL.appendingPathComponent("api/application/servers")
@@ -742,7 +742,8 @@ actor PterodactylClient {
                 "cpu": limits.cpu ?? 100
             ],
             "feature_limits": [
-                "databases": featureLimits.databases,
+                "databases": featureLimits.databases ?? 0,
+                "allocations": featureLimits.allocations ?? 1,
                 "backups": featureLimits.backups
             ],
             "allocation": [
@@ -754,12 +755,16 @@ actor PterodactylClient {
         
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            if let str = String(data: data, encoding: .utf8) {
+                print("Create Server Error: \(str)")
+            }
             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to create server")
         }
         
-        let decoded = try JSONDecoder().decode(ServerData.self, from: data)
+        let decoded = try JSONDecoder().decode(ApplicationServerResponse.self, from: data)
         return decoded.attributes
     }
+
     
     /// Fetch current user info to get user ID  
     func fetchCurrentUser() async throws -> UserInfo {

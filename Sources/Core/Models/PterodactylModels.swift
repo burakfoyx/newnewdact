@@ -463,3 +463,32 @@ struct ApplicationUser: Codable, Identifiable {
         case twoFactorEnabled = "2fa"
     }
 }
+
+// MARK: - Application Server Models (For Create Response)
+struct ApplicationServerResponse: Codable {
+    let object: String
+    let attributes: ApplicationServerAttributes
+}
+
+struct ApplicationServerAttributes: Codable, Identifiable {
+    let id: Int
+    let externalId: String?
+    let uuid: String
+    let identifier: String
+    let name: String
+    let description: String?
+    let suspended: Bool
+    let limits: ServerLimits
+    let featureLimits: FeatureLimits
+    let user: Int
+    let node: Int
+    let allocation: Int
+    let nest: Int
+    let egg: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case id, uuid, identifier, name, description, suspended, limits, user, node, allocation, nest, egg
+        case externalId = "external_id"
+        case featureLimits = "feature_limits"
+    }
+}
