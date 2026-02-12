@@ -7,6 +7,7 @@ COPY go.mod ./
 RUN go mod download
 
 COPY . .
+RUN go mod tidy
 RUN CGO_ENABLED=1 GOOS=linux go build -o xyidactyl-agent ./cmd/agent
 
 # --- Runtime ---
