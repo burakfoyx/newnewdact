@@ -9,6 +9,11 @@ struct Account: Codable, Identifiable, Hashable {
     var theme: AppTheme = .blue // Default theme
     var lowPowerMode: Bool = false
     var hasAdminAccess: Bool = false // Can create servers via Application API
+    
+    // Agent integration
+    var agentServerIdentifier: String? = nil  // Pterodactyl server ID for the agent
+    var agentSecret: String? = nil            // Shared secret for encryption
+    var agentConnected: Bool = false          // Whether this account is connected to an agent
 }
 
 class AccountManager: ObservableObject {

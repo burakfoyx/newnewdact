@@ -16,6 +16,7 @@ struct SettingsView: View {
                     subscriptionSection
                     appearanceSection
                     refreshSection
+                    agentSection
                     aboutSection
                     linksSection
                     infoSection
@@ -150,6 +151,12 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+    
+    // MARK: - Agent Section
+    
+    private var agentSection: some View {
+        AgentSettingsView()
     }
     
     // MARK: - About Section
