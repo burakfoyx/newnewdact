@@ -10,8 +10,9 @@ echo "================================================"
 cd /home/container || echo "Could not cd to /home/container, using current directory"
 
 # Create default control.json if it doesn't exist
-if [ ! -f ./control.json ]; then
-    echo '{"version":0,"updated_at":0,"users":[],"alerts":[],"automations":[]}' > ./control.json
+mkdir -p ./control
+if [ ! -f ./control/control.json ]; then
+    echo '{"version":0,"updated_at":0,"users":[],"alerts":[],"automations":[]}' > ./control/control.json
     echo "[INIT] Created default control.json"
 fi
 
