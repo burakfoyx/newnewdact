@@ -606,7 +606,30 @@ actor PterodactylClient {
         
         let decoded = try JSONDecoder().decode(ApplicationAllocationResponse.self, from: data)
         return decoded.data.map { $0.attributes }
+    // MARK: - Application Server Management
+    
+    /// Fetch all servers (Application API)
+    func fetchApplicationServers(page: Int = 1) async throws -> [ApplicationServerAttributes] {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        var components = URLComponents(url: baseURL.appendingPathComponent("api/application/servers"), resolvingAgainstBaseURL: true)!
+        components.queryItems = [URLQueryItem(name: "page", value: "\(page)")]
+        
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to fetch application servers")
+        }
+        
+        let decoded = try JSONDecoder().decode(ApplicationServerListResponse.self, from: data)
+        return decoded.data.map { $0.attributes }
+    }
 
+    func createNest(name: String, description: String, author: String) async throws -> NestAttributes {
         guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
         
         let url = baseURL.appendingPathComponent("api/application/nests")
