@@ -244,7 +244,7 @@ class AgentManager: ObservableObject {
             }
         }
         
-        return (finalEgg.id, finalEgg.dockerImage, finalEgg.startup)
+        return (finalEgg.id, AgentEggDefinition.dockerImage, AgentEggDefinition.startup)
     }
     
     // MARK: - Connect User
