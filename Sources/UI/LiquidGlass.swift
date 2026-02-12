@@ -150,8 +150,8 @@ struct AppBackgroundView: View {
                     // Deep Space Base
                     LinearGradient(
                         colors: [
-                            Color(red: 0.02, green: 0.02, blue: 0.05), // #05050D
-                            Color(red: 0.05, green: 0.05, blue: 0.15)  // #0D0D26
+                            Color(red: 0.05, green: 0.05, blue: 0.15), // #0D0D26 (Brighter than #05050D)
+                            Color(red: 0.10, green: 0.10, blue: 0.25)  // #1A1A40 (Brighter than #0D0D26)
                         ],
                         startPoint: .top,
                         endPoint: .bottom

@@ -104,10 +104,13 @@ struct ServerDetailsView: View {
                                 ConsoleSection(server: server, viewModel: viewModel)
                             case .analytics:
                                 ScrollView { AnalyticsSection(server: server, viewModel: viewModel) }
+                                    .scrollContentBackground(.hidden)
                             case .alerts:
                                 ScrollView { AlertsSection(manager: alertManager) }
+                                    .scrollContentBackground(.hidden)
                             case .backups:
                                 ScrollView { BackupSection(server: server) }
+                                    .scrollContentBackground(.hidden)
                             case .details:
                                 ServerDetailsInfoView(server: server, viewModel: viewModel)
                             default:
@@ -265,7 +268,8 @@ struct ConsoleSection: View {
                 }
             }
             .padding()
-            .background(Color.black.opacity(0.6))
+            .padding()
+            .glassEffect(.regular, in: Rectangle())
             
             // Console Output (Scrollable)
             ScrollViewReader { proxy in
@@ -287,7 +291,7 @@ struct ConsoleSection: View {
                     isInputFocused = false
                 }
             }
-            .background(Color.black.opacity(0.4))
+            .glassEffect(.regular, in: Rectangle())
             
             // Input Area
             HStack {
@@ -304,12 +308,16 @@ struct ConsoleSection: View {
                     .font(.custom("Menlo", size: 14))
             }
             .padding()
-            .background(Color.black.opacity(0.8))
+            .padding()
+            // .background(Color.black.opacity(0.8)) // Removed opaque background
+            .glassEffect(.regular, in: Rectangle())
+        }
         }
         .cornerRadius(12)
         // .padding(.horizontal) // Remove horizontal padding to fill width if desired, or keep it
         .padding(12)
         .padding(.bottom, isInputFocused ? 0 : 0) // Adjust if needed
+        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12)) // Outer container glass
     }
 }
 
