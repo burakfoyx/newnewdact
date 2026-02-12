@@ -30,6 +30,8 @@ actor AgentFileManager {
         updated.version += 1
         updated.updatedAt = Int(Date().timeIntervalSince1970)
         
+        print("📝 Writing control.json (v\(updated.version)) to /control/control.json ...")
+        
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let data = try encoder.encode(updated)
@@ -38,6 +40,7 @@ actor AgentFileManager {
         }
         
         try await client.writeFileContent(serverId: agentServerID, filePath: "/control/control.json", content: jsonString)
+        print("✅ Successfully wrote control.json")
     }
     
     // MARK: - Status File (Agent → App)

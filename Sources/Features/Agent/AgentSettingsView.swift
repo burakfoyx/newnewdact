@@ -143,6 +143,17 @@ struct AgentSettingsView: View {
                 Label("Refresh Status", systemImage: "arrow.clockwise")
             }
             
+            Button {
+                Task {
+                    // Force re-sync of control.json
+                    if let secret = agentManager.agentSecret {
+                        try? await agentManager.connectUser(agentSecret: secret)
+                    }
+                }
+            } label: {
+                Label("Repair Connection (Force Sync)", systemImage: "arrow.triangle.2.circlepath")
+            }
+            
             if let serverID = accountManager.activeAccount?.agentServerIdentifier {
                 Button {
                     Task {
