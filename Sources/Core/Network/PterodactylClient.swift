@@ -1,11 +1,21 @@
 import Foundation
 
-enum PterodactylError: Error {
+enum PterodactylError: Error, LocalizedError {
     case invalidURL
     case serializationError
     case apiError(Int, String) // Code, Message
     case networkError(Error)
     case unauthorized
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL: return "Invalid URL configuration."
+        case .serializationError: return "Failed to parse response."
+        case .apiError(let code, let message): return "API Error \(code): \(message)"
+        case .networkError(let error): return "Network Error: \(error.localizedDescription)"
+        case .unauthorized: return "Unauthorized. Check API key."
+        }
+    }
 }
 
 actor PterodactylClient {
@@ -484,6 +494,38 @@ actor PterodactylClient {
         } catch {
             return false
         }
+    }
+    
+    /// Fetch users (Application API)
+    func fetchApplicationUsers(filter: String? = nil) async throws -> [ApplicationUser] {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        var components = URLComponents(url: baseURL.appendingPathComponent("api/application/users"), resolvingAgainstBaseURL: true)!
+        if let filter = filter, !filter.isEmpty {
+            // Primitive filter query support
+            // Pterodactyl uses filter[email]=...
+            // For now just pass generic query items if needed, or just list all
+        }
+        
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to fetch application users")
+        }
+        
+        struct AppUserResponse: Codable {
+            let data: [AppUserData]
+        }
+        struct AppUserData: Codable {
+            let attributes: ApplicationUser
+        }
+        
+        let decoded = try JSONDecoder().decode(AppUserResponse.self, from: data)
+        return decoded.data.map { $0.attributes }
     }
     
     /// Fetch available nodes for server creation (Application API)

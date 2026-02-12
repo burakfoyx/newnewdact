@@ -440,3 +440,26 @@ struct UserInfo: Codable {
         case lastName = "last_name"
     }
 }
+
+// MARK: - Application User Models
+struct ApplicationUser: Codable, Identifiable {
+    let id: Int
+    let externalId: String?
+    let uuid: String
+    let username: String
+    let email: String
+    let firstName: String
+    let lastName: String
+    let language: String
+    let rootAdmin: Bool
+    let twoFactorEnabled: Bool
+    
+    enum CodingKeys: String, CodingKey {
+        case id, uuid, username, email, language
+        case externalId = "external_id"
+        case firstName = "first_name"
+        case lastName = "last_name"
+        case rootAdmin = "root_admin"
+        case twoFactorEnabled = "2fa"
+    }
+}

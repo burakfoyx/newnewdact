@@ -425,13 +425,27 @@ struct AgentDeploySheet: View {
                     return
                 }
                 
-                let userInfo = try await PterodactylClient.shared.fetchCurrentUser()
+                var userId: Int = 0
+                
+                do {
+                    let userInfo = try await PterodactylClient.shared.fetchCurrentUser()
+                    userId = userInfo.id
+                } catch {
+                    // Fallback: If using an Application Key, Client API (fetchCurrentUser) fails.
+                    // Try to fetch users via Application API and use the first root admin or user.
+                    let users = try await PterodactylClient.shared.fetchApplicationUsers()
+                    if let targetUser = users.first(where: { $0.rootAdmin }) ?? users.first {
+                        userId = targetUser.id
+                    } else {
+                        throw error // Rethrow original error if we can't find any users
+                    }
+                }
                 
                 try await agentManager.deployAgent(
                     nodeId: nodeId,
                     allocationId: allocation.id,
                     eggId: 1, // Agent egg — should be found dynamically in production
-                    userId: userInfo.id
+                    userId: userId
                 )
                 
                 deploySuccess = true

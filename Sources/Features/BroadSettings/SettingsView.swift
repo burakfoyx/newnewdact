@@ -14,9 +14,9 @@ struct SettingsView: View {
                 
                 List {
                     subscriptionSection
+                    agentSection
                     appearanceSection
                     refreshSection
-                    agentSection
                     aboutSection
                     linksSection
                     infoSection

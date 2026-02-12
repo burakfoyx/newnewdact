@@ -13,7 +13,7 @@ struct AgentSettingsView: View {
     @State private var showUninstallConfirm = false
     
     var body: some View {
-        List {
+        Group {
             statusSection
             
             if agentManager.agentState == .connected || agentManager.agentState == .unhealthy {
@@ -26,11 +26,6 @@ struct AgentSettingsView: View {
             if agentManager.agentState == .notFound || agentManager.agentState == .unknown {
                 setupSection
             }
-        }
-        .scrollContentBackground(.hidden)
-        .background(Color.clear)
-        .refreshable {
-            await agentManager.refreshStatus()
         }
         .sheet(isPresented: $showSetup) {
             AgentSetupView()
