@@ -299,9 +299,16 @@ class AgentManager: ObservableObject {
         
         do {
             agentStatus = try await fm.readStatus()
-            agentState = agentStatus?.isHealthy == true ? .connected : .unhealthy
+            
+            // Only mark as connected/unhealthy if we have the secret locally.
+            // Otherwise, we are just detecting an existing agent.
+            if agentSecret != nil {
+                agentState = agentStatus?.isHealthy == true ? .connected : .unhealthy
+            } else {
+                agentState = .detected
+            }
         } catch {
-            // Status file may not exist yet if agent just started
+            // Status file may not exist yet if agent just started, or we can't reach it
             agentState = .detected
         }
     }
