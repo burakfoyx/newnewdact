@@ -128,6 +128,15 @@ struct AgentEggDefinition {
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|string|in:debug,info,warn,error"
+        ],
+        [
+            "name": "Control File Path",
+            "description": "Path to the control.json file.",
+            "env_variable": "CONTROL_FILE_PATH",
+            "default_value": "./control/control.json",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:255"
         ]
     ]
 }

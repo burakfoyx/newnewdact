@@ -100,7 +100,8 @@ class AgentManager: ObservableObject {
             "SAMPLING_INTERVAL": "30",
             "RETENTION_DAYS": "30",
             "PUSH_PROVIDER": "dev",
-            "LOG_LEVEL": "info"
+            "LOG_LEVEL": "info",
+            "CONTROL_FILE_PATH": "./control/control.json"
         ]
         
         // ... (rest of function)
