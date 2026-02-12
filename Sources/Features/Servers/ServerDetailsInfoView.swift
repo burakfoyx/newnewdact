@@ -153,6 +153,7 @@ struct ServerDetailsInfoView: View {
             .padding()
         }
         .scrollContentBackground(.hidden)
+        .background(Color.clear)
     }
     
     private func renameServer() {

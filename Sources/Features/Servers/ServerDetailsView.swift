@@ -14,15 +14,6 @@ struct ServerDetailsView: View {
     init(server: ServerAttributes) {
         self.server = server
         _alertManager = StateObject(wrappedValue: AlertManager(serverId: server.identifier))
-        
-        // Configure transparent TabBar to show LiquidBackground through it
-        let appearance = UITabBarAppearance()
-        appearance.configureWithTransparentBackground()
-        // Optional: Add a thin material if text readability is an issue, but "Liquid Glass" usually implies full custom or blur.
-        // Let's keep it transparent to show the LiquidBackgroundView.
-        
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
     
     // Environment
@@ -139,8 +130,9 @@ struct ServerDetailsView: View {
             }
         }
         .background(Color.clear)
-        .toolbarBackground(.hidden, for: .navigationBar)
+        .scrollContentBackground(.hidden)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             // Always visible
             ToolbarItem(placement: .topBarTrailing) {
