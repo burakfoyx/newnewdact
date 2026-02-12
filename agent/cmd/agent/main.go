@@ -90,6 +90,7 @@ func main() {
 
 	// --- Init Status Writer ---
 	statusWriter := status.NewWriter(cfg.DataDir)
+	metricsWriter := status.NewMetricsWriter(cfg.DataDir, db)
 
 	// --- Init Engines ---
 	alertEvaluator := engine.NewAlertEvaluator(db, pushProvider)
@@ -104,6 +105,7 @@ func main() {
 		alertEvaluator,
 		automationExecutor,
 		statusWriter,
+		metricsWriter,
 	)
 
 	cleanup := engine.NewCleanup(db, cfg.RetentionDays)

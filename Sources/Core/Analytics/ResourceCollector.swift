@@ -46,6 +46,8 @@ class ResourceCollector: ObservableObject {
         // Trigger immediate poll
         Task { @MainActor in
             await pollServers()
+            // Sync history from agent to fill gaps
+            await syncHistoricalMetrics()
         }
     }
     
@@ -217,6 +219,55 @@ class ResourceCollector: ObservableObject {
             return 7    // Pro tier: 7 days
         case .host:
             return 30   // Host tier: 30 days
+        }
+    }
+    
+    // MARK: - Historical Sync
+    
+    /// Syncs historical metrics from the agent's metrics.json file
+    func syncHistoricalMetrics() async {
+        guard let fm = AgentManager.shared.getFileManager() else { return }
+        
+        print("🔄 Syncing historical metrics from agent...")
+        do {
+            let export = try await fm.readMetrics()
+            let myPanelId = AccountManager.shared.activeAccount?.id.uuidString ?? "unknown"
+            
+            var count = 0
+            for (serverId, snapshots) in export.servers {
+                // Prevent duplicates: Only import snapshots newer than what we already have
+                let latest = store.fetchLatestSnapshot(serverId: serverId)
+                let latestTime = latest?.timestamp ?? Date.distantPast
+                
+                for snap in snapshots {
+                    // Go's timestamp might have slight precision differences, add 1 sec buffer or strict >
+                    if snap.timestamp > latestTime {
+                        let snapshot = ResourceSnapshot(
+                            serverId: serverId,
+                            panelId: myPanelId,
+                            timestamp: snap.timestamp,
+                            cpuPercent: snap.cpu_percent,
+                            memoryUsedBytes: snap.mem_bytes,
+                            memoryLimitBytes: snap.mem_limit,
+                            diskUsedBytes: snap.disk_bytes,
+                            diskLimitBytes: snap.disk_limit,
+                            networkRxBytes: snap.net_rx,
+                            networkTxBytes: snap.net_tx,
+                            uptimeMs: snap.uptime_ms
+                        )
+                        store.save(snapshot)
+                        count += 1
+                    }
+                }
+            }
+            if count > 0 {
+                print("✅ Synced \(count) historical data points from agent")
+            } else {
+                print("✨ No new historical data to sync")
+            }
+            
+        } catch {
+            print("Failed to sync historical metrics: \(error)")
         }
     }
     

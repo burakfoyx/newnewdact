@@ -126,6 +126,35 @@ func (db *DB) GetLatestSnapshot(serverID string) (*models.ResourceSnapshot, erro
 	return &s, nil
 }
 
+// GetRecentSnapshots returns the last N snapshots for a server, most recent last.
+func (db *DB) GetRecentSnapshots(serverID string, limit int) ([]models.ResourceSnapshot, error) {
+	query := `SELECT id, server_id, timestamp, power_state, cpu_percent, mem_bytes, mem_limit, disk_bytes, disk_limit, net_rx, net_tx, uptime_ms
+	          FROM resource_snapshots WHERE server_id = ? ORDER BY timestamp DESC LIMIT ?`
+
+	rows, err := db.conn.Query(query, serverID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var snapshots []models.ResourceSnapshot
+	for rows.Next() {
+		var s models.ResourceSnapshot
+		if err := rows.Scan(&s.ID, &s.ServerID, &s.Timestamp, &s.PowerState, &s.CPUPercent,
+			&s.MemBytes, &s.MemLimit, &s.DiskBytes, &s.DiskLimit, &s.NetRx, &s.NetTx, &s.UptimeMs); err != nil {
+			return nil, err
+		}
+		snapshots = append(snapshots, s)
+	}
+
+	// Reverse to chronological order (oldest first)
+	for i, j := 0, len(snapshots)-1; i < j; i, j = i+1, j-1 {
+		snapshots[i], snapshots[j] = snapshots[j], snapshots[i]
+	}
+
+	return snapshots, nil
+}
+
 // InsertAlertHistory logs a triggered alert.
 func (db *DB) InsertAlertHistory(entry models.AlertHistoryEntry) error {
 	_, err := db.conn.Exec(

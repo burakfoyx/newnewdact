@@ -180,6 +180,43 @@ actor AgentFileManager {
     }
 }
 
+    // MARK: - Metrics
+    
+    /// Reads metrics.json from the agent container.
+    func readMetrics() async throws -> AgentMetricsExport {
+        let content = try await client.getFileContent(serverId: agentServerID, filePath: "/data/metrics.json")
+        let data = Data(content.utf8)
+        let decoder = JSONDecoder()
+        
+        // Go's time.Time marshals to RFC3339 string
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ" // simplified ISO8601
+        // Better: use ISO8601DateFormatter
+        decoder.dateDecodingStrategy = .iso8601
+        
+        return try decoder.decode(AgentMetricsExport.self, from: data)
+    }
+}
+
+// MARK: - Metric Types
+
+struct AgentMetricsExport: Decodable {
+    let generated_at: Date
+    let servers: [String: [AgentResourceSnapshot]]
+}
+
+struct AgentResourceSnapshot: Decodable {
+    let timestamp: Date
+    let cpu_percent: Double
+    let mem_bytes: Int64
+    let mem_limit: Int64
+    let disk_bytes: Int64
+    let disk_limit: Int64
+    let net_rx: Int64
+    let net_tx: Int64
+    let uptime_ms: Int64
+}
+
 enum AgentFileError: LocalizedError {
     case encodingFailed
     case fileNotFound

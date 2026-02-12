@@ -25,6 +25,7 @@ type Monitor struct {
 	alertEvaluator *AlertEvaluator
 	autoExecutor   *AutomationExecutor
 	statusWriter   *status.Writer
+	metricsWriter  *status.MetricsWriter
 	stopCh         chan struct{}
 	startTime      time.Time
 
@@ -43,6 +44,7 @@ func NewMonitor(
 	alertEval *AlertEvaluator,
 	autoExec *AutomationExecutor,
 	sw *status.Writer,
+	mw *status.MetricsWriter,
 ) *Monitor {
 	return &Monitor{
 		interval:       time.Duration(intervalSec) * time.Second,
@@ -53,6 +55,7 @@ func NewMonitor(
 		alertEvaluator: alertEval,
 		autoExecutor:   autoExec,
 		statusWriter:   sw,
+		metricsWriter:  mw,
 		stopCh:         make(chan struct{}),
 		startTime:      time.Now(),
 		apiKeyCache:    make(map[string]string),
@@ -132,6 +135,22 @@ func (m *Monitor) sample() {
 
 	logging.Debug("Sampling cycle complete: %d servers monitored", serversMonitored)
 	m.updateStatus(cf, serversMonitored)
+
+	// Export metrics to metrics.json (last 1 hour = 120 points at 30s)
+	uniqueServers := make(map[string]bool)
+	for _, user := range cf.Users {
+		for _, sid := range user.AllowedServers {
+			uniqueServers[sid] = true
+		}
+	}
+	serverIDs := make([]string, 0, len(uniqueServers))
+	for sid := range uniqueServers {
+		serverIDs = append(serverIDs, sid)
+	}
+
+	if len(serverIDs) > 0 {
+		m.metricsWriter.Update(serverIDs, 120)
+	}
 }
 
 func (m *Monitor) collectServer(apiKey, serverID string) (*models.ResourceSnapshot, error) {
