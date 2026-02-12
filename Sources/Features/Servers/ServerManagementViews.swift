@@ -52,7 +52,7 @@ struct NetworkSection: View {
                 }
                 
                 // Add allocation button (shown if server has room for more)
-                if server.featureLimits.allocations > allocations.count {
+                if (server.featureLimits.allocations ?? 0) > allocations.count {
                     Button {
                         // TODO: Wire up allocation assignment API
                     } label: {
