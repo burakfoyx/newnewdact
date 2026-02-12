@@ -103,11 +103,13 @@ class AgentManager: ObservableObject {
             swap: 0,
             disk: 1024,
             io: 500,
-            cpu: 50
+            cpu: 50,
+            threads: nil
         )
         
         let featureLimits = FeatureLimits(
             databases: 0,
+            allocations: 1, // Require 1 allocation for the server itself
             backups: 1
         )
         

@@ -72,10 +72,26 @@ struct SftpDetails: Codable {
 struct ServerLimits: Codable {
     let memory, swap, disk, io, cpu: Int?
     let threads: String? // sometimes string or int, usually null in client API
+    
+    init(memory: Int?, swap: Int?, disk: Int?, io: Int?, cpu: Int?, threads: String? = nil) {
+        self.memory = memory
+        self.swap = swap
+        self.disk = disk
+        self.io = io
+        self.cpu = cpu
+        self.threads = threads
+    }
 }
 
 struct FeatureLimits: Codable {
-    let databases, allocations, backups: Int
+    let databases, allocations: Int?
+    let backups: Int
+    
+    init(databases: Int?, allocations: Int?, backups: Int) {
+        self.databases = databases
+        self.allocations = allocations
+        self.backups = backups
+    }
 }
 
 struct ServerRelationships: Codable {
