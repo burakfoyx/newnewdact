@@ -6,14 +6,17 @@ echo "  XYIDactyl Agent"
 echo "  Starting up..."
 echo "================================================"
 
+# Ensure we are in the container volume
+cd /home/container || echo "Could not cd to /home/container, using current directory"
+
 # Create default control.json if it doesn't exist
-if [ ! -f /control/control.json ]; then
-    echo '{"version":0,"updated_at":0,"users":[],"alerts":[],"automations":[]}' > /control/control.json
+if [ ! -f ./control.json ]; then
+    echo '{"version":0,"updated_at":0,"users":[],"alerts":[],"automations":[]}' > ./control.json
     echo "[INIT] Created default control.json"
 fi
 
 # Ensure data directories exist
-mkdir -p /data/logs
+mkdir -p ./data/logs
 
 echo "[INIT] Configuration:"
 echo "  PANEL_URL=${PANEL_URL}"

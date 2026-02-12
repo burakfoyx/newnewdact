@@ -5,7 +5,7 @@ struct AgentEggDefinition {
     static let name = "XYIDactyl Agent"
     static let description = "Self-hosted monitoring, alerting, and automation agent for the XYIDactyl iOS app. Runs as a background worker with zero inbound networking."
     static let dockerImage = "ghcr.io/xyidactyl/agent:latest"
-    static let startup = "./entrypoint.sh"
+    static let startup = "/app/entrypoint.sh"
     
     static let script = """
     #!/bin/ash
