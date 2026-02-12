@@ -231,17 +231,22 @@ class AgentManager: ObservableObject {
             guard let envVar = variableDef["env_variable"] as? String else { continue }
             
             if !existingVars.contains(envVar) {
-                try await client.createEggVariable(
-                    nestId: finalNestId,
-                    eggId: finalEgg.id,
-                    name: variableDef["name"] as? String ?? "",
-                    description: variableDef["description"] as? String ?? "",
-                    envVariable: envVar,
-                    defaultValue: variableDef["default_value"] as? String ?? "",
-                    rules: variableDef["rules"] as? String ?? "",
-                    userViewable: variableDef["user_viewable"] as? Bool ?? true,
-                    userEditable: variableDef["user_editable"] as? Bool ?? true
-                )
+                do {
+                    try await client.createEggVariable(
+                        nestId: finalNestId,
+                        eggId: finalEgg.id,
+                        name: variableDef["name"] as? String ?? "",
+                        description: variableDef["description"] as? String ?? "",
+                        envVariable: envVar,
+                        defaultValue: variableDef["default_value"] as? String ?? "",
+                        rules: variableDef["rules"] as? String ?? "",
+                        userViewable: variableDef["user_viewable"] as? Bool ?? true,
+                        userEditable: variableDef["user_editable"] as? Bool ?? true
+                    )
+                } catch {
+                    print("⚠️ Failed to create variable \(envVar): \(error.localizedDescription) (it might already exist)")
+                    // Continue to next variable
+                }
             }
         }
         
