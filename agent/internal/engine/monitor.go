@@ -149,7 +149,9 @@ func (m *Monitor) sample() {
 	}
 
 	if len(serverIDs) > 0 {
-		m.metricsWriter.Update(serverIDs, 120)
+		// Export last 24 hours of data (24 * 60 * 60 / 30s = 2880 points)
+		// This ensures graph history is available immediately to the app.
+		m.metricsWriter.Update(serverIDs, 2880)
 	}
 }
 
