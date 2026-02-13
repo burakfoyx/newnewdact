@@ -80,7 +80,7 @@ func Init(dataDir string, level string) error {
 		level:    ParseLevel(level),
 		file:     f,
 		filePath: logPath,
-		maxSize:  10 * 1024 * 1024, // 10MB
+		maxSize:  128 * 1024, // 128KB (Safe for Pterodactyl Panel view)
 		stdout:   log.New(os.Stdout, "", 0),
 	}
 	return nil
