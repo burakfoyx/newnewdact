@@ -291,38 +291,60 @@ actor PterodactylClient {
         }
         components.queryItems = [URLQueryItem(name: "file", value: filePath)]
         
+        // WORKAROUND: Some Pterodactyl panels (Nginx) reject encoded slashes (%2F) in query params.
+        // We manually revert them to "/" in the query string.
+        components.percentEncodedQuery = components.percentEncodedQuery?.replacingOccurrences(of: "%2F", with: "/")
+        
         guard let finalURL = components.url else { throw PterodactylError.invalidURL }
+        print("📂 PterodactylClient: Get File URL: \(finalURL)")
+        
         var request = URLRequest(url: finalURL)
         request.httpMethod = "GET"
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let (data, response) = try await URLSession.shared.data(for: request)
+        
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to read file")
+            let body = String(data: data, encoding: .utf8) ?? "No body"
+            print("❌ PterodactylClient: Failed to read file '\(filePath)'. Status: \((response as? HTTPURLResponse)?.statusCode ?? 0). Body: \(body)")
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to read file: \(body)")
         }
         
-        return String(data: data, encoding: .utf8) ?? ""
+        guard let content = String(data: data, encoding: .utf8) else {
+            throw PterodactylError.decodingError
+        }
+        
+        return content
     }
     
     func writeFileContent(serverId: String, filePath: String, content: String) async throws {
         guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
         
-        // Use 'write' endpoint which usually takes raw body or specific file param
-        // Pterodactyl API: POST /files/write?file=...
-        var components = URLComponents(url: baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/write"), resolvingAgainstBaseURL: true)!
+        guard var components = URLComponents(url: baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/write"), resolvingAgainstBaseURL: true) else {
+             throw PterodactylError.invalidURL
+        }
         components.queryItems = [URLQueryItem(name: "file", value: filePath)]
-
-        var request = URLRequest(url: components.url!)
+        
+        // WORKAROUND: Unescape slashes for compatibility
+        components.percentEncodedQuery = components.percentEncodedQuery?.replacingOccurrences(of: "%2F", with: "/")
+        
+        guard let finalURL = components.url else { throw PterodactylError.invalidURL }
+        print("📝 PterodactylClient: Write File URL: \(finalURL)")
+        
+        var request = URLRequest(url: finalURL)
         request.httpMethod = "POST"
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.addValue("text/plain", forHTTPHeaderField: "Content-Type") // Raw body usually
-        
+        request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
         request.httpBody = content.data(using: .utf8)
         
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-             throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to save file")
+            let body = String(data: data, encoding: .utf8) ?? "No body"
+            print("❌ PterodactylClient: Failed to write file '\(filePath)'. Status: \((response as? HTTPURLResponse)?.statusCode ?? 0). Body: \(body)")
+            throw PterodactylError.apiError((response as? HTTPURLResponse)?.statusCode ?? 0, "Failed to write file: \(body)")
         }
     }
 
