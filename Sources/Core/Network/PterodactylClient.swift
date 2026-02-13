@@ -313,7 +313,7 @@ actor PterodactylClient {
         }
         
         guard let content = String(data: data, encoding: .utf8) else {
-            throw PterodactylError.decodingError
+            throw PterodactylError.serializationError
         }
         
         return content
@@ -522,7 +522,7 @@ actor PterodactylClient {
     func fetchApplicationUsers(filter: String? = nil) async throws -> [ApplicationUser] {
         guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
         
-        var components = URLComponents(url: baseURL.appendingPathComponent("api/application/users"), resolvingAgainstBaseURL: true)!
+        let components = URLComponents(url: baseURL.appendingPathComponent("api/application/users"), resolvingAgainstBaseURL: true)!
         if let filter = filter, !filter.isEmpty {
             // Primitive filter query support
             // Pterodactyl uses filter[email]=...
