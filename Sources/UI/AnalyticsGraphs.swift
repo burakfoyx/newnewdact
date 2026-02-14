@@ -110,14 +110,32 @@ class AnalyticsViewModel: ObservableObject {
     }
     
     var chartData: [ChartDataPoint] {
-        return history.map { snapshot in
+        // Optimization: Downsample if we have too many points
+        let maxPoints = 200
+        let stride = max(1, history.count / maxPoints)
+        
+        // Filter history based on stride
+        let visibleSnapshots: [ResourceSnapshot]
+        if stride > 1 {
+            visibleSnapshots = history.enumerated()
+                .filter { $0.offset % stride == 0 }
+                .map { $0.element }
+        } else {
+            visibleSnapshots = history
+        }
+        
+        return visibleSnapshots.map { snapshot in
             let value: Double
             switch selectedResource {
             case .cpu: value = snapshot.cpuPercent
             case .memory: value = Double(snapshot.memoryUsedBytes) / 1024 / 1024
             case .network: value = Double(snapshot.networkRxBytes + snapshot.networkTxBytes) / 1024 / 1024
             }
-            return ChartDataPoint(timestamp: snapshot.timestamp, value: value)
+            return ChartDataPoint(
+                timestamp: snapshot.timestamp, 
+                value: value, 
+                origin: snapshot.dataOrigin
+            )
         }
     }
 }

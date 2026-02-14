@@ -57,6 +57,9 @@ struct ResourceSnapshot: Identifiable, Codable {
         self.networkTxBytes = networkTxBytes
         self.uptimeMs = uptimeMs
     }
+    var dataOrigin: DataOrigin {
+        return panelId == "agent" ? .agent : .app
+    }
 }
 
 // MARK: - Peak Usage Record
