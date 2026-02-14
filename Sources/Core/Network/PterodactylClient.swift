@@ -342,7 +342,8 @@ actor PterodactylClient {
         
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? ""
-            throw PterodactylError.apiError(http.statusCode, "Failed to get download URL: \(body)")
+            let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+            throw PterodactylError.apiError(code, "Failed to get download URL: \(body)")
         }
         
         struct DownloadResponse: Codable {
