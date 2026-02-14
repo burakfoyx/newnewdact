@@ -155,11 +155,18 @@ class ResourceStore: ObservableObject {
     }
     
     // MARK: - Fetch Latest Snapshot
-    func fetchLatestSnapshot(serverId: String) -> ResourceSnapshot? {
+    func fetchLatestSnapshot(serverId: String, panelId: String? = nil) -> ResourceSnapshot? {
         guard let context = modelContext else { return nil }
         
-        let predicate = #Predicate<ResourceSnapshotEntity> { entity in
-            entity.serverId == serverId
+        let predicate: Predicate<ResourceSnapshotEntity>
+        if let panelId = panelId {
+            predicate = #Predicate<ResourceSnapshotEntity> { entity in
+                entity.serverId == serverId && entity.panelId == panelId
+            }
+        } else {
+            predicate = #Predicate<ResourceSnapshotEntity> { entity in
+                entity.serverId == serverId
+            }
         }
         
         var descriptor = FetchDescriptor<ResourceSnapshotEntity>(
