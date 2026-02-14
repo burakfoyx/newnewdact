@@ -55,8 +55,19 @@ actor AgentFileManager {
     // MARK: - Logs
     
     /// Reads the latest agent log lines.
+    /// Reads the latest agent log lines.
     func readLogs() async throws -> String {
-        return try await client.getFileContent(serverId: agentServerID, filePath: "data/logs/agent.log")
+        let content = try await client.getFileContent(serverId: agentServerID, filePath: "data/logs/agent.log")
+        if !content.isEmpty {
+            return content
+        }
+        
+        // Fallback to rotated log if main log is empty (just rotated)
+        do {
+            return try await client.getFileContent(serverId: agentServerID, filePath: "data/logs/agent.log.1")
+        } catch {
+            return "" // Return empty if no rotated log exists
+        }
     }
     
     // MARK: - User Management

@@ -30,8 +30,9 @@ type Monitor struct {
 	startTime      time.Time
 
 	// Permission cache: user_uuid -> decrypted API key
-	mu          sync.RWMutex
-	apiKeyCache map[string]string
+	mu                 sync.RWMutex
+	apiKeyCache        map[string]string
+	lastControlVersion int
 }
 
 // NewMonitor creates a new monitoring engine.
@@ -97,6 +98,13 @@ func (m *Monitor) sample() {
 		logging.Debug("No users configured, skipping sample")
 		m.updateStatus(cf, 0)
 		return
+	}
+
+	// Invalidate API key cache if control file updated (e.g. key rotation)
+	if cf.Version > m.lastControlVersion {
+		logging.Info("Control version changed (%d -> %d), invalidating API key cache", m.lastControlVersion, cf.Version)
+		m.InvalidateKeyCache()
+		m.lastControlVersion = cf.Version
 	}
 
 	serversMonitored := 0

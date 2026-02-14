@@ -171,8 +171,20 @@ func (c *Client) doRequest(method, url, apiKey string, body io.Reader) (*http.Re
 	if resp.StatusCode >= 400 {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
-		logging.Warn("Pterodactyl API %s %s returned %d: %s", method, url, resp.StatusCode, string(bodyBytes))
-		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(bodyBytes))
+
+		bodyStr := string(bodyBytes)
+		if len(bodyStr) > 500 {
+			bodyStr = bodyStr[:500] + "... (truncated)"
+		}
+
+		// 409 Conflict is common for servers in install/transfer states.
+		if resp.StatusCode == 409 {
+			logging.Debug("Pterodactyl API %s %s returned 409 (Conflict): %s", method, url, bodyStr)
+		} else {
+			logging.Warn("Pterodactyl API %s %s returned %d: %s", method, url, resp.StatusCode, bodyStr)
+		}
+
+		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, bodyStr)
 	}
 
 	return resp, nil
