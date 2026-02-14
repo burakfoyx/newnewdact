@@ -319,6 +319,46 @@ actor PterodactylClient {
         return content
     }
     
+    func getFileDownloadUrl(serverId: String, filePath: String) async throws -> URL {
+        guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
+        
+        guard var components = URLComponents(url: baseURL.appendingPathComponent("api/client/servers/\(serverId)/files/download"), resolvingAgainstBaseURL: true) else {
+             throw PterodactylError.invalidURL
+        }
+        components.queryItems = [URLQueryItem(name: "file", value: filePath)]
+        
+        // WORKAROUND: Unescape slashes
+        components.percentEncodedQuery = components.percentEncodedQuery?.replacingOccurrences(of: "%2F", with: "/")
+        
+        guard let finalURL = components.url else { throw PterodactylError.invalidURL }
+        print("🔗 PterodactylClient: Get Download URL for: \(filePath)")
+        
+        var request = URLRequest(url: finalURL)
+        request.httpMethod = "GET"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            let body = String(data: data, encoding: .utf8) ?? ""
+            throw PterodactylError.apiError(http.statusCode, "Failed to get download URL: \(body)")
+        }
+        
+        struct DownloadResponse: Codable {
+            let attributes: DownloadAttributes
+        }
+        struct DownloadAttributes: Codable {
+            let url: String
+        }
+        
+        let decoded = try JSONDecoder().decode(DownloadResponse.self, from: data)
+        guard let downloadURL = URL(string: decoded.attributes.url) else {
+             throw PterodactylError.serializationError
+        }
+        return downloadURL
+    }
+    
     func writeFileContent(serverId: String, filePath: String, content: String) async throws {
         guard let baseURL = baseURL, let apiKey = apiKey else { throw PterodactylError.invalidURL }
         

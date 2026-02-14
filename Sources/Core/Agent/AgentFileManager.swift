@@ -196,14 +196,25 @@ actor AgentFileManager {
     
     /// Reads metrics.json from the agent container.
     /// Reads metrics.json from the agent container.
+    /// Uses download URL to avoid FileSizeTooLargeException for large history files.
     func readMetrics() async throws -> AgentMetricsExport {
-        let content = try await client.getFileContent(serverId: agentServerID, filePath: "data/metrics.json")
+        // 1. Get signed download URL
+        let downloadUrl = try await client.getFileDownloadUrl(serverId: agentServerID, filePath: "data/metrics.json")
+        
+        print("⬇️ Downloading metrics.json from: \(downloadUrl)")
+        
+        // 2. Download content
+        let (data, response) = try await URLSession.shared.data(from: downloadUrl)
+        
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw AgentFileError.fileNotFound // Or newer error type
+        }
         
         // Debug: Log first 100 chars to verify content
-        let preview = String(content.prefix(200))
-        print("📄 metrics.json content preview: \(preview)...")
+        if let preview = String(data: data.prefix(200), encoding: .utf8) {
+            print("📄 metrics.json content preview: \(preview)...")
+        }
         
-        let data = Data(content.utf8)
         let decoder = JSONDecoder()
         
         // Go's time.Time marshals to RFC3339 string (often with fractional seconds)
