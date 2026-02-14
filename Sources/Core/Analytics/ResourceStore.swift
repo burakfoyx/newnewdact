@@ -315,7 +315,11 @@ class ResourceStore: ObservableObject {
             case .uptime:
                 value = Double(snapshot.uptimeMs) / 3_600_000 // Hours
             }
-            return ChartDataPoint(timestamp: snapshot.timestamp, value: value)
+            
+            // Determine origin based on panelId tag
+            let origin: DataOrigin = (snapshot.panelId == "agent") ? .agent : .app
+            
+            return ChartDataPoint(timestamp: snapshot.timestamp, value: value, origin: origin)
         }
     }
     

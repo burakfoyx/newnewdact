@@ -197,7 +197,7 @@ struct ServerResourceUsageView: View {
                         y: .value("Value", point.value)
                     )
                     .interpolationMethod(.catmullRom)
-                    .foregroundStyle(vm.selectedResource.color)
+                    .foregroundStyle(vm.selectedResource.color.opacity(0.5))
                     
                     AreaMark(
                         x: .value("Time", point.timestamp),
@@ -206,12 +206,24 @@ struct ServerResourceUsageView: View {
                     .interpolationMethod(.catmullRom)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [vm.selectedResource.color.opacity(0.3), vm.selectedResource.color.opacity(0.0)],
+                            colors: [vm.selectedResource.color.opacity(0.1), vm.selectedResource.color.opacity(0.0)],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
+                    
+                    // Show individual points to visualize density & origin
+                    PointMark(
+                        x: .value("Time", point.timestamp),
+                        y: .value("Value", point.value)
+                    )
+                    .foregroundStyle(by: .value("Source", point.origin.rawValue.capitalized))
+                    .symbolSize(30)
                 }
+                .chartForegroundStyleScale([
+                    "App": .purple,
+                    "Agent": .green
+                ])
                 .chartXAxis {
                     AxisMarks(values: .automatic(desiredCount: 5)) { value in
                         if let date = value.as(Date.self) {
@@ -238,6 +250,7 @@ struct ServerResourceUsageView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "lightbulb.fill")
+                    
                         .foregroundStyle(.yellow)
                     Text("Resource Insight")
                         .font(.headline)
@@ -256,15 +269,16 @@ struct ServerResourceUsageView: View {
         .onAppear {
             vm.refresh()
         }
+        .onChange(of: vm.selectedRange) { _, _ in
+            vm.refresh()
+        }
         .onChange(of: stats.resources.cpuAbsolute) { _, _ in
-            // Refresh logic - maybe don't reload full history on every tick, but append?
-            // For now, let's just let the view model handle it if we want live updates.
-            // Actually, if ResourceStore is updated, we might need to fetch the latest.
-            // Or we can rely on periodic refresh?
-            // Let's debounce slightly or just strictly load from store periodically.
-            // For smoother UX, we might want to just append locally in VM, but we want to use Store.
-            // Let's call refresh periodically or on significant change?
-            // Simpler: Just refresh every 10s or when user changes range.
+             // Refresh stats when live data changes (throttling could be added if needed)
+             // For now, allow live updates to reflect in the graph
+             Task {
+                 // specific logic to avoid too frequent updates if necessary
+                 vm.refresh()
+             }
         }
     }
     

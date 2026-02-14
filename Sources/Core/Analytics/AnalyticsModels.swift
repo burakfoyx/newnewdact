@@ -141,17 +141,25 @@ struct ServerAnalyticsSummary {
     let idleHoursPerDay: Double // Hours per day where CPU < 5%
 }
 
+// MARK: - Data Origin
+enum DataOrigin: String, Codable {
+    case app
+    case agent
+}
+
 // MARK: - Chart Data Point
 struct ChartDataPoint: Identifiable {
     let id = UUID()
     let timestamp: Date
     let value: Double
     let label: String?
+    let origin: DataOrigin
     
-    init(timestamp: Date, value: Double, label: String? = nil) {
+    init(timestamp: Date, value: Double, label: String? = nil, origin: DataOrigin = .app) {
         self.timestamp = timestamp
         self.value = value
         self.label = label
+        self.origin = origin
     }
 }
 

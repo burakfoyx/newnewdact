@@ -72,7 +72,7 @@ class ResourceCollector: ObservableObject {
                     
                     recordFromStats(
                         serverId: server.identifier,
-                        panelId: AccountManager.shared.activeAccount?.id.uuidString ?? "unknown",
+                        panelId: "app", // Tag as app data (polled)
                         cpu: stats.resources.cpuAbsolute,
                         memory: stats.resources.memoryBytes,
                         memoryLimit: memoryLimit,
@@ -231,7 +231,7 @@ class ResourceCollector: ObservableObject {
         print("🔄 Syncing historical metrics from agent...")
         do {
             let export = try await fm.readMetrics()
-            let myPanelId = AccountManager.shared.activeAccount?.id.uuidString ?? "unknown"
+            let myPanelId = "agent" // Tag as agent data
             
             var count = 0
             for (serverId, snapshots) in export.servers {
