@@ -121,11 +121,25 @@ func (m *Monitor) sample() {
 			snapshot, err := m.collectServer(apiKey, serverID)
 			if err != nil {
 				if strings.Contains(err.Error(), "409") {
-					logging.Debug("Skipping server %s (409 Conflict): %v", serverID, err)
+					logging.Debug("Skipping server %s (409 Conflict): Recording zero-usage snapshot", serverID)
+					// Create zero snapshot for suspended server
+					snapshot = &models.ResourceSnapshot{
+						ServerID:   serverID,
+						Timestamp:  time.Now(),
+						PowerState: "suspended", // Or "offline"
+						CPUPercent: 0,
+						MemBytes:   0,
+						DiskBytes:  0,
+						NetRx:      0,
+						NetTx:      0,
+						UptimeMs:   0,
+					}
+					// Clear error to proceed with insertion
+					err = nil
 				} else {
 					logging.Warn("Failed to collect server %s for user %s: %v", serverID, user.UserUUID, err)
+					continue
 				}
-				continue
 			}
 
 			// Store snapshot
