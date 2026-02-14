@@ -225,8 +225,10 @@ class ResourceCollector: ObservableObject {
     // MARK: - Historical Sync
     
     /// Syncs historical metrics from the agent's metrics.json file
-    func syncHistoricalMetrics() async {
-        guard let fm = AgentManager.shared.getFileManager() else { return }
+    func syncHistoricalMetrics() async -> (Int, Error?) {
+        guard let fm = AgentManager.shared.getFileManager() else { 
+            return (0, NSError(domain: "Agent", code: 404, userInfo: [NSLocalizedDescriptionKey: "Agent file manager not available"]))
+        }
         
         print("🔄 Syncing historical metrics from agent...")
         do {
@@ -272,8 +274,11 @@ class ResourceCollector: ObservableObject {
                 print("✨ No new historical data to sync (scanned \(count) points)")
             }
             
+            return (newCount, nil)
+            
         } catch {
             print("❌ Failed to sync historical metrics: \(error)")
+            return (0, error)
         }
     }
     

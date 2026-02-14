@@ -335,6 +335,11 @@ struct AnalyticsSection: View {
     @ObservedObject var viewModel: ServerDetailsViewModel
     @Binding var refreshTrigger: UUID
     
+    @State private var showingSyncAlert = false
+    @State private var syncResultTitle = ""
+    @State private var syncResultMessage = ""
+    @State private var isSyncing = false
+    
     var body: some View {
         VStack(spacing: 20) {
             // Header with Sync Button
@@ -345,22 +350,42 @@ struct AnalyticsSection: View {
                 Spacer()
                 
                 Button {
+                    guard !isSyncing else { return }
+                    isSyncing = true
+                    
                     Task {
                         // Feedback vibration
                         let generator = UIImpactFeedbackGenerator(style: .medium)
                         generator.impactOccurred()
                         
                         // Force Sync
-                        await ResourceCollector.shared.syncHistoricalMetrics()
+                        let (count, error) = await ResourceCollector.shared.syncHistoricalMetrics()
+                        
                         // Force Refresh Graph
                         await MainActor.run {
+                            if let error = error {
+                                syncResultTitle = "Sync Failed"
+                                syncResultMessage = error.localizedDescription
+                            } else {
+                                syncResultTitle = "Sync Complete"
+                                syncResultMessage = "Imported \(count) new data points from Agent."
+                            }
+                            
+                            isSyncing = false
+                            showingSyncAlert = true
                             refreshTrigger = UUID()
                         }
                     }
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                        Text("Sync Agent")
+                        if isSyncing {
+                            ProgressView()
+                                .tint(.white)
+                                .scaleEffect(0.7)
+                        } else {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                        }
+                        Text(isSyncing ? "Syncing..." : "Sync Agent")
                     }
                     .font(.caption.bold())
                     .padding(.horizontal, 10)
@@ -368,8 +393,14 @@ struct AnalyticsSection: View {
                     .background(.ultraThinMaterial, in: Capsule())
                     .foregroundStyle(.white)
                 }
+                .disabled(isSyncing)
             }
             .padding(.horizontal)
+            .alert(syncResultTitle, isPresented: $showingSyncAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(syncResultMessage)
+            }
 
             if let stats = viewModel.currentStats {
                 ServerResourceUsageView(
