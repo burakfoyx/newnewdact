@@ -128,13 +128,15 @@ struct ServerResourceUsageView: View {
     let stats: ServerStats
     let limits: ServerLimits
     let serverId: String
+    let refreshTrigger: UUID // Trigger for external refresh
     
     @StateObject private var vm: AnalyticsViewModel
     
-    init(stats: ServerStats, limits: ServerLimits, serverId: String) {
+    init(stats: ServerStats, limits: ServerLimits, serverId: String, refreshTrigger: UUID = UUID()) {
         self.stats = stats
         self.limits = limits
         self.serverId = serverId
+        self.refreshTrigger = refreshTrigger
         _vm = StateObject(wrappedValue: AnalyticsViewModel(serverId: serverId))
     }
     
@@ -279,6 +281,9 @@ struct ServerResourceUsageView: View {
                  // specific logic to avoid too frequent updates if necessary
                  vm.refresh()
              }
+        }
+        .onChange(of: refreshTrigger) { _, _ in
+            vm.refresh()
         }
     }
     

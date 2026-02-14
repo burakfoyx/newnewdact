@@ -233,11 +233,16 @@ class ResourceCollector: ObservableObject {
             let export = try await fm.readMetrics()
             let myPanelId = "agent" // Tag as agent data
             
+            print("📦 Read metrics export with \(export.servers.count) servers")
+            
             var count = 0
+            var newCount = 0
             for (serverId, snapshots) in export.servers {
                 // Prevent duplicates: Only import snapshots newer than what we already have for the AGENT
                 let latest = store.fetchLatestSnapshot(serverId: serverId, panelId: "agent")
                 let latestTime = latest?.timestamp ?? Date.distantPast
+                
+                print("🔹 Server \(serverId): Found \(snapshots.count) snapshots in export. Latest DB timestamp: \(latestTime)")
                 
                 for snap in snapshots {
                     // Go's timestamp might have slight precision differences, add 1 sec buffer or strict >
@@ -256,18 +261,19 @@ class ResourceCollector: ObservableObject {
                             uptimeMs: snap.uptime_ms
                         )
                         store.save(snapshot)
-                        count += 1
+                        newCount += 1
                     }
+                    count += 1
                 }
             }
-            if count > 0 {
-                print("✅ Synced \(count) historical data points from agent")
+            if newCount > 0 {
+                print("✅ Synced \(newCount) new historical data points (out of \(count) total) from agent")
             } else {
-                print("✨ No new historical data to sync")
+                print("✨ No new historical data to sync (scanned \(count) points)")
             }
             
         } catch {
-            print("Failed to sync historical metrics: \(error)")
+            print("❌ Failed to sync historical metrics: \(error)")
         }
     }
     

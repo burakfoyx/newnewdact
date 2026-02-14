@@ -10,6 +10,7 @@ struct ServerDetailsView: View {
     @State private var selectedTab: ServerTab = .console
     @State private var isToolbarVisible = true
     @State private var lastScrollOffset: CGFloat = 0
+    @State private var refreshTrigger = UUID() // Trigger for forcing graph refresh
     
     init(server: ServerAttributes) {
         self.server = server
@@ -196,7 +197,7 @@ struct ServerDetailsView: View {
         case .console:
             ConsoleSection(server: server, viewModel: viewModel)
         case .analytics:
-            ScrollView { AnalyticsSection(server: server, viewModel: viewModel) }
+            ScrollView { AnalyticsSection(server: server, viewModel: viewModel, refreshTrigger: $refreshTrigger) }
                 .scrollContentBackground(.hidden)
         case .alerts:
             ScrollView { AlertsSection(manager: alertManager) }
@@ -332,11 +333,51 @@ struct ConsoleSection: View {
 struct AnalyticsSection: View {
     let server: ServerAttributes
     @ObservedObject var viewModel: ServerDetailsViewModel
+    @Binding var refreshTrigger: UUID
     
     var body: some View {
         VStack(spacing: 20) {
+            // Header with Sync Button
+            HStack {
+                Text("Analytics")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Spacer()
+                
+                Button {
+                    Task {
+                        // Feedback vibration
+                        let generator = UIImpactFeedbackGenerator(style: .medium)
+                        generator.impactOccurred()
+                        
+                        // Force Sync
+                        await ResourceCollector.shared.syncHistoricalMetrics()
+                        // Force Refresh Graph
+                        await MainActor.run {
+                            refreshTrigger = UUID()
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                        Text("Sync Agent")
+                    }
+                    .font(.caption.bold())
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .foregroundStyle(.white)
+                }
+            }
+            .padding(.horizontal)
+
             if let stats = viewModel.currentStats {
-                ServerResourceUsageView(stats: stats, limits: server.limits, serverId: server.identifier)
+                ServerResourceUsageView(
+                    stats: stats,
+                    limits: server.limits,
+                    serverId: server.identifier,
+                    refreshTrigger: refreshTrigger
+                )
             } else {
                 ProgressView()
                     .frame(height: 200)
