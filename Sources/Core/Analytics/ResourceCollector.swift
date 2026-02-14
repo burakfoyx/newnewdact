@@ -47,7 +47,7 @@ class ResourceCollector: ObservableObject {
         Task { @MainActor in
             await pollServers()
             // Sync history from agent to fill gaps
-            await syncHistoricalMetrics()
+            _ = await syncHistoricalMetrics()
         }
     }
     
