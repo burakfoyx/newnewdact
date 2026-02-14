@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -119,7 +120,11 @@ func (m *Monitor) sample() {
 		for _, serverID := range user.AllowedServers {
 			snapshot, err := m.collectServer(apiKey, serverID)
 			if err != nil {
-				logging.Warn("Failed to collect server %s for user %s: %v", serverID, user.UserUUID, err)
+				if strings.Contains(err.Error(), "409") {
+					logging.Debug("Skipping server %s (409 Conflict): %v", serverID, err)
+				} else {
+					logging.Warn("Failed to collect server %s for user %s: %v", serverID, user.UserUUID, err)
+				}
 				continue
 			}
 
