@@ -242,7 +242,27 @@ actor AgentFileManager {
             )
         }
         
-        return try decoder.decode(AgentMetricsExport.self, from: data)
+        do {
+            return try decoder.decode(AgentMetricsExport.self, from: data)
+        } catch let DecodingError.dataCorrupted(context) {
+            print("❌ Data corrupted: \(context)")
+            throw DecodingError.dataCorrupted(context)
+        } catch let DecodingError.keyNotFound(key, context) {
+            print("❌ Key '\(key)' not found: \(context.debugDescription)")
+            print("❌ CodingPath: \(context.codingPath)")
+            throw DecodingError.keyNotFound(key, context)
+        } catch let DecodingError.valueNotFound(value, context) {
+            print("❌ Value '\(value)' not found: \(context.debugDescription)")
+            print("❌ CodingPath: \(context.codingPath)")
+            throw DecodingError.valueNotFound(value, context)
+        } catch let DecodingError.typeMismatch(type, context) {
+            print("❌ Type '\(type)' mismatch: \(context.debugDescription)")
+            print("❌ CodingPath: \(context.codingPath)")
+            throw DecodingError.typeMismatch(type, context)
+        } catch {
+            print("❌ Generic decoding error: \(error)")
+            throw error
+        }
     }
 }
 
