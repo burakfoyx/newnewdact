@@ -249,20 +249,55 @@ actor AgentFileManager {
 // MARK: - Metric Types
 
 struct AgentMetricsExport: Decodable {
-    let generated_at: Date
+    let generatedAt: Date
     let servers: [String: [AgentResourceSnapshot]]
+    
+    enum CodingKeys: String, CodingKey {
+        case generatedAt = "generated_at"
+        case servers
+    }
 }
 
 struct AgentResourceSnapshot: Decodable {
     let timestamp: Date
-    let cpu_percent: Double
-    let mem_bytes: Int64
-    let mem_limit: Int64
-    let disk_bytes: Int64
-    let disk_limit: Int64
-    let net_rx: Int64
-    let net_tx: Int64
-    let uptime_ms: Int64
+    let cpuPercent: Double
+    let memBytes: Int64
+    let memLimit: Int64
+    let diskBytes: Int64
+    let diskLimit: Int64
+    let netRx: Int64
+    let netTx: Int64
+    let uptimeMs: Int64
+    
+    enum CodingKeys: String, CodingKey {
+        case timestamp
+        case cpuPercent = "cpu_percent"
+        case memBytes = "mem_bytes"
+        case memLimit = "mem_limit"
+        case diskBytes = "disk_bytes"
+        case diskLimit = "disk_limit"
+        case netRx = "net_rx"
+        case netTx = "net_tx"
+        case uptimeMs = "uptime_ms"
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Timestamp is required, but we should be robust about it too if possible, 
+        // effectively if timestamp is missing, the whole point is moot, so try decode.
+        timestamp = try container.decode(Date.self, forKey: .timestamp)
+        
+        // Use default values for missing fields to support older metrics.json versions
+        cpuPercent = try container.decodeIfPresent(Double.self, forKey: .cpuPercent) ?? 0
+        memBytes = try container.decodeIfPresent(Int64.self, forKey: .memBytes) ?? 0
+        memLimit = try container.decodeIfPresent(Int64.self, forKey: .memLimit) ?? 0
+        diskBytes = try container.decodeIfPresent(Int64.self, forKey: .diskBytes) ?? 0
+        diskLimit = try container.decodeIfPresent(Int64.self, forKey: .diskLimit) ?? 0
+        netRx = try container.decodeIfPresent(Int64.self, forKey: .netRx) ?? 0
+        netTx = try container.decodeIfPresent(Int64.self, forKey: .netTx) ?? 0
+        uptimeMs = try container.decodeIfPresent(Int64.self, forKey: .uptimeMs) ?? 0
+    }
 }
 
 enum AgentFileError: LocalizedError {

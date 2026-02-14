@@ -253,14 +253,14 @@ class ResourceCollector: ObservableObject {
                             serverId: serverId,
                             panelId: myPanelId,
                             timestamp: snap.timestamp,
-                            cpuPercent: snap.cpu_percent,
-                            memoryUsedBytes: snap.mem_bytes,
-                            memoryLimitBytes: snap.mem_limit,
-                            diskUsedBytes: snap.disk_bytes,
-                            diskLimitBytes: snap.disk_limit,
-                            networkRxBytes: snap.net_rx,
-                            networkTxBytes: snap.net_tx,
-                            uptimeMs: snap.uptime_ms
+                            cpuPercent: snap.cpuPercent,
+                            memoryUsedBytes: snap.memBytes,
+                            memoryLimitBytes: snap.memLimit,
+                            diskUsedBytes: snap.diskBytes,
+                            diskLimitBytes: snap.diskLimit,
+                            networkRxBytes: snap.netRx,
+                            networkTxBytes: snap.netTx,
+                            uptimeMs: snap.uptimeMs
                         )
                         store.save(snapshot)
                         newCount += 1
