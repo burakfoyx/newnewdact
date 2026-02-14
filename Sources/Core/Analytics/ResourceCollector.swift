@@ -239,7 +239,9 @@ class ResourceCollector: ObservableObject {
             
             var count = 0
             var newCount = 0
-            for (serverId, snapshots) in export.servers {
+            for (serverId, optSnapshots) in export.servers {
+                guard let snapshots = optSnapshots else { continue }
+                
                 // Prevent duplicates: Only import snapshots newer than what we already have for the AGENT
                 let latest = store.fetchLatestSnapshot(serverId: serverId, panelId: "agent")
                 let latestTime = latest?.timestamp ?? Date.distantPast

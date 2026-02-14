@@ -280,7 +280,7 @@ actor AgentFileManager {
 
 struct AgentMetricsExport: Decodable {
     let generatedAt: Date
-    let servers: [String: [AgentResourceSnapshot]]
+    let servers: [String: [AgentResourceSnapshot]?]
     
     enum CodingKeys: String, CodingKey {
         case generatedAt = "generated_at"
