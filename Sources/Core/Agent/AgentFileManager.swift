@@ -195,16 +195,41 @@ actor AgentFileManager {
     // MARK: - Metrics
     
     /// Reads metrics.json from the agent container.
+    /// Reads metrics.json from the agent container.
     func readMetrics() async throws -> AgentMetricsExport {
         let content = try await client.getFileContent(serverId: agentServerID, filePath: "data/metrics.json")
+        
+        // Debug: Log first 100 chars to verify content
+        let preview = String(content.prefix(200))
+        print("📄 metrics.json content preview: \(preview)...")
+        
         let data = Data(content.utf8)
         let decoder = JSONDecoder()
         
-        // Go's time.Time marshals to RFC3339 string
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ" // simplified ISO8601
-        // Better: use ISO8601DateFormatter
-        decoder.dateDecodingStrategy = .iso8601
+        // Go's time.Time marshals to RFC3339 string (often with fractional seconds)
+        // Standard .iso8601 strategy in Swift often fails on fractional seconds.
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateStr = try container.decode(String.self)
+            
+            // Try standard ISO8601 (upto nanos)
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = formatter.date(from: dateStr) {
+                return date
+            }
+            
+            // Try without fractional seconds
+            formatter.formatOptions = [.withInternetDateTime]
+            if let date = formatter.date(from: dateStr) {
+                return date
+            }
+            
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Invalid date format: \(dateStr)"
+            )
+        }
         
         return try decoder.decode(AgentMetricsExport.self, from: data)
     }
