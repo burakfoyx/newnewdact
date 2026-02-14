@@ -244,24 +244,34 @@ actor AgentFileManager {
         
         do {
             return try decoder.decode(AgentMetricsExport.self, from: data)
-        } catch let DecodingError.dataCorrupted(context) {
-            print("❌ Data corrupted: \(context)")
-            throw DecodingError.dataCorrupted(context)
-        } catch let DecodingError.keyNotFound(key, context) {
-            print("❌ Key '\(key)' not found: \(context.debugDescription)")
-            print("❌ CodingPath: \(context.codingPath)")
-            throw DecodingError.keyNotFound(key, context)
-        } catch let DecodingError.valueNotFound(value, context) {
-            print("❌ Value '\(value)' not found: \(context.debugDescription)")
-            print("❌ CodingPath: \(context.codingPath)")
-            throw DecodingError.valueNotFound(value, context)
-        } catch let DecodingError.typeMismatch(type, context) {
-            print("❌ Type '\(type)' mismatch: \(context.debugDescription)")
-            print("❌ CodingPath: \(context.codingPath)")
-            throw DecodingError.typeMismatch(type, context)
         } catch {
-            print("❌ Generic decoding error: \(error)")
-            throw error
+            // Create a preview of the JSON to help debugging
+            let preview = String(data: data.prefix(500), encoding: .utf8) ?? "Unreadable Data"
+            
+            // Detailed error message
+            var errorMsg = "Decoding Failed: \(error.localizedDescription)"
+            if let decodingError = error as? DecodingError {
+                switch decodingError {
+                case .keyNotFound(let key, let ctx):
+                    errorMsg = "Missing Key: '\(key.stringValue)' at path: \(ctx.codingPath)"
+                case .valueNotFound(let type, let ctx):
+                    errorMsg = "Missing Value for type: \(type) at path: \(ctx.codingPath)"
+                case .typeMismatch(let type, let ctx):
+                    errorMsg = "Type Mismatch: Expected \(type), at path: \(ctx.codingPath)"
+                case .dataCorrupted(let ctx):
+                    errorMsg = "Data Corrupted: \(ctx.debugDescription)"
+                @unknown default:
+                    errorMsg = "Unknown Decoding Error"
+                }
+            }
+            
+            print("❌ \(errorMsg)")
+            print("📄 JSON Preview: \(preview)")
+            
+            // Throw a descriptive error that the UI can show
+            throw NSError(domain: "AgentFileManager", code: 500, userInfo: [
+                NSLocalizedDescriptionKey: "\(errorMsg)\n\nJSON Head: \(preview)"
+            ])
         }
     }
 }
