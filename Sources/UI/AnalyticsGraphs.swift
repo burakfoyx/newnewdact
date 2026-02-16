@@ -237,6 +237,8 @@ struct ServerResourceUsageView: View {
                             .foregroundStyle(.white)
                     }
                 }
+                .padding()
+                .liquidGlassEffect()
                 
                 // Chart
                 Chart(vm.chartData) { point in
@@ -267,7 +269,6 @@ struct ServerResourceUsageView: View {
                             y: .value("Value", point.value)
                         )
                         .foregroundStyle(by: .value("Source", point.origin.rawValue.capitalized))
-                        // Removed excessive symbolSize(30) which caused clutter and lag
                     }
                 }
                 .chartForegroundStyleScale([
@@ -278,8 +279,13 @@ struct ServerResourceUsageView: View {
                     AxisMarks(values: .automatic(desiredCount: 5)) { value in
                         if let date = value.as(Date.self) {
                             AxisValueLabel {
-                                Text(date, format: .dateTime.hour().minute())
-                                    .foregroundStyle(.white.opacity(0.5))
+                                if vm.selectedRange == .days7 || vm.selectedRange == .days30 {
+                                    Text(date, format: .dateTime.month().day())
+                                        .foregroundStyle(.white.opacity(0.5))
+                                } else {
+                                    Text(date, format: .dateTime.hour().minute())
+                                        .foregroundStyle(.white.opacity(0.5))
+                                }
                             }
                         }
                     }
@@ -292,9 +298,8 @@ struct ServerResourceUsageView: View {
                     }
                 }
                 .frame(height: 250)
-            }
-            .padding()
-            .liquidGlassEffect()
+                .padding()
+                .liquidGlassEffect()
             
             // 4. Insights Footer
             VStack(alignment: .leading, spacing: 8) {
