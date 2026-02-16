@@ -26,12 +26,18 @@ struct AgentSettingsView: View {
             if agentManager.agentState == .notFound || agentManager.agentState == .unknown || agentManager.agentState == .detected {
                 setupSection
             }
-        }
-        .sheet(isPresented: $showSetup) {
-            AgentSetupView()
-        }
-        .sheet(isPresented: $showLogs) {
-            logViewerSheet
+            
+            // Stable anchor for sheets to prevent auto-dismissal when Group content changes
+            Color.clear
+                .frame(width: 0, height: 0)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .sheet(isPresented: $showSetup) {
+                    AgentSetupView()
+                }
+                .sheet(isPresented: $showLogs) {
+                    logViewerSheet
+                }
         }
         .alert("Remove Agent", isPresented: $showUninstallConfirm) {
             Button("Remove", role: .destructive) {

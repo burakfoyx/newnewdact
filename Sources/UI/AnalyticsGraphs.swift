@@ -66,6 +66,34 @@ class AnalyticsViewModel: ObservableObject {
         generateInsights()
     }
     
+    /// Efficiently adds a live snapshot to the graph without reloading from DB
+    func appendLiveSnapshot(_ stats: ServerStats) {
+        let snapshot = ResourceSnapshot(
+            serverId: serverId,
+            panelId: "app",
+            timestamp: Date(),
+            cpuPercent: stats.resources.cpuAbsolute,
+            memoryUsedBytes: stats.resources.memoryBytes,
+            memoryLimitBytes: 0, // Not critical for graph
+            diskUsedBytes: stats.resources.diskBytes,
+            diskLimitBytes: 0,
+            networkRxBytes: stats.resources.networkRxBytes,
+            networkTxBytes: stats.resources.networkTxBytes,
+            uptimeMs: stats.resources.uptime ?? 0
+        )
+        
+        self.history.append(snapshot)
+        
+        // Trim history if it gets too long (keep last 24h worth roughly)
+        // 1 point per sec = 86400 points max, reasonable to trim if needed
+        if history.count > 5000 {
+            history.removeFirst(history.count - 5000)
+        }
+        
+        calculateStats()
+        // Skip insights generation on every tick to save CPU
+    }
+    
     private func calculateStats() {
         guard !history.isEmpty else {
             avgCPU = 0; peakCPU = 0; avgRAM = 0; peakRAM = 0
@@ -111,7 +139,7 @@ class AnalyticsViewModel: ObservableObject {
     
     var chartData: [ChartDataPoint] {
         // Optimization: Downsample if we have too many points
-        let maxPoints = 200
+        let maxPoints = 60
         let stride = max(1, history.count / maxPoints)
         
         // Filter history based on stride
@@ -232,13 +260,15 @@ struct ServerResourceUsageView: View {
                         )
                     )
                     
-                    // Show individual points to visualize density & origin
-                    PointMark(
-                        x: .value("Time", point.timestamp),
-                        y: .value("Value", point.value)
-                    )
-                    .foregroundStyle(by: .value("Source", point.origin.rawValue.capitalized))
-                    .symbolSize(30)
+                    // Only show points if density is low enough for readability/performance
+                    if vm.chartData.count <= 40 {
+                        PointMark(
+                            x: .value("Time", point.timestamp),
+                            y: .value("Value", point.value)
+                        )
+                        .foregroundStyle(by: .value("Source", point.origin.rawValue.capitalized))
+                        // Removed excessive symbolSize(30) which caused clutter and lag
+                    }
                 }
                 .chartForegroundStyleScale([
                     "App": .purple,
@@ -293,11 +323,9 @@ struct ServerResourceUsageView: View {
             vm.refresh()
         }
         .onChange(of: stats.resources.cpuAbsolute) { _, _ in
-             // Refresh stats when live data changes (throttling could be added if needed)
-             // For now, allow live updates to reflect in the graph
-             Task {
-                 // specific logic to avoid too frequent updates if necessary
-                 vm.refresh()
+             // Efficiently update graph with live data without hitting DB
+             Task { @MainActor in
+                 vm.appendLiveSnapshot(stats)
              }
         }
         .onChange(of: refreshTrigger) { _, _ in

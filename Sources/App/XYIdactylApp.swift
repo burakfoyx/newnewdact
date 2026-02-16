@@ -43,6 +43,11 @@ struct XYIdactylApp: App {
                     
                     // Register background tasks
                     ResourceCollector.scheduleBackgroundTask() 
+                    
+                    // Initialize Agent Connection
+                    Task {
+                        await AgentManager.shared.detectAgent()
+                    }
                 }
         }
         .modelContainer(for: [ResourceSnapshotEntity.self, AlertEvent.self, ServerGroup.self, ServerCustomization.self])

@@ -126,6 +126,36 @@ class ResourceStore: ObservableObject {
         }
     }
     
+    // MARK: - Batch Save
+    func saveBatch(_ snapshots: [ResourceSnapshot]) {
+        guard let context = modelContext, !snapshots.isEmpty else { return }
+        
+        for snapshot in snapshots {
+            let entity = ResourceSnapshotEntity(
+                id: snapshot.id,
+                serverId: snapshot.serverId,
+                panelId: snapshot.panelId,
+                timestamp: snapshot.timestamp,
+                cpuPercent: snapshot.cpuPercent,
+                memoryUsedBytes: snapshot.memoryUsedBytes,
+                memoryLimitBytes: snapshot.memoryLimitBytes,
+                diskUsedBytes: snapshot.diskUsedBytes,
+                diskLimitBytes: snapshot.diskLimitBytes,
+                networkRxBytes: snapshot.networkRxBytes,
+                networkTxBytes: snapshot.networkTxBytes,
+                uptimeMs: snapshot.uptimeMs
+            )
+            context.insert(entity)
+        }
+        
+        do {
+            try context.save()
+            print("✅ Batch saved \(snapshots.count) snapshots")
+        } catch {
+            print("❌ Failed to batch save snapshots: \(error)")
+        }
+    }
+    
     // MARK: - Fetch Snapshots
     func fetchSnapshots(
         serverId: String,

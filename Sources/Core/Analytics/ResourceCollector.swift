@@ -232,24 +232,28 @@ class ResourceCollector: ObservableObject {
         
         print("🔄 Syncing historical metrics from agent...")
         do {
+            // 1. Read JSON (Network IO)
             let export = try await fm.readMetrics()
-            let myPanelId = "agent" // Tag as agent data
+            let myPanelId = "agent"
             
             print("📦 Read metrics export with \(export.servers.count) servers")
             
-            var count = 0
-            var newCount = 0
+            var newSnapshots: [ResourceSnapshot] = []
+            var total scanned = 0
+            
+            // 2. Process in memory
             for (serverId, optSnapshots) in export.servers {
                 guard let snapshots = optSnapshots else { continue }
                 
-                // Prevent duplicates: Only import snapshots newer than what we already have for the AGENT
+                // Get latest timestamp for this server to avoid duplicates
+                // Note: database access is fast enough here since it's one query per server
                 let latest = store.fetchLatestSnapshot(serverId: serverId, panelId: "agent")
                 let latestTime = latest?.timestamp ?? Date.distantPast
                 
-                print("🔹 Server \(serverId): Found \(snapshots.count) snapshots in export. Latest DB timestamp: \(latestTime)")
+                print("🔹 Server \(serverId): Found \(snapshots.count) snapshots. Latest DB: \(latestTime)")
                 
                 for snap in snapshots {
-                    // Go's timestamp might have slight precision differences, add 1 sec buffer or strict >
+                    scanned += 1
                     if snap.timestamp > latestTime {
                         let snapshot = ResourceSnapshot(
                             serverId: serverId,
@@ -264,19 +268,21 @@ class ResourceCollector: ObservableObject {
                             networkTxBytes: snap.netTx,
                             uptimeMs: snap.uptimeMs
                         )
-                        store.save(snapshot)
-                        newCount += 1
+                        newSnapshots.append(snapshot)
                     }
-                    count += 1
                 }
             }
-            if newCount > 0 {
-                print("✅ Synced \(newCount) new historical data points (out of \(count) total) from agent")
+            
+            // 3. Batch Save (Database IO)
+            if !newSnapshots.isEmpty {
+                print("💾 Batch saving \(newSnapshots.count) records...")
+                store.saveBatch(newSnapshots)
+                print("✅ Synced \(newSnapshots.count) new data points")
             } else {
-                print("✨ No new historical data to sync (scanned \(count) points)")
+                print("✨ No new data to sync (scanned \(scanned) points)")
             }
             
-            return (newCount, nil)
+            return (newSnapshots.count, nil)
             
         } catch {
             print("❌ Failed to sync historical metrics: \(error)")
