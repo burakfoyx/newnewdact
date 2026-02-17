@@ -253,7 +253,7 @@ class ResourceCollector: ObservableObject {
                 print("🔹 Server \(serverId): Found \(snapshots.count) snapshots. Latest DB: \(latestTime)")
                 
                 for snap in snapshots {
-                    scanned += 1
+                    totalScanned += 1
                     if snap.timestamp > latestTime {
                         let snapshot = ResourceSnapshot(
                             serverId: serverId,
@@ -279,7 +279,7 @@ class ResourceCollector: ObservableObject {
                 store.saveBatch(newSnapshots)
                 print("✅ Synced \(newSnapshots.count) new data points")
             } else {
-                print("✨ No new data to sync (scanned \(scanned) points)")
+                print("✨ No new data to sync (scanned \(totalScanned) points)")
             }
             
             return (newSnapshots.count, nil)
