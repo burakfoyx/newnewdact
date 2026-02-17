@@ -239,7 +239,7 @@ class ResourceCollector: ObservableObject {
             print("📦 Read metrics export with \(export.servers.count) servers")
             
             var newSnapshots: [ResourceSnapshot] = []
-            var total scanned = 0
+            var totalScanned = 0
             
             // 2. Process in memory
             for (serverId, optSnapshots) in export.servers {

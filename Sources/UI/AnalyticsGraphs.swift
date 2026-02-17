@@ -300,6 +300,7 @@ struct ServerResourceUsageView: View {
                 .frame(height: 250)
                 .padding()
                 .liquidGlassEffect()
+            }
             
             // 4. Insights Footer
             VStack(alignment: .leading, spacing: 8) {
