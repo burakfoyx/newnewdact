@@ -72,6 +72,7 @@ struct NetworkSection: View {
                 }
             }
         }
+        .padding(16)
         .task {
             do {
                 allocations = try await PterodactylClient.shared.fetchAllocations(serverId: server.identifier)
@@ -149,6 +150,7 @@ struct BackupSection: View {
                 }
             }
         }
+        .padding(16)
         .task { await loadBackups() }
         .alert("Create Backup", isPresented: $showCreateSheet) {
             TextField("Backup Name", text: $newBackupName)
@@ -216,6 +218,7 @@ struct DatabaseSection: View {
                 .liquidGlassEffect()
             }
         }
+        .padding(16)
         .task {
             databases = (try? await PterodactylClient.shared.fetchDatabases(serverId: server.identifier)) ?? []
         }
@@ -252,6 +255,7 @@ struct ScheduleSection: View {
                 .liquidGlassEffect()
             }
         }
+        .padding(16)
         .task {
             schedules = (try? await PterodactylClient.shared.fetchSchedules(serverId: server.identifier)) ?? []
         }
@@ -288,6 +292,7 @@ struct UserSection: View {
                 .liquidGlassEffect()
             }
         }
+        .padding(16)
         .task {
             users = (try? await PterodactylClient.shared.fetchUsers(serverId: server.identifier)) ?? []
         }

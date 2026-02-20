@@ -23,7 +23,7 @@ func NewClient(panelURL string) *Client {
 	return &Client{
 		baseURL: url,
 		httpClient: &http.Client{
-			Timeout: 15 * time.Second,
+			Timeout: 25 * time.Second,
 		},
 	}
 }

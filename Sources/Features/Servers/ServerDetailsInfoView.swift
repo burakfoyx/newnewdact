@@ -150,7 +150,7 @@ struct ServerDetailsInfoView: View {
                 
                 Spacer().frame(height: 100)
             }
-            .padding()
+            .padding(16)
         }
         .scrollContentBackground(.hidden)
         .background(Color.clear)

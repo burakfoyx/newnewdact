@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/xyidactyl/agent/internal/control"
@@ -108,7 +109,8 @@ func (m *Monitor) sample() {
 		m.lastControlVersion = cf.Version
 	}
 
-	serversMonitored := 0
+	var serversMonitored int32
+	var wg sync.WaitGroup
 
 	for _, user := range cf.Users {
 		apiKey, err := m.getAPIKey(user)
@@ -118,50 +120,55 @@ func (m *Monitor) sample() {
 		}
 
 		for _, serverID := range user.AllowedServers {
-			snapshot, err := m.collectServer(apiKey, serverID)
-			if err != nil {
-				if strings.Contains(err.Error(), "409") {
-					logging.Debug("Skipping server %s (409 Conflict): Recording zero-usage snapshot", serverID)
-					// Create zero snapshot for suspended server
-					snapshot = &models.ResourceSnapshot{
-						ServerID:   serverID,
-						Timestamp:  time.Now(),
-						PowerState: "suspended", // Or "offline"
-						CPUPercent: 0,
-						MemBytes:   0,
-						DiskBytes:  0,
-						NetRx:      0,
-						NetTx:      0,
-						UptimeMs:   0,
+			wg.Add(1)
+			go func(u models.ControlUser, key, sID string) {
+				defer wg.Done()
+
+				snapshot, runErr := m.collectServer(key, sID)
+				if runErr != nil {
+					if strings.Contains(runErr.Error(), "409") {
+						logging.Debug("Skipping server %s (409 Conflict): Recording zero-usage snapshot", sID)
+						// Create zero snapshot for suspended server
+						snapshot = &models.ResourceSnapshot{
+							ServerID:   sID,
+							Timestamp:  time.Now(),
+							PowerState: "suspended", // Or "offline"
+							CPUPercent: 0,
+							MemBytes:   0,
+							DiskBytes:  0,
+							NetRx:      0,
+							NetTx:      0,
+							UptimeMs:   0,
+						}
+					} else {
+						logging.Warn("Failed to collect server %s for user %s: %v", sID, u.UserUUID, runErr)
+						return
 					}
-					// Clear error to proceed with insertion
-					err = nil
-				} else {
-					logging.Warn("Failed to collect server %s for user %s: %v", serverID, user.UserUUID, err)
-					continue
 				}
-			}
 
-			// Store snapshot
-			if err := m.db.InsertSnapshot(*snapshot); err != nil {
-				logging.Error("Failed to store snapshot for server %s: %v", serverID, err)
-				continue
-			}
+				// Store snapshot
+				if storeErr := m.db.InsertSnapshot(*snapshot); storeErr != nil {
+					logging.Error("Failed to store snapshot for server %s: %v", sID, storeErr)
+					return
+				}
 
-			serversMonitored++
+				atomic.AddInt32(&serversMonitored, 1)
 
-			// Evaluate alerts for this server
-			userAlerts := filterAlerts(cf.Alerts, user.UserUUID, serverID)
-			m.alertEvaluator.Evaluate(context.Background(), user, snapshot, userAlerts)
+				// Evaluate alerts for this server
+				userAlerts := filterAlerts(cf.Alerts, u.UserUUID, sID)
+				m.alertEvaluator.Evaluate(context.Background(), u, snapshot, userAlerts)
 
-			// Evaluate automations for this server
-			userAutos := filterAutomations(cf.Automations, user.UserUUID, serverID)
-			m.autoExecutor.Evaluate(context.Background(), user, apiKey, snapshot, userAutos)
+				// Evaluate automations for this server
+				userAutos := filterAutomations(cf.Automations, u.UserUUID, sID)
+				m.autoExecutor.Evaluate(context.Background(), u, key, snapshot, userAutos)
+			}(user, apiKey, serverID)
 		}
 	}
 
+	wg.Wait()
+
 	logging.Debug("Sampling cycle complete: %d servers monitored", serversMonitored)
-	m.updateStatus(cf, serversMonitored)
+	m.updateStatus(cf, int(serversMonitored))
 
 	// Export metrics to metrics.json (last 1 hour = 120 points at 30s)
 	uniqueServers := make(map[string]bool)

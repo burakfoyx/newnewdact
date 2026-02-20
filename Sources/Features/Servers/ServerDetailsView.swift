@@ -322,7 +322,7 @@ struct ConsoleSection: View {
 
         .cornerRadius(12)
         // .padding(.horizontal) // Remove horizontal padding to fill width if desired, or keep it
-        .padding(12)
+        .padding(16)
         .padding(.bottom, isInputFocused ? 0 : 0) // Adjust if needed
         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12)) // Outer container glass
     }
@@ -395,7 +395,6 @@ struct AnalyticsSection: View {
                 }
                 .disabled(isSyncing)
             }
-            .padding(.horizontal)
             .alert(syncResultTitle, isPresented: $showingSyncAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
@@ -414,6 +413,7 @@ struct AnalyticsSection: View {
                     .frame(height: 200)
             }
         }
+        .padding(16)
     }
 }
 
@@ -640,6 +640,6 @@ struct AlertsSection: View {
             
             Spacer()
         }
-        .padding()
+        .padding(16)
     }
 }

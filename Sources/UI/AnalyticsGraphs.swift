@@ -137,6 +137,18 @@ class AnalyticsViewModel: ObservableObject {
         insightText += " (Based on \(selectedRange.displayName))"
     }
     
+    var yAxisMax: Double {
+        switch selectedResource {
+        case .cpu:
+            return max(100.0, peakCPU * 1.1)
+        case .memory:
+            return max(100.0, peakRAM * 1.2) // Add 20% padding above peak
+        case .network:
+            let peak = history.map { Double($0.networkRxBytes + $0.networkTxBytes) / 1024 / 1024 }.max() ?? 0
+            return max(1.0, peak * 1.2) // At least 1 MB/s scale
+        }
+    }
+    
     var chartData: [ChartDataPoint] {
         // Optimization: Downsample if we have too many points
         let maxPoints = 60
@@ -241,26 +253,32 @@ struct ServerResourceUsageView: View {
                 .liquidGlassEffect()
                 
                 // Chart
-                Chart(vm.chartData) { point in
+                Group {
+                    if vm.chartData.isEmpty {
+                        VStack(spacing: 12) {
+                            ProgressView().tint(.white)
+                            Text("Gathering Data...")
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        Chart(vm.chartData) { point in
                     LineMark(
                         x: .value("Time", point.timestamp),
                         y: .value("Value", point.value)
                     )
                     .interpolationMethod(.catmullRom)
-                    .foregroundStyle(vm.selectedResource.color.opacity(0.5))
+                    .foregroundStyle(by: .value("Source", point.origin.rawValue.capitalized))
+                    .lineStyle(StrokeStyle(lineWidth: 2))
                     
                     AreaMark(
                         x: .value("Time", point.timestamp),
                         y: .value("Value", point.value)
                     )
                     .interpolationMethod(.catmullRom)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [vm.selectedResource.color.opacity(0.1), vm.selectedResource.color.opacity(0.0)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                    .foregroundStyle(by: .value("Source", point.origin.rawValue.capitalized))
+                    .opacity(0.3)
                     
                     // Only show points if density is low enough for readability/performance
                     if vm.chartData.count <= 40 {
@@ -272,9 +290,11 @@ struct ServerResourceUsageView: View {
                     }
                 }
                 .chartForegroundStyleScale([
-                    "App": .purple,
+                    "App": vm.selectedResource.color,
                     "Agent": .green
                 ])
+                .chartYScale(domain: 0...vm.yAxisMax)
+                .animation(.easeInOut, value: vm.chartData)
                 .chartXAxis {
                     AxisMarks(values: .automatic(desiredCount: 5)) { value in
                         if let date = value.as(Date.self) {
@@ -291,12 +311,19 @@ struct ServerResourceUsageView: View {
                     }
                 }
                 .chartYAxis {
-                    AxisMarks { value in
+                    AxisMarks(position: .leading) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4])).foregroundStyle(.white.opacity(0.1))
-                        AxisValueLabel()
-                            .foregroundStyle(.white.opacity(0.5))
+                        if let doubleValue = value.as(Double.self) {
+                            AxisValueLabel {
+                                Text("\(Int(doubleValue))\(vm.selectedResource.unit)")
+                                    .foregroundStyle(.white.opacity(0.5))
+                                    .font(.caption2)
+                            }
+                        }
                     }
                 }
+                    } // End else
+                } // End Group
                 .frame(height: 250)
                 .padding()
                 .liquidGlassEffect()
