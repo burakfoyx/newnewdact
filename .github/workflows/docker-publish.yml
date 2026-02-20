@@ -4,10 +4,16 @@ name: Docker
 on:
   push:
     branches: [ "main" ]
-    # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
+    paths:
+      - 'agent/**'
+      - '.github/workflows/docker-publish.yml'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'agent/**'
+      - '.github/workflows/docker-publish.yml'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
