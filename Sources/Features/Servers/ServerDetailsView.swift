@@ -211,6 +211,9 @@ struct ConsoleSection: View {
     @ObservedObject var viewModel: ServerDetailsViewModel
     @FocusState private var isInputFocused: Bool
     
+    // Smart auto-scroll state
+    @State private var isAutoScrollEnabled = true
+    
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -219,6 +222,25 @@ struct ConsoleSection: View {
                     .font(.system(size: 13, weight: .semibold, design: .default))
                     .foregroundStyle(.secondary)
                 Spacer()
+                
+                // Auto-Scroll Toggle
+                Button {
+                    isAutoScrollEnabled.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: isAutoScrollEnabled ? "arrow.down.to.line" : "pause.circle.fill")
+                        Text(isAutoScrollEnabled ? "Auto" : "Paused")
+                            .font(.caption2.bold())
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .foregroundStyle(isAutoScrollEnabled ? .blue : .orange)
+                    .background(
+                        isAutoScrollEnabled ? Color.blue.opacity(0.1) : Color.orange.opacity(0.1),
+                        in: Capsule()
+                    )
+                }
+                
                 if viewModel.isConnected {
                     HStack(spacing: 6) {
                         Circle().fill(Color.green).frame(width: 8, height: 8)
@@ -253,14 +275,19 @@ struct ConsoleSection: View {
                             Text(line.text)
                                 .font(.custom("Menlo", size: 12))
                                 .foregroundStyle(.white)
+                                // Text selection must be on the individual Text views
+                                // or the container, usually works best on the container in LazyVStack
                         }
                     }
+                    .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .id("bottom")
                 }
                 .onChange(of: viewModel.consoleLines.count) { _, _ in
-                    proxy.scrollTo("bottom", anchor: .bottom)
+                    if isAutoScrollEnabled {
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
                 }
                 .onTapGesture {
                     isInputFocused = false
