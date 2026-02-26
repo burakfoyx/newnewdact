@@ -2,13 +2,14 @@ import SwiftUI
 
 struct AnsiParser {
     
+    // Compiled once, reused for lifetime of the app
+    private static let regex = try! NSRegularExpression(pattern: "\u{001B}\\[([0-9;]*)m")
+    
     /// Parses a string containing ANSI escape codes into a SwiftUI AttributedString
     static func parse(_ text: String) -> AttributedString {
         var attributed = AttributedString("")
         
-        // Regex to find ANSI escape sequences
-        // Matches \u001B[...m
-        let regex = try! NSRegularExpression(pattern: "\u{001B}\\[([0-9;]*)m")
+        let regex = Self.regex
         
         let nsString = text as NSString
         let matches = regex.matches(in: text, range: NSRange(location: 0, length: nsString.length))

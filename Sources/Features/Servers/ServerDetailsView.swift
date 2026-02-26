@@ -72,7 +72,7 @@ struct ServerDetailsView: View {
                 }
             }
 
-            .onReceive(viewModel.$currentStats) { stats in
+            .onReceive(viewModel.$currentStats.debounce(for: .seconds(2), scheduler: RunLoop.main)) { stats in
                 if let stats = stats {
                     alertManager.checkStats(stats, limits: server.limits)
                     
@@ -259,10 +259,8 @@ struct ConsoleSection: View {
                     .padding()
                     .id("bottom")
                 }
-                .onChange(of: viewModel.consoleLines.last?.id) { _, _ in
-                    withAnimation {
-                        proxy.scrollTo("bottom", anchor: .bottom)
-                    }
+                .onChange(of: viewModel.consoleLines.count) { _, _ in
+                    proxy.scrollTo("bottom", anchor: .bottom)
                 }
                 .onTapGesture {
                     isInputFocused = false
@@ -426,6 +424,10 @@ class ServerDetailsViewModel: ObservableObject {
     @Published var isConnected = false
     @Published var errorMessage: String?
     
+    // Console line buffer — accumulates lines and flushes to @Published every 150ms
+    private var lineBuffer: [ConsoleLine] = []
+    private var flushTimer: Timer?
+    
     private var serverId: String?
     private var cancellables = Set<AnyCancellable>()
     
@@ -483,10 +485,29 @@ class ServerDetailsViewModel: ObservableObject {
     func disconnect() {
         WebSocketClient.shared.disconnect()
         cancellables.removeAll()
+        flushTimer?.invalidate()
+        flushTimer = nil
         isConnected = false
     }
     
+    /// Flushes buffered lines to @Published, collapsing multiple mutations into one
+    private func flushLineBuffer() {
+        guard !lineBuffer.isEmpty else { return }
+        consoleLines.append(contentsOf: lineBuffer)
+        lineBuffer.removeAll(keepingCapacity: true)
+        if consoleLines.count > 1000 {
+            consoleLines.removeFirst(consoleLines.count - 1000)
+        }
+    }
+    
     private func setupSubscriptions() {
+        // Start flush timer — fires every 150ms to batch console updates
+        flushTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.flushLineBuffer()
+            }
+        }
+        
         WebSocketClient.shared.eventPublisher
             .receive(on: RunLoop.main)
             .sink { [weak self] event in
@@ -496,24 +517,22 @@ class ServerDetailsViewModel: ObservableObject {
                     let newLines = text.components(separatedBy: .newlines).map { line in
                         ConsoleLine(text: AnsiParser.parse(line))
                     }
-                    self.consoleLines.append(contentsOf: newLines)
-                    if self.consoleLines.count > 1000 {
-                        self.consoleLines.removeFirst(self.consoleLines.count - 1000)
-                    }
+                    // Append to buffer instead of directly to @Published
+                    self.lineBuffer.append(contentsOf: newLines)
                 case .stats(let json):
                     self.parseStats(json)
                 case .status(let status):
                     self.updateStatus(status)
                 case .connected:
-                    self.consoleLines.append(ConsoleLine(text: AttributedString("[System] Connected to server stream.")))
+                    self.lineBuffer.append(ConsoleLine(text: AttributedString("[System] Connected to server stream.")))
                     self.isConnected = true
                 case .disconnected:
-                    self.consoleLines.append(ConsoleLine(text: AttributedString("[System] Disconnected.")))
+                    self.lineBuffer.append(ConsoleLine(text: AttributedString("[System] Disconnected.")))
                     self.isConnected = false
                 case .installOutput(let text):
-                    self.consoleLines.append(ConsoleLine(text: AttributedString("[Install] \(text)")))
+                    self.lineBuffer.append(ConsoleLine(text: AttributedString("[Install] \(text)")))
                 case .daemonError(let error):
-                    self.consoleLines.append(ConsoleLine(text: AttributedString("[Error] \(error)")))
+                    self.lineBuffer.append(ConsoleLine(text: AttributedString("[Error] \(error)")))
                 }
             }
             .store(in: &cancellables)

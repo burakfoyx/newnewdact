@@ -19,6 +19,9 @@ class ResourceCollector: ObservableObject {
     // Track last collection per server to avoid hitting the store for every stats update
     private var lastCollectionPerServer: [String: Date] = [:]
     
+    // Cache AlertManagers per server to avoid re-creating from storage on every poll
+    private var alertManagerCache: [String: AlertManager] = []
+    
     // Polling Timer
     private var pollingTimer: Timer?
     
@@ -83,8 +86,11 @@ class ResourceCollector: ObservableObject {
                         uptimeMs: stats.resources.uptime ?? 0
                     )
                     
-                    // Check Alerts
-                    let alertManager = AlertManager(serverId: server.identifier)
+                    // Check Alerts (use cached manager)
+                    if alertManagerCache[server.identifier] == nil {
+                        alertManagerCache[server.identifier] = AlertManager(serverId: server.identifier)
+                    }
+                    let alertManager = alertManagerCache[server.identifier]!
                     AlertEngine.shared.checkAlerts(
                         server: server,
                         stats: stats.resources,
