@@ -151,7 +151,7 @@ enum DataOrigin: String, Codable {
 }
 
 // MARK: - Chart Data Point
-struct ChartDataPoint: Identifiable {
+struct ChartDataPoint: Identifiable, Equatable {
     let id = UUID()
     let timestamp: Date
     let value: Double
