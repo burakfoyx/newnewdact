@@ -113,24 +113,14 @@ struct ServerListView: View {
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
-            ZStack {
-                LiquidBackgroundView()
-                    .ignoresSafeArea()
-                
-                content
-            }
-            .background(Color.clear)
+            content
             .navigationTitle("Servers")
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar { toolbarContent }
             .environment(\.editMode, .constant(isEditing ? .active : .inactive))
             .navigationDestination(for: ServerAttributes.self) { server in
                 ServerDetailsView(server: server)
             }
         }
-        .scrollContentBackground(.hidden)
-        .background(Color.clear)
         .task {
             // Cleanup duplicates for safety
             cleanupCustomizations()
@@ -163,7 +153,6 @@ struct ServerListView: View {
     private var content: some View {
         if viewModel.isLoading {
             ProgressView("Loading Servers...")
-                .tint(.white)
         } else if let error = viewModel.errorMessage {
             errorView(error)
         } else {
@@ -258,17 +247,15 @@ struct ServerListView: View {
     }
     
     private func errorView(_ error: String) -> some View {
-        VStack {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.largeTitle)
-                .foregroundStyle(.orange)
+        ContentUnavailableView {
+            Label("Connection Error", systemImage: "exclamationmark.triangle")
+        } description: {
             Text(error)
-                .multilineTextAlignment(.center)
-                .padding()
+        } actions: {
             Button("Retry") {
                 Task { await viewModel.loadServers() }
             }
-            .buttonStyle(LiquidButtonStyle())
+            .buttonStyle(.borderedProminent)
         }
     }
     
@@ -340,11 +327,11 @@ struct ServerListView: View {
                         .font(.title2.bold())
                         .foregroundStyle(.white)
                         .frame(width: 56, height: 56)
-                        .glassEffect(.clear.interactive(), in: Circle())
-                        .shadow(color: .purple.opacity(0.5), radius: 10)
+                        .background(.blue, in: Circle())
+                        .shadow(radius: 8)
                 }
                 .padding(.trailing, 16)
-                .padding(.bottom, 30) // Extra bottom padding for safe area
+                .padding(.bottom, 30)
             }
         }
     }
@@ -356,42 +343,26 @@ struct ServerListView: View {
         }
         
         ToolbarItem(placement: .primaryAction) {
-            HStack(spacing: 8) {
-                // Edit / Done Button
+            HStack(spacing: 12) {
                 Button {
                     withAnimation { isEditing.toggle() }
                 } label: {
                     Text(isEditing ? "Done" : "Edit")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .glassEffect(.clear, in: Capsule())
                 }
                 
-                // Group Management
                 if !isEditing {
                     Button {
                         showGroupsSheet = true
                     } label: {
                         Image(systemName: "folder.badge.plus")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.white)
-                            .padding(10)
-                            .glassEffect(.clear, in: Circle())
                     }
                     
-                    // View Toggle
                     Button {
                         withAnimation {
                             viewMode = (viewMode == .list) ? .category : .list
                         }
                     } label: {
                         Image(systemName: viewMode == .list ? "square.grid.2x2" : "list.bullet")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(.white)
-                            .padding(10)
-                            .glassEffect(.clear, in: Circle())
                     }
                 }
             }
@@ -511,8 +482,13 @@ struct ServerRow: View {
     }
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 6) {
+        HStack(spacing: 12) {
+            // Status dot
+            Circle()
+                .fill(statusColor)
+                .frame(width: 10, height: 10)
+            
+            VStack(alignment: .leading, spacing: 4) {
                 // Name Row
                 HStack(spacing: 6) {
                     if isPinned {
@@ -527,18 +503,18 @@ struct ServerRow: View {
                             .foregroundStyle(.yellow)
                     }
                     Text(displayName)
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(.white)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
                 }
                 
                 // IP Row
                 HStack(spacing: 4) {
-                     Image(systemName: "network")
+                    Image(systemName: "network")
                         .font(.caption2)
-                     Text(displayIP) 
+                    Text(displayIP)
                         .font(.caption)
                 }
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(.secondary)
                 
                 // Resources Row
                 HStack(spacing: 16) {
@@ -546,51 +522,19 @@ struct ServerRow: View {
                         Image(systemName: "cpu")
                         Text(cpuUsage)
                     }
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.8))
-                    
                     HStack(spacing: 4) {
                         Image(systemName: "memorychip")
                         Text(memoryUsage)
                     }
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.white.opacity(0.8))
                 }
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.tertiary)
             }
+            
             Spacer()
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(alignment: .leading) {
-            ServerStatusIndicator(color: statusColor)
-        }
-        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(.vertical, 4)
     }
 }
 
-struct ServerStatusIndicator: View {
-    let color: Color
-    
-    var body: some View {
-        Rectangle()
-            .fill(
-                LinearGradient(
-                    colors: [color.opacity(0.4), .clear],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .frame(width: 60)
-            .clipShape(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: 16,
-                    bottomLeadingRadius: 16,
-                    bottomTrailingRadius: 0,
-                    topTrailingRadius: 0,
-                    style: .continuous
-                )
-            )
-            .allowsHitTesting(false)
-    }
-}
+// ServerStatusIndicator removed — replaced by inline Circle dot in ServerRow

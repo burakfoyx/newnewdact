@@ -13,7 +13,7 @@ struct AlertRuleEditor: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                LiquidBackgroundView()
+                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -22,7 +22,7 @@ struct AlertRuleEditor: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Metric")
                                 .font(.subheadline.weight(.medium))
-                                .foregroundStyle(.white.opacity(0.7))
+                                .foregroundStyle(.secondary)
                             
                             HStack(spacing: 8) {
                                 ForEach(AlertMetric.allCases) { m in
@@ -38,14 +38,14 @@ struct AlertRuleEditor: View {
                             }
                         }
                         .padding()
-                        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                         
                         // Condition Section (only for non-offline metrics)
                         if metric != .offline {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Condition")
                                     .font(.subheadline.weight(.medium))
-                                    .foregroundStyle(.white.opacity(0.7))
+                                    .foregroundStyle(.secondary)
                                 
                                 HStack(spacing: 8) {
                                     ForEach(AlertCondition.allCases) { c in
@@ -61,18 +61,18 @@ struct AlertRuleEditor: View {
                                 }
                             }
                             .padding()
-                            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                             
                             // Threshold Section
                             VStack(alignment: .leading, spacing: 16) {
                                 HStack {
                                     Text("Threshold")
                                         .font(.subheadline.weight(.medium))
-                                        .foregroundStyle(.white.opacity(0.7))
+                                        .foregroundStyle(.secondary)
                                     Spacer()
                                     Text("\(Int(threshold))\(metric.unit)")
                                         .font(.title2.bold())
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(.primary)
                                 }
                                 
                                 // Custom Slider with Glass Effect
@@ -88,11 +88,11 @@ struct AlertRuleEditor: View {
                                         } label: {
                                             Text("\(Int(value))\(metric.unit)")
                                                 .font(.caption.weight(.medium))
-                                                .foregroundStyle(threshold == value ? .white : .white.opacity(0.6))
+                                                .foregroundStyle(threshold == value ? .primary : .secondary)
                                                 .padding(.horizontal, 12)
                                                 .padding(.vertical, 8)
-                                                .glassEffect(
-                                                    threshold == value ? .clear.interactive() : .clear,
+                                                .background(
+                                                    threshold == value ? Color(.tertiarySystemFill) : Color.clear,
                                                     in: Capsule()
                                                 )
                                         }
@@ -101,7 +101,7 @@ struct AlertRuleEditor: View {
                                 }
                             }
                             .padding()
-                            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                         }
                         
                         // Summary Card
@@ -112,17 +112,17 @@ struct AlertRuleEditor: View {
                             
                             Text(summaryText)
                                 .font(.headline)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                                 .multilineTextAlignment(.center)
                             
                             Text("You will receive a notification when this condition is met.")
                                 .font(.caption)
-                                .foregroundStyle(.white.opacity(0.6))
+                                .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
                         }
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                         
                         // Create Button
                         Button {
@@ -130,7 +130,7 @@ struct AlertRuleEditor: View {
                         } label: {
                             Text("Create Alert")
                                 .font(.headline)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
                         }
@@ -229,11 +229,11 @@ struct MetricSelectionButton: View {
                 Text(metric.displayName)
                     .font(.caption)
             }
-            .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
+            .foregroundStyle(isSelected ? .primary : .secondary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .glassEffect(
-                isSelected ? .clear.interactive() : .clear,
+            .background(
+                isSelected ? Color(.tertiarySystemFill) : Color.clear,
                 in: RoundedRectangle(cornerRadius: 12, style: .continuous)
             )
         }
@@ -265,11 +265,11 @@ struct ConditionSelectionButton: View {
                 Text(condition.displayName)
                     .font(.subheadline)
             }
-            .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
+            .foregroundStyle(isSelected ? .primary : .secondary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .glassEffect(
-                isSelected ? .clear.interactive() : .clear,
+            .background(
+                isSelected ? Color(.tertiarySystemFill) : Color.clear,
                 in: RoundedRectangle(cornerRadius: 12, style: .continuous)
             )
         }
@@ -295,7 +295,7 @@ struct GlassSlider: View {
             ZStack(alignment: .leading) {
                 // Track background
                 Capsule()
-                    .fill(.white.opacity(0.1))
+                    .fill(Color(.tertiarySystemFill))
                     .frame(height: 8)
                 
                 // Filled track

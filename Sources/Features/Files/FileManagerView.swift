@@ -15,21 +15,21 @@ struct FileManagerView: View {
                             .font(.caption)
                             .foregroundStyle(.blue)
                             .padding(8)
-                            .glassEffect(.clear, in: Circle())
+                            .background(Color.accentColor, in: Circle())
                     }
                     
                     ForEach(viewModel.pathComponents, id: \.self) { component in
                         Image(systemName: "chevron.right")
                             .font(.caption2)
-                            .foregroundStyle(.white.opacity(0.3))
+                            .foregroundStyle(.tertiary)
                         
                         Button(action: { viewModel.navigateTo(component: component) }) {
                             Text(component)
                                 .font(.caption.weight(.medium))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
-                                .glassEffect(.clear, in: Capsule())
+                                .background(Color(.tertiarySystemFill), in: Capsule())
                         }
                     }
                 }
@@ -41,7 +41,7 @@ struct FileManagerView: View {
             if viewModel.isLoading {
                 Spacer()
                 ProgressView()
-                    .tint(.white)
+                    .tint(.accentColor)
                 Spacer()
             } else if let error = viewModel.errorMessage {
                 Spacer()
@@ -51,7 +51,7 @@ struct FileManagerView: View {
                         .foregroundStyle(.orange)
                     Text(error)
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.7))
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding()
                     Button("Reload") {
@@ -129,7 +129,7 @@ struct FileManagerView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                 }
             }
         }
@@ -168,7 +168,7 @@ struct FileRow: View {
             VStack(alignment: .leading) {
                 Text(file.name)
                     .font(.body)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 
                 HStack {
                     Text(formatBytes(file.size))
@@ -176,17 +176,17 @@ struct FileRow: View {
                     Text(file.modifiedAt) // In real app, parse ISO string to Date
                 }
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(.secondary)
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.3))
+                .foregroundStyle(.tertiary)
         }
         .padding(8)
-        .liquidGlassEffect(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
     
     func formatBytes(_ bytes: Int) -> String {

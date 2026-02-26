@@ -12,7 +12,7 @@ struct CreateServerView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                LiquidBackgroundView()
+                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                     .onTapGesture {
                         focusedField = nil // Dismiss keyboard
@@ -24,39 +24,39 @@ struct CreateServerView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Server Name", systemImage: "server.rack")
                                 .font(.headline)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             
                             TextField("My Minecraft Server", text: $viewModel.serverName)
                                 .focused($focusedField, equals: .serverName)
                                 .padding()
-                                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                         }
                         
                         // Node Selection
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Node", systemImage: "cpu")
                                 .font(.headline)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             
                             if viewModel.isLoadingNodes {
                                 HStack {
-                                    ProgressView().tint(.white)
+                                    ProgressView()
                                     Text("Loading nodes...")
-                                        .foregroundStyle(.white.opacity(0.7))
+                                        .foregroundStyle(.secondary)
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                             } else if viewModel.nodes.isEmpty {
                                 HStack {
                                     Image(systemName: "exclamationmark.triangle")
                                         .foregroundStyle(.orange)
                                     Text("No nodes available")
-                                        .foregroundStyle(.white.opacity(0.7))
+                                        .foregroundStyle(.secondary)
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                             } else {
                                 Menu {
                                     ForEach(viewModel.nodes) { node in
@@ -67,14 +67,14 @@ struct CreateServerView: View {
                                 } label: {
                                     HStack {
                                         Text(viewModel.selectedNode?.name ?? "Select Node")
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(.primary)
                                         Spacer()
                                         Image(systemName: "chevron.down")
-                                            .foregroundStyle(.white.opacity(0.5))
+                                            .foregroundStyle(.secondary)
                                     }
                                     .padding()
                                     .frame(maxWidth: .infinity)
-                                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                    .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                                     .contentShape(RoundedRectangle(cornerRadius: 12))
                                 }
                             }
@@ -84,27 +84,27 @@ struct CreateServerView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Category", systemImage: "folder")
                                 .font(.headline)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             
                             if viewModel.isLoadingNests {
                                 HStack {
-                                    ProgressView().tint(.white)
+                                    ProgressView()
                                     Text("Loading categories...")
-                                        .foregroundStyle(.white.opacity(0.7))
+                                        .foregroundStyle(.secondary)
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                             } else if viewModel.nests.isEmpty {
                                 HStack {
                                     Image(systemName: "exclamationmark.triangle")
                                         .foregroundStyle(.orange)
                                     Text("No categories available")
-                                        .foregroundStyle(.white.opacity(0.7))
+                                        .foregroundStyle(.secondary)
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                             } else {
                                 Menu {
                                     ForEach(viewModel.nests) { nest in
@@ -115,14 +115,14 @@ struct CreateServerView: View {
                                 } label: {
                                     HStack {
                                         Text(viewModel.selectedNest?.name ?? "Select Category")
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(.primary)
                                         Spacer()
                                         Image(systemName: "chevron.down")
-                                            .foregroundStyle(.white.opacity(0.5))
+                                            .foregroundStyle(.secondary)
                                     }
                                     .padding()
                                     .frame(maxWidth: .infinity)
-                                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                    .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                                     .contentShape(RoundedRectangle(cornerRadius: 12))
                                 }
                             }
@@ -133,27 +133,27 @@ struct CreateServerView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Label("Template", systemImage: "doc.text")
                                     .font(.headline)
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(.primary)
                                 
                                 if viewModel.isLoadingEggs {
                                     HStack {
-                                        ProgressView().tint(.white)
+                                        ProgressView()
                                         Text("Loading templates...")
-                                            .foregroundStyle(.white.opacity(0.7))
+                                            .foregroundStyle(.secondary)
                                     }
                                     .padding()
                                     .frame(maxWidth: .infinity)
-                                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                    .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                                 } else if viewModel.eggs.isEmpty {
                                     HStack {
                                         Image(systemName: "exclamationmark.triangle")
                                             .foregroundStyle(.orange)
                                         Text("No templates available")
-                                            .foregroundStyle(.white.opacity(0.7))
+                                            .foregroundStyle(.secondary)
                                     }
                                     .padding()
                                     .frame(maxWidth: .infinity)
-                                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                    .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                                 } else {
                                     Menu {
                                         ForEach(viewModel.eggs) { egg in
@@ -164,14 +164,14 @@ struct CreateServerView: View {
                                     } label: {
                                         HStack {
                                             Text(viewModel.selectedEgg?.name ?? "Select Template")
-                                                .foregroundStyle(.white)
+                                                .foregroundStyle(.primary)
                                             Spacer()
                                             Image(systemName: "chevron.down")
-                                                .foregroundStyle(.white.opacity(0.5))
+                                                .foregroundStyle(.secondary)
                                         }
                                         .padding()
                                         .frame(maxWidth: .infinity)
-                                        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                                         .contentShape(RoundedRectangle(cornerRadius: 12))
                                     }
                                 }
@@ -182,7 +182,7 @@ struct CreateServerView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Label("Resources", systemImage: "gauge")
                                 .font(.headline)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             
                             // Memory
                             ResourceInputSlider(
@@ -221,7 +221,7 @@ struct CreateServerView: View {
                             )
                         }
                         .padding()
-                        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
                         
                         // Error
                         if let error = viewModel.errorMessage {
@@ -234,7 +234,7 @@ struct CreateServerView: View {
                             }
                             .padding()
                             .frame(maxWidth: .infinity)
-                            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                         }
                         
                         // Create Button
@@ -244,9 +244,9 @@ struct CreateServerView: View {
                         }) {
                             if viewModel.isCreating {
                                 HStack {
-                                    ProgressView().tint(.white)
+                                    ProgressView()
                                     Text("Creating Server...")
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(.primary)
                                 }
                             } else {
                                 Label("Create Server", systemImage: "plus.circle.fill")
@@ -269,7 +269,7 @@ struct CreateServerView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                 }
                 
                 ToolbarItem(placement: .keyboard) {
@@ -312,7 +312,7 @@ struct ResourceInputSlider: View {
                 Image(systemName: icon)
                     .foregroundStyle(.blue)
                 Text(title)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 Spacer()
                 
                 if isEditing {
@@ -326,10 +326,10 @@ struct ResourceInputSlider: View {
                                 applyTextValue()
                             }
                         Text(unit)
-                            .foregroundStyle(.white.opacity(0.7))
+                            .foregroundStyle(.secondary)
                     }
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 } else {
                     Button(action: {
                         textValue = String(Int(value))
@@ -338,10 +338,10 @@ struct ResourceInputSlider: View {
                     }) {
                         Text("\(Int(value)) \(unit)")
                             .font(.headline)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 8))
+                            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
                     }
                 }
             }

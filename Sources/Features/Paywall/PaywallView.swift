@@ -16,7 +16,7 @@ struct PaywallView: View {
         NavigationStack {
             ZStack {
                 // Use app's Liquid Glass background
-                LiquidBackgroundView()
+                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -51,7 +51,7 @@ struct PaywallView: View {
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title2)
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -71,7 +71,7 @@ struct PaywallView: View {
 // Header Circle
                 Color.clear
                     .frame(width: 90, height: 90)
-                    .glassEffect(.clear, in: Circle())
+                    .background(.regularMaterial, in: Circle())
                     .overlay(
                         Circle()
                             .stroke(
@@ -98,11 +98,11 @@ struct PaywallView: View {
             
             Text("Unlock Full Potential")
                 .font(.system(size: 28, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
             
             Text("Choose the plan that fits your needs")
                 .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(.secondary)
         }
         .padding(.top, 20)
     }
@@ -133,7 +133,7 @@ struct PaywallView: View {
             }
         }
         .padding(6)
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
     
     // MARK: - Plan Selector
@@ -216,34 +216,34 @@ struct PaywallView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(selectedTier == .pro ? "Pro Features" : "Host Features")
                 .font(.headline)
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .padding(.leading, 4)
             
             VStack(spacing: 0) {
                 if selectedTier == .pro {
                     GlassFeatureRow(icon: "chart.xyaxis.line", title: "Historical Analytics", description: "30-day resource history")
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider()
                     GlassFeatureRow(icon: "bell.badge", title: "Custom Alerts", description: "Up to 5 alert rules")
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider()
                     GlassFeatureRow(icon: "folder.fill", title: "Server Groups", description: "Organize into 5 groups")
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider()
                     GlassFeatureRow(icon: "star.fill", title: "Favorites", description: "Pin servers to top")
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider()
                     GlassFeatureRow(icon: "arrow.clockwise", title: "Faster Refresh", description: "5s/10s intervals")
                 } else {
                     GlassFeatureRow(icon: "checkmark.seal.fill", title: "All Pro Features", description: "Everything in Pro, plus...")
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider()
                     GlassFeatureRow(icon: "gearshape.2.fill", title: "Automation Rules", description: "Unlimited automated actions")
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider()
                     GlassFeatureRow(icon: "cpu", title: "Node Intelligence", description: "Advanced node analytics")
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider()
                     GlassFeatureRow(icon: "bell.fill", title: "Unlimited Alerts", description: "No limits on alert rules")
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider()
                     GlassFeatureRow(icon: "arrow.up.forward.app", title: "Webhooks", description: "Discord, Slack & more")
                 }
             }
             .padding()
-            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
     
@@ -257,7 +257,7 @@ struct PaywallView: View {
             HStack(spacing: 8) {
                 if isPurchasing {
                     ProgressView()
-                        .tint(.white)
+                        .tint(.accentColor)
                 } else {
                     Image(systemName: "crown.fill")
                         .font(.body.bold())
@@ -298,24 +298,24 @@ struct PaywallView: View {
             } label: {
                 Text("Restore Purchases")
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
             }
             
             // Legal Text
             Text("Payment will be charged to your Apple ID account. Subscription automatically renews unless canceled at least 24 hours before the end of the current period.")
                 .font(.caption2)
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
             
             // Links
             HStack(spacing: 20) {
                 Link("Terms of Use", destination: URL(string: "https://xyidactyl.app/terms")!)
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.secondary)
                 
                 Link("Privacy Policy", destination: URL(string: "https://xyidactyl.app/privacy")!)
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -355,25 +355,25 @@ struct TierTab: View {
             VStack(spacing: 4) {
                 Text(title)
                     .font(.headline)
-                    .foregroundStyle(isSelected ? .white : .white.opacity(0.5))
+                    .foregroundStyle(isSelected ? .primary : .secondary)
                 
                 Text(subtitle)
                     .font(.caption2)
-                    .foregroundStyle(isSelected ? .white.opacity(0.7) : .white.opacity(0.3))
+                    .foregroundStyle(isSelected ? .secondary : .tertiary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .padding(.horizontal, 8)
             .background(
                 isSelected ?
-                    AnyShapeStyle(Color.white.opacity(0.1)) :
+                    AnyShapeStyle(Color(.tertiarySystemFill)) :
                     AnyShapeStyle(Color.clear)
             )
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(
-                        isSelected ? Color.white.opacity(0.2) : Color.clear,
+                        isSelected ? Color.accentColor.opacity(0.3) : Color.clear,
                         lineWidth: 1
                     )
             )
@@ -421,26 +421,23 @@ struct GlassPlanCard: View {
                 
                 Text(title)
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
                 
                 HStack(alignment: .lastTextBaseline, spacing: 2) {
                     Text(price)
                         .font(.title2.bold())
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                     
                     Text(period)
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(.secondary)
                 }
             }
             .frame(maxWidth: .infinity)
             .frame(minHeight: 100)
             .padding(.vertical, 16)
             .padding(.horizontal, 12)
-            .glassEffect(
-                isSelected ? .clear.interactive() : .clear,
-                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .stroke(
@@ -478,11 +475,11 @@ struct GlassFeatureRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
@@ -515,12 +512,12 @@ struct UpgradePromptView: View {
                 
                 Text(feature.displayName)
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
             }
             
             Text(feature.description)
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             
             Button {
@@ -546,11 +543,11 @@ struct UpgradePromptView: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
         )
         .sheet(isPresented: $showPaywall) {
             PaywallView(highlightedFeature: feature)

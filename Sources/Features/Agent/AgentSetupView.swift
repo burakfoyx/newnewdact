@@ -15,7 +15,7 @@ struct AgentSetupView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                LiquidBackgroundView()
+                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -274,7 +274,7 @@ struct AgentDeploySheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                LiquidBackgroundView()
+                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                 
                 ScrollView {

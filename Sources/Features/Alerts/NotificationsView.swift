@@ -12,7 +12,7 @@ struct NotificationsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                LiquidBackgroundView()
+                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                 
                 if events.isEmpty {
@@ -46,7 +46,7 @@ struct NotificationsView: View {
         VStack(spacing: 16) {
             Image(systemName: "bell.slash")
                 .font(.system(size: 50))
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(.tertiary)
             
             Text("No Notifications")
                 .font(.title3.bold())
@@ -54,7 +54,7 @@ struct NotificationsView: View {
             
             Text("Alert notifications will appear here")
                 .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(.secondary)
         }
     }
     
@@ -99,23 +99,23 @@ struct NotificationCard: View {
                 
                 Text(event.message)
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
                 
                 Text(event.timestamp.formatted(date: .abbreviated, time: .shortened))
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
             
             Button(action: onDelete) {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.white.opacity(0.3))
+                    .foregroundStyle(.tertiary)
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
     
     private func iconFor(_ metric: AlertMetric) -> String {

@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @ObservedObject private var backgroundSettings = BackgroundSettings.shared
     @ObservedObject private var subscriptionManager = SubscriptionManager.shared
     @ObservedObject private var serverPrefs = ServerPreferencesManager.shared
     @State private var showPaywall = false
@@ -9,13 +8,12 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                LiquidBackgroundView()
+                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                 
                 List {
                     subscriptionSection
                     agentSection
-                    appearanceSection
                     refreshSection
                     aboutSection
                     linksSection
@@ -23,11 +21,8 @@ struct SettingsView: View {
                     debugSection
                 }
                 .scrollContentBackground(.hidden)
-                .background(Color.clear)
             }
             .navigationTitle("Settings")
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     NotificationBellButton()
@@ -37,7 +32,6 @@ struct SettingsView: View {
                 PaywallView()
             }
         }
-        .background(Color.clear)
     }
     
     // MARK: - Subscription Section
@@ -98,41 +92,7 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - Appearance Section
-    
-    private var appearanceSection: some View {
-        Section("Appearance") {
-            ForEach(BackgroundStyle.allCases) { style in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        backgroundSettings.selectedBackground = style
-                    }
-                } label: {
-                    backgroundStyleRow(style: style)
-                }
-            }
-        }
-    }
-    
-    private func backgroundStyleRow(style: BackgroundStyle) -> some View {
-        HStack {
-            Image(style.rawValue)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: 50, height: 35)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-            
-            Text(style.displayName)
-                .foregroundStyle(.primary)
-            
-            Spacer()
-            
-            if backgroundSettings.selectedBackground == style {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.blue)
-            }
-        }
-    }
+    // Appearance section removed — wallpaper picker no longer needed
     
     // MARK: - Refresh Section
     

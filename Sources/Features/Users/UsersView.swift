@@ -85,7 +85,7 @@ struct UsersView: View {
                                         
                                         Text(user.email)
                                             .font(.caption)
-                                            .foregroundStyle(.white.opacity(0.6))
+                                            .foregroundStyle(.secondary)
                                     }
                                     
                                     Spacer()

@@ -77,7 +77,7 @@ struct AlertsListView: View {
                             .font(.title2.bold())
                             .foregroundStyle(.white)
                             .frame(width: 56, height: 56)
-                            .glassEffect(.clear.interactive(), in: Circle())
+                            .background(.blue, in: Circle())\r\n                            .shadow(radius: 4)
                     }
                     .padding()
                 }

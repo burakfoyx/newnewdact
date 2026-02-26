@@ -12,7 +12,7 @@ struct PanelListView: View {
             ZStack {
 
                 
-                LiquidBackgroundView()
+                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                 
                 if accountManager.accounts.isEmpty {
@@ -21,16 +21,12 @@ struct PanelListView: View {
                     panelListContent
                 }
             }
-            .background(Color.clear)
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("Panels")
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 toolbarContent
             }
         }
-        .scrollContentBackground(.hidden)
-        .background(Color.clear)
         .sheet(isPresented: $showAddPanel) {
             AuthenticationView(isPresented: $showAddPanel)
         }
@@ -54,16 +50,14 @@ struct PanelListView: View {
         VStack(spacing: 20) {
             Image(systemName: "rectangle.stack.badge.plus")
                 .font(.system(size: 60))
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(.secondary)
             
             Text("No Panels")
                 .font(.title2.bold())
-                .foregroundStyle(.white)
             
             Text("Add your first Pterodactyl panel to get started")
                 .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.7))
-                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
             
             Button(action: { showAddPanel = true }) {
                 Label("Add Panel", systemImage: "plus")
@@ -116,7 +110,8 @@ struct PanelListView: View {
                         .font(.title2.bold())
                         .foregroundStyle(.white)
                         .frame(width: 56, height: 56)
-                        .glassEffect(.clear.interactive(), in: Circle())
+                        .background(.blue, in: Circle())
+                        .shadow(radius: 8)
                 }
                 .padding()
             }
@@ -132,7 +127,6 @@ struct PanelListView: View {
         if !accountManager.accounts.isEmpty {
             ToolbarItem(placement: .primaryAction) {
                 EditButton()
-                    .foregroundStyle(.white)
             }
         }
     }
@@ -163,7 +157,6 @@ struct PanelRowContent: View {
                  HStack(spacing: 8) {
                      Text(account.name)
                          .font(.title3.weight(.bold))
-                         .foregroundStyle(.white)
                      
                      if account.hasAdminAccess {
                          Text("ADMIN")
@@ -178,14 +171,14 @@ struct PanelRowContent: View {
                  
                  Text(account.url)
                      .font(.caption)
-                     .foregroundStyle(.white.opacity(0.6))
+                     .foregroundStyle(.secondary)
              }
              
              Spacer()
          }
          .padding(16)
          .frame(maxWidth: .infinity)
-         .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
          .shadow(
              color: isActive ? Color.blue.opacity(0.6) : Color.clear,
              radius: isActive ? 12 : 0
@@ -193,8 +186,8 @@ struct PanelRowContent: View {
          .overlay(
              RoundedRectangle(cornerRadius: 16)
                  .stroke(
-                     isActive ? Color.blue.opacity(0.8) : Color.white.opacity(0.1),
-                     lineWidth: isActive ? 2 : 1
+                     isActive ? Color.blue.opacity(0.8) : Color.clear,
+                     lineWidth: isActive ? 2 : 0
                  )
                  .allowsHitTesting(false)
          )

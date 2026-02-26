@@ -94,7 +94,7 @@ struct DatabasesView: View {
                                         Label(database.username, systemImage: "person.circle")
                                     }
                                     .font(.caption)
-                                    .foregroundStyle(.white.opacity(0.7))
+                                    .foregroundStyle(.secondary)
                                 }
                             }
                             .contextMenu {

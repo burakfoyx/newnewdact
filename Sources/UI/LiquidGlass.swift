@@ -2,37 +2,6 @@ import SwiftUI
 import UIKit
 
 // MARK: - iOS 26 Native Liquid Glass
-// Using the native SwiftUI glassEffect API introduced in iOS 26
-
-// MARK: - View Extension for Native Glass Effect
-
-extension View {
-    /// Apply native iOS 26 Liquid Glass effect with .clear variant (most transparent, edge bending)
-    @ViewBuilder
-    public func liquidGlassEffect(in shape: some Shape = RoundedRectangle(cornerRadius: 20, style: .continuous)) -> some View {
-        self.glassEffect(.clear, in: shape)
-    }
-    
-    /// Apply native iOS 26 Liquid Glass effect with regular variant
-    @ViewBuilder
-    public func liquidGlassRegular(in shape: some Shape = RoundedRectangle(cornerRadius: 20, style: .continuous)) -> some View {
-        self.glassEffect(.regular, in: shape)
-    }
-}
-
-// MARK: - Legacy liquidGlass modifier (now uses native API)
-
-extension View {
-    public func liquidGlass(variant: GlassVariant = .clear, cornerRadius: CGFloat = 24) -> some View {
-        self.glassEffect(.clear, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-    }
-}
-
-public enum GlassVariant {
-    case clear
-    case frosted
-    case heavy
-}
 
 // MARK: - LiquidGlassCard
 
@@ -68,7 +37,23 @@ public struct LiquidButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - GlassEffectContainer
+public enum GlassVariant {
+    case clear
+    case frosted
+    case heavy
+}
+
+extension ButtonStyle where Self == LiquidButtonStyle {
+    public static var liquidGlass: LiquidButtonStyle { LiquidButtonStyle() }
+}
+
+// MARK: - Legacy Glass Modifier (kept for LiquidGlassDock usage)
+
+extension View {
+    public func liquidGlass(variant: GlassVariant = .clear, cornerRadius: CGFloat = 24) -> some View {
+        self.glassEffect(.clear, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+    }
+}
 
 public struct GlassEffectContainer<Content: View>: View {
     let spacing: CGFloat
@@ -85,108 +70,3 @@ public struct GlassEffectContainer<Content: View>: View {
 }
 
 public struct GlassEffectTransition {}
-
-extension ButtonStyle where Self == LiquidButtonStyle {
-    public static var liquidGlass: LiquidButtonStyle { LiquidButtonStyle() }
-}
-
-// MARK: - Background Style Enum
-
-enum BackgroundStyle: String, CaseIterable, Identifiable {
-    case darkBlueBlurred = "Dark Blue Blurred"
-    case darkBlueNoBlur = "Dark Blue No Blur"
-    case nebulaBlurred = "Nebula  Blurred"
-    case nebulaNoBlur = "Nebula No Blur"
-    
-    var id: String { rawValue }
-    
-    var displayName: String {
-        switch self {
-        case .darkBlueBlurred: return "Dark Blue (Blurred)"
-        case .darkBlueNoBlur: return "Dark Blue"
-        case .nebulaBlurred: return "Nebula (Blurred)"
-        case .nebulaNoBlur: return "Nebula"
-        }
-    }
-}
-
-// MARK: - Background Settings Manager
-
-class BackgroundSettings: ObservableObject {
-    static let shared = BackgroundSettings()
-    
-    @Published var selectedBackground: BackgroundStyle {
-        didSet {
-            UserDefaults.standard.set(selectedBackground.rawValue, forKey: "selectedBackground")
-        }
-    }
-    
-    private init() {
-        if let stored = UserDefaults.standard.string(forKey: "selectedBackground"),
-           let style = BackgroundStyle(rawValue: stored) {
-            selectedBackground = style
-        } else {
-            selectedBackground = .darkBlueBlurred
-        }
-    }
-}
-
-// MARK: - App Background View
-
-struct AppBackgroundView: View {
-    @ObservedObject private var settings = BackgroundSettings.shared
-    
-    var body: some View {
-        GeometryReader { geometry in
-            if let uiImage = UIImage(named: settings.selectedBackground.rawValue) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .clipped()
-            } else {
-                // Fallback: Modern Ambient Background
-                ZStack {
-                    // Deep Space Base
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.05, green: 0.05, blue: 0.15), // #0D0D26 (Brighter than #05050D)
-                            Color(red: 0.10, green: 0.10, blue: 0.25)  // #1A1A40 (Brighter than #0D0D26)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    
-                    // Ambient Orbs
-                    GeometryReader { proxy in
-                        // Top Left - Blue/Purple
-                        Circle()
-                            .fill(Color.blue.opacity(0.2))
-                            .frame(width: proxy.size.width * 0.8)
-                            .blur(radius: 80)
-                            .offset(x: -proxy.size.width * 0.2, y: -proxy.size.height * 0.1)
-                        
-                        // Bottom Right - Purple/Pink
-                        Circle()
-                            .fill(Color.purple.opacity(0.2))
-                            .frame(width: proxy.size.width * 0.8)
-                            .blur(radius: 80)
-                            .offset(x: proxy.size.width * 0.4, y: proxy.size.height * 0.6)
-                        
-                        // Center - Cyan
-                        Circle()
-                            .fill(Color.cyan.opacity(0.15))
-                            .frame(width: proxy.size.width * 0.6)
-                            .blur(radius: 60)
-                            .offset(x: proxy.size.width * 0.2, y: proxy.size.height * 0.3)
-                    }
-                }
-                .ignoresSafeArea()
-            }
-        }
-        .ignoresSafeArea()
-    }
-}
-
-// MARK: - Legacy Compatibility
-typealias LiquidBackgroundView = AppBackgroundView

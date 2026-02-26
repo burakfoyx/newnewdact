@@ -10,11 +10,11 @@ struct InfoRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(.secondary)
             Spacer()
             Text(value)
                 .font(.caption.monospaced())
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .lineLimit(1)
                 .truncationMode(.middle)
         }

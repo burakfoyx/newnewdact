@@ -28,7 +28,6 @@ struct ServerDetailsInfoView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("SFTP Details")
                         .font(.headline)
-                        .foregroundStyle(.white)
                     
                     VStack(spacing: 0) {
                         DetailRow(label: "Host", value: server.sftpDetails.ip, copyable: true)
@@ -46,38 +45,36 @@ struct ServerDetailsInfoView: View {
                         // Let's rely on what we have or a "Check Panel" text if missing.
                         DetailRow(label: "Username", value:  server.uuid.prefix(8) + "..." , copyable: true, isPlaceholder: true) 
                     }
-                    .liquidGlassEffect()
+                    .padding()
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                 }
                 
                 // MARK: - Management Section
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Management")
                         .font(.headline)
-                        .foregroundStyle(.white)
                     
                     VStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Server Name")
                                 .font(.caption)
-                                .foregroundStyle(.white.opacity(0.6))
+                                .foregroundStyle(.secondary)
                             TextField("Name", text: $serverName)
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .padding()
-                                .background(Color.white.opacity(0.05))
+                                .background(Color(.tertiarySystemFill))
                                 .cornerRadius(8)
-                                .foregroundStyle(.white)
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Description")
                                 .font(.caption)
-                                .foregroundStyle(.white.opacity(0.6))
+                                .foregroundStyle(.secondary)
                             TextField("Description", text: $serverDescription)
                                 .textFieldStyle(PlainTextFieldStyle())
                                 .padding()
-                                .background(Color.white.opacity(0.05))
+                                .background(Color(.tertiarySystemFill))
                                 .cornerRadius(8)
-                                .foregroundStyle(.white)
                         }
                         
                         Button {
@@ -99,7 +96,7 @@ struct ServerDetailsInfoView: View {
                         .disabled(isRenaming)
                     }
                     .padding()
-                    .liquidGlassEffect()
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                 }
                 
                 // MARK: - Danger Zone
@@ -121,7 +118,7 @@ struct ServerDetailsInfoView: View {
                             .padding()
                         }
                     }
-                    .liquidGlassEffect()
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                 }
                 .alert("Reinstall Server?", isPresented: $showReinstallConfirmation) {
                     Button("Cancel", role: .cancel) { }
@@ -136,7 +133,6 @@ struct ServerDetailsInfoView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Debug Information")
                         .font(.headline)
-                        .foregroundStyle(.white)
                     
                     VStack(spacing: 0) {
                         DetailRow(label: "UUID", value: server.uuid, copyable: true)
@@ -145,7 +141,7 @@ struct ServerDetailsInfoView: View {
                         Divider().background(Color.white.opacity(0.1))
                         DetailRow(label: "Identifier", value: server.identifier, copyable: true)
                     }
-                    .liquidGlassEffect()
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                 }
                 
                 Spacer().frame(height: 100)
@@ -153,7 +149,6 @@ struct ServerDetailsInfoView: View {
             .padding(16)
         }
         .scrollContentBackground(.hidden)
-        .background(Color.clear)
     }
     
     private func renameServer() {
@@ -185,10 +180,10 @@ struct DetailRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(.secondary)
             Spacer()
             Text(value)
-                .foregroundStyle(isPlaceholder ? .white.opacity(0.4) : .white)
+                .foregroundStyle(isPlaceholder ? .tertiary : .primary)
                 .multilineTextAlignment(.trailing)
             
             if copyable {

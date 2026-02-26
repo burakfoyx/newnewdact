@@ -187,7 +187,7 @@ struct AgentSettingsView: View {
     private var logViewerSheet: some View {
         NavigationStack {
             ZStack {
-                LiquidBackgroundView()
+                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                 
                 ScrollView {

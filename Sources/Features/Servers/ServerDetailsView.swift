@@ -62,12 +62,7 @@ struct ServerDetailsView: View {
             // 1. Main Content using TabView
             TabView(selection: $selectedTab) {
                 ForEach(ServerTab.allCases.filter { $0.isPrimary }) { tab in
-                    ZStack {
-                        LiquidBackgroundView()
-                            .ignoresSafeArea()
-                        primaryTabContent(for: tab)
-                    }
-                    .background(Color.clear)
+                    primaryTabContent(for: tab)
                     .navigationTitle(server.name)
                     .navigationBarTitleDisplayMode(.large)
                     .tabItem {
@@ -76,7 +71,7 @@ struct ServerDetailsView: View {
                     .tag(tab)
                 }
             }
-            .background(Color.clear)
+
             .onReceive(viewModel.$currentStats) { stats in
                 if let stats = stats {
                     alertManager.checkStats(stats, limits: server.limits)
@@ -108,14 +103,10 @@ struct ServerDetailsView: View {
                 .zIndex(100)
             }
         }
-        .background(Color.clear)
         .scrollContentBackground(.hidden)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
-                        // Power Menu (Gear)
                         Menu {
                             Button {
                                 viewModel.sendPowerSignal(signal: "start")
@@ -142,13 +133,8 @@ struct ServerDetailsView: View {
                             }
                         } label: {
                             Image(systemName: "gearshape.fill")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(.gray)
-                                .padding(8)
-                                .background(.ultraThinMaterial, in: Circle())
                         }
                         
-                        // Secondary Menu (Three Dots)
                         Menu {
                             ForEach(ServerTab.allCases.filter { !$0.isPrimary }) { tab in
                                 NavigationLink(value: tab) {
@@ -157,27 +143,15 @@ struct ServerDetailsView: View {
                             }
                         } label: {
                             Image(systemName: "ellipsis")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(.gray)
-                                .padding(8)
-                                .background(.ultraThinMaterial, in: Circle())
                         }
                     }
-                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
         .toolbar(.hidden, for: .tabBar)
         .navigationDestination(for: ServerTab.self) { tab in
-            ZStack {
-                LiquidBackgroundView()
-                    .ignoresSafeArea()
-                secondaryTabContent(for: tab)
-            }
-            .background(Color.clear)
+            secondaryTabContent(for: tab)
             .navigationTitle(tab.rawValue)
             .navigationBarTitleDisplayMode(.large)
-            .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .onAppear {
             Task {
@@ -198,13 +172,10 @@ struct ServerDetailsView: View {
             ConsoleSection(server: server, viewModel: viewModel)
         case .analytics:
             ScrollView { AnalyticsSection(server: server, viewModel: viewModel, refreshTrigger: $refreshTrigger) }
-                .scrollContentBackground(.hidden)
         case .alerts:
             ScrollView { AlertsSection(manager: alertManager) }
-                .scrollContentBackground(.hidden)
         case .backups:
             ScrollView { BackupSection(server: server) }
-                .scrollContentBackground(.hidden)
         case .details:
             ServerDetailsInfoView(server: server, viewModel: viewModel)
         default:
@@ -219,16 +190,12 @@ struct ServerDetailsView: View {
             FileManagerView(server: server)
         case .network:
             ScrollView { NetworkSection(server: server) }
-                .scrollContentBackground(.hidden)
         case .databases:
             ScrollView { DatabaseSection(server: server) }
-                .scrollContentBackground(.hidden)
         case .schedules:
             ScrollView { ScheduleSection(server: server) }
-                .scrollContentBackground(.hidden)
         case .users:
             ScrollView { UserSection(server: server) }
-                .scrollContentBackground(.hidden)
         default:
             EmptyView()
         }
@@ -250,7 +217,7 @@ struct ConsoleSection: View {
             HStack {
                 Text("Terminal")
                     .font(.system(size: 13, weight: .semibold, design: .default))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
                 Spacer()
                 if viewModel.isConnected {
                     HStack(spacing: 6) {
@@ -276,20 +243,23 @@ struct ConsoleSection: View {
             }
             .padding()
             .padding()
-            .glassEffect(.regular, in: Rectangle())
+            .background(.regularMaterial)
             
             // Console Output (Scrollable)
             ScrollViewReader { proxy in
                 ScrollView {
-                    Text(AnsiParser.parse(viewModel.consoleOutput))
-                        .font(.custom("Menlo", size: 12))
-                        .lineSpacing(4)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding()
-                        .id("bottom")
+                    LazyVStack(alignment: .leading, spacing: 4) {
+                        ForEach(viewModel.consoleLines) { line in
+                            Text(line.text)
+                                .font(.custom("Menlo", size: 12))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .id("bottom")
                 }
-                .onChange(of: viewModel.consoleOutput) { _, _ in
+                .onChange(of: viewModel.consoleLines.last?.id) { _, _ in
                     withAnimation {
                         proxy.scrollTo("bottom", anchor: .bottom)
                     }
@@ -298,33 +268,30 @@ struct ConsoleSection: View {
                     isInputFocused = false
                 }
             }
-            .glassEffect(.regular, in: Rectangle())
+            .background(Color(.secondarySystemGroupedBackground))
             
             // Input Area
             HStack {
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.secondary)
                 TextField("Enter command...", text: $viewModel.commandInput)
                     .focused($isInputFocused)
                     .onSubmit {
                         viewModel.sendCommand()
-                        isInputFocused = true // Keep focus after send
+                        isInputFocused = true
                     }
                     .submitLabel(.send)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                     .font(.custom("Menlo", size: 14))
             }
             .padding()
             .padding()
-            // .background(Color.black.opacity(0.8)) // Removed opaque background
-            .glassEffect(.regular, in: Rectangle())
+            .background(.regularMaterial)
         }
 
         .cornerRadius(12)
-        // .padding(.horizontal) // Remove horizontal padding to fill width if desired, or keep it
         .padding(16)
-        .padding(.bottom, isInputFocused ? 0 : 0) // Adjust if needed
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12)) // Outer container glass
+        .padding(.bottom, isInputFocused ? 0 : 0)
     }
 }
 
@@ -346,7 +313,6 @@ struct AnalyticsSection: View {
             HStack {
                 Text("Analytics")
                     .font(.headline)
-                    .foregroundStyle(.white)
                 Spacer()
                 
                 Button {
@@ -426,7 +392,7 @@ struct PlaceholderSection: View {
         VStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.system(size: 48))
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(.secondary)
             
             Text(title)
                 .font(.title3.weight(.bold))
@@ -435,12 +401,12 @@ struct PlaceholderSection: View {
             Text(description)
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(.secondary)
                 .padding(.horizontal)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 60)
-        .liquidGlassEffect()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -449,7 +415,12 @@ struct PlaceholderSection: View {
 // MARK: - ViewModel
 
 class ServerDetailsViewModel: ObservableObject {
-    @Published var consoleOutput: String = ""
+    struct ConsoleLine: Identifiable, Equatable {
+        let id = UUID()
+        let text: AttributedString
+    }
+    
+    @Published var consoleLines: [ConsoleLine] = []
     @Published var commandInput: String = ""
     @Published var currentStats: ServerStats?
     @Published var isConnected = false
@@ -462,7 +433,7 @@ class ServerDetailsViewModel: ObservableObject {
         self.serverId = server.identifier
         
         await MainActor.run {
-            self.consoleOutput = "Connecting to \(server.name)...\n"
+            self.consoleLines = [ConsoleLine(text: AttributedString("Connecting to \(server.name)..."))]
             self.isConnected = false
             self.errorMessage = nil
             // Don't clear currentStats immediately to avoid flickering if re-connecting
@@ -503,7 +474,7 @@ class ServerDetailsViewModel: ObservableObject {
             
         } catch {
             await MainActor.run {
-                self.consoleOutput += "Connection failed: \(error.localizedDescription)\n"
+                self.consoleLines.append(ConsoleLine(text: AttributedString("Connection failed: \(error.localizedDescription)")))
                 self.errorMessage = error.localizedDescription
             }
         }
@@ -522,25 +493,27 @@ class ServerDetailsViewModel: ObservableObject {
                 guard let self = self else { return }
                 switch event {
                 case .consoleOutput(let text):
-                    self.consoleOutput += text + "\n"
-                    // Cap console output to avoid memory issues (e.g. last 1000 lines)
-                    if self.consoleOutput.count > 50000 {
-                        self.consoleOutput = String(self.consoleOutput.suffix(50000))
+                    let newLines = text.components(separatedBy: .newlines).map { line in
+                        ConsoleLine(text: AnsiParser.parse(line))
+                    }
+                    self.consoleLines.append(contentsOf: newLines)
+                    if self.consoleLines.count > 1000 {
+                        self.consoleLines.removeFirst(self.consoleLines.count - 1000)
                     }
                 case .stats(let json):
                     self.parseStats(json)
                 case .status(let status):
                     self.updateStatus(status)
                 case .connected:
-                    self.consoleOutput += "[System] Connected to server stream.\n"
+                    self.consoleLines.append(ConsoleLine(text: AttributedString("[System] Connected to server stream.")))
                     self.isConnected = true
                 case .disconnected:
-                    self.consoleOutput += "[System] Disconnected.\n"
+                    self.consoleLines.append(ConsoleLine(text: AttributedString("[System] Disconnected.")))
                     self.isConnected = false
                 case .installOutput(let text):
-                    self.consoleOutput += "[Install] \(text)\n"
+                    self.consoleLines.append(ConsoleLine(text: AttributedString("[Install] \(text)")))
                 case .daemonError(let error):
-                    self.consoleOutput += "[Error] \(error)\n"
+                    self.consoleLines.append(ConsoleLine(text: AttributedString("[Error] \(error)")))
                 }
             }
             .store(in: &cancellables)
@@ -623,7 +596,7 @@ struct AlertsSection: View {
                         .foregroundStyle(.white)
                     Spacer()
                     Image(systemName: "chevron.right")
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(.secondary)
                 }
                 .padding()
                 .background(Color.white.opacity(0.05))
@@ -635,7 +608,7 @@ struct AlertsSection: View {
             
             Text("Set up custom triggers for CPU, RAM, and Disk usage.")
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(.secondary)
                 .padding(.horizontal)
             
             Spacer()

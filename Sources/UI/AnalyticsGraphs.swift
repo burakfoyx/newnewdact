@@ -100,15 +100,25 @@ class AnalyticsViewModel: ObservableObject {
             return
         }
         
-        // CPU
-        let cpuValues = history.map { $0.cpuPercent }
-        avgCPU = cpuValues.reduce(0, +) / Double(cpuValues.count)
-        peakCPU = cpuValues.max() ?? 0
+        var sumCPU: Double = 0
+        var maxCPU: Double = 0
+        var sumRAM: Double = 0
+        var maxRAM: Double = 0
         
-        // RAM (MB)
-        let ramValues = history.map { Double($0.memoryUsedBytes) / 1024 / 1024 }
-        avgRAM = ramValues.reduce(0, +) / Double(ramValues.count)
-        peakRAM = ramValues.max() ?? 0
+        for item in history {
+            let cpu = item.cpuPercent
+            sumCPU += cpu
+            if cpu > maxCPU { maxCPU = cpu }
+            
+            let ram = Double(item.memoryUsedBytes) / 1024 / 1024
+            sumRAM += ram
+            if ram > maxRAM { maxRAM = ram }
+        }
+        
+        avgCPU = sumCPU / Double(history.count)
+        peakCPU = maxCPU
+        avgRAM = sumRAM / Double(history.count)
+        peakRAM = maxRAM
     }
     
     private func generateInsights() {
@@ -213,7 +223,7 @@ struct ServerResourceUsageView: View {
                     .foregroundStyle(.white)
             }
             .padding()
-            .liquidGlassEffect()
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
             
             // 2. 2x2 Stats Grid
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
@@ -246,20 +256,20 @@ struct ServerResourceUsageView: View {
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                             .font(.title2)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 .padding()
-                .liquidGlassEffect()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                 
                 // Chart
                 Group {
                     if vm.chartData.isEmpty {
                         VStack(spacing: 12) {
-                            ProgressView().tint(.white)
+                            ProgressView()
                             Text("Gathering Data...")
                                 .font(.caption)
-                                .foregroundStyle(.white.opacity(0.7))
+                                .foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
@@ -301,10 +311,10 @@ struct ServerResourceUsageView: View {
                             AxisValueLabel {
                                 if vm.selectedRange == .days7 || vm.selectedRange == .days30 {
                                     Text(date, format: .dateTime.month().day())
-                                        .foregroundStyle(.white.opacity(0.5))
+                                        .foregroundStyle(.secondary)
                                 } else {
                                     Text(date, format: .dateTime.hour().minute())
-                                        .foregroundStyle(.white.opacity(0.5))
+                                        .foregroundStyle(.secondary)
                                 }
                             }
                         }
@@ -312,11 +322,11 @@ struct ServerResourceUsageView: View {
                 }
                 .chartYAxis {
                     AxisMarks(position: .leading) { value in
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4])).foregroundStyle(.white.opacity(0.1))
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [4])).foregroundStyle(.secondary.opacity(0.2))
                         if let doubleValue = value.as(Double.self) {
                             AxisValueLabel {
                                 Text("\(Int(doubleValue))\(vm.selectedResource.unit)")
-                                    .foregroundStyle(.white.opacity(0.5))
+                                    .foregroundStyle(.secondary)
                                     .font(.caption2)
                             }
                         }
@@ -326,28 +336,26 @@ struct ServerResourceUsageView: View {
                 } // End Group
                 .frame(height: 250)
                 .padding()
-                .liquidGlassEffect()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
             }
             
             // 4. Insights Footer
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "lightbulb.fill")
-                    
                         .foregroundStyle(.yellow)
                     Text("Resource Insight")
                         .font(.headline)
-                        .foregroundStyle(.white)
                 }
                 
                 Text(vm.insightText)
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .liquidGlassEffect()
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         }
         .onAppear {
             vm.refresh()
@@ -394,14 +402,13 @@ struct StatBox: View {
                 Spacer()
                 Text(title)
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.secondary)
             }
             
             Text(value)
                 .font(.title3.bold())
-                .foregroundStyle(.white)
         }
         .padding()
-        .liquidGlassEffect()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }

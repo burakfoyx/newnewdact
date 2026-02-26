@@ -98,7 +98,7 @@ struct SchedulesView: View {
                                         Spacer()
                                         if let lastRun = schedule.lastRunAt {
                                             Text("Last: " + formatDate(lastRun))
-                                                .foregroundStyle(.white.opacity(0.5))
+                                                .foregroundStyle(.secondary)
                                         }
                                     }
                                     .font(.caption)

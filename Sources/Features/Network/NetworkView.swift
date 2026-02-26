@@ -54,7 +54,7 @@ struct NetworkView: View {
                  // Header Hoisted
                 
                 if viewModel.isLoading && viewModel.allocations.isEmpty {
-                    ProgressView().tint(.white)
+                    ProgressView()
                         .padding(.top, 40)
                 } else if let error = viewModel.error {
                     VStack(spacing: 12) {
@@ -63,21 +63,21 @@ struct NetworkView: View {
                             .foregroundStyle(.orange)
                         Text(error)
                             .multilineTextAlignment(.center)
-                            .foregroundStyle(.white.opacity(0.8))
+                            .foregroundStyle(.secondary)
                         Button("Retry") {
                             Task { await viewModel.loadAllocations() }
                         }
                         .buttonStyle(LiquidButtonStyle())
                     }
                     .padding(.top, 40)
-                    .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
                 } else if viewModel.allocations.isEmpty {
                     VStack(spacing: 12) {
                         Image(systemName: "network.slash")
                             .font(.system(size: 40))
-                            .foregroundStyle(.white.opacity(0.3))
+                            .foregroundStyle(.tertiary)
                         Text("No allocations found.")
-                            .foregroundStyle(.white.opacity(0.5))
+                            .foregroundStyle(.secondary)
                     }
                     .padding(.top, 40)
                 } else {
@@ -107,7 +107,7 @@ struct AllocationRow: View {
                 HStack(spacing: 8) {
                     Text(allocation.ipAlias ?? allocation.ip)
                         .font(.headline)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                     
                     if allocation.isDefault {
                         Text("PRIMARY")
@@ -122,7 +122,7 @@ struct AllocationRow: View {
                 
                 Text("Port: \(allocation.port)")
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
             
@@ -130,11 +130,11 @@ struct AllocationRow: View {
             
             if let notes = allocation.notes, !notes.isEmpty {
                 Image(systemName: "note.text")
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.secondary)
             }
         }
         .padding()
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         .contextMenu {
             Button {
                 UIPasteboard.general.string = "\(allocation.ipAlias ?? allocation.ip):\(allocation.port)"

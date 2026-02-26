@@ -109,15 +109,15 @@ struct BackupView: View {
                     }
                     
                     if viewModel.isLoading && viewModel.backups.isEmpty {
-                        ProgressView().tint(.white)
+                        ProgressView()
                             .padding(.top, 40)
                     } else if viewModel.backups.isEmpty && !viewModel.isLoading {
                          VStack(spacing: 12) {
                              Image(systemName: "archivebox")
                                 .font(.system(size: 40))
-                                .foregroundStyle(.white.opacity(0.3))
+                                .foregroundStyle(.tertiary)
                              Text("No backups found.")
-                                .foregroundStyle(.white.opacity(0.5))
+                                .foregroundStyle(.secondary)
                          }
                          .padding(.top, 40)
                     } else {
@@ -181,7 +181,8 @@ struct BackupView: View {
                             .font(.title2.bold())
                             .foregroundStyle(.white)
                             .frame(width: 56, height: 56)
-                            .glassEffect(.clear.interactive(), in: Circle())
+                            .background(.blue, in: Circle())
+                            .shadow(radius: 8)
                     }
                     .padding()
                 }
@@ -235,7 +236,7 @@ struct BackupRow: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(backup.name)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                     .font(.headline)
                 
                 HStack {
@@ -243,7 +244,7 @@ struct BackupRow: View {
                         .font(.caption2)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Color.white.opacity(0.1))
+                        .background(Color(.tertiarySystemFill))
                         .cornerRadius(4)
                     
                     Text(formatBytes(Int64(backup.bytes)))
@@ -254,7 +255,7 @@ struct BackupRow: View {
                     Text(formatDate(backup.createdAt))
                         .font(.caption)
                 }
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(.secondary)
             }
             
             Spacer()

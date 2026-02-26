@@ -112,7 +112,7 @@ struct VariableRow: View {
             
             Text(variable.description)
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(.secondary)
                 .lineLimit(2)
             
             HStack {
@@ -154,7 +154,7 @@ struct VariableRow: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.black.opacity(0.2))
                         .cornerRadius(8)
-                        .foregroundStyle(.white.opacity(0.7))
+                        .foregroundStyle(.secondary)
                     
                     Image(systemName: "lock.fill")
                         .foregroundStyle(.gray)

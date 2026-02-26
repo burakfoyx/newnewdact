@@ -159,12 +159,10 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
             // Handle both single string and array of strings (history often comes as array)
             if let lines = args as? [String] {
                 for line in lines {
-                    let clean = filterAnsiCodes(line)
-                    eventSubject.send(.consoleOutput(clean))
+                    eventSubject.send(.consoleOutput(line))
                 }
             } else if let line = args.first as? String {
-                let clean = filterAnsiCodes(line)
-                eventSubject.send(.consoleOutput(clean))
+                eventSubject.send(.consoleOutput(line))
             }
         case "stats":
             let content = (args.first as? String) ?? ""
@@ -180,13 +178,4 @@ class WebSocketClient: NSObject, URLSessionWebSocketDelegate {
         }
     }
     
-    private func filterAnsiCodes(_ text: String) -> String {
-        // More robust ANSI regex
-        let ansiPattern = #"\\u001B\[[0-9;]*[a-zA-Z]"#
-        if let regex = try? NSRegularExpression(pattern: ansiPattern, options: []) {
-            let range = NSRange(text.startIndex..<text.endIndex, in: text)
-            return regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "")
-        }
-        return text
-    }
 }

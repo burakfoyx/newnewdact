@@ -58,7 +58,7 @@ struct HistoryView: View {
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 16)
-                    .glassEffect(.clear, in: Capsule())
+                    .background(Color(.tertiarySystemFill), in: Capsule())
                     
                     // Time Range Selector
                     timeRangeSelector
@@ -121,20 +121,20 @@ struct HistoryView: View {
             
             Text("How Analytics Work")
                 .font(.headline)
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
             
             Text("Analytics data is collected while viewing the Console tab. Open the Console to start collecting real-time stats, then return here to see your charts.")
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             
             Text("Pull down to refresh")
                 .font(.caption2)
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(.tertiary)
                 .padding(.top, 4)
         }
         .padding()
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
     
     // MARK: - Refresh Data
@@ -243,14 +243,14 @@ struct HistoryView: View {
                     .foregroundStyle(.yellow)
                 Text(selectedMetric.rawValue)
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 Spacer()
                 
                 // Show data range info
                 if !chartData.isEmpty {
                     Text("\(chartData.count) points")
                         .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(.tertiary)
                 }
             }
             
@@ -301,10 +301,10 @@ struct HistoryView: View {
                     AxisMarks(values: .automatic) { value in
                         if domain.useDataRange {
                             AxisValueLabel(format: .dateTime.hour().minute())
-                                .foregroundStyle(.white.opacity(0.6))
+                                .foregroundStyle(.secondary)
                         } else {
                             AxisValueLabel(format: xAxisFormat)
-                                .foregroundStyle(.white.opacity(0.6))
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -313,11 +313,11 @@ struct HistoryView: View {
                         AxisValueLabel {
                             if let v = value.as(Double.self) {
                                 Text("\(Int(v))\(selectedMetric.unit)")
-                                    .foregroundStyle(.white.opacity(0.6))
+                                    .foregroundStyle(.secondary)
                             }
                         }
                         AxisGridLine()
-                            .foregroundStyle(.white.opacity(0.1))
+                            .foregroundStyle(.secondary.opacity(0.3))
                     }
                 }
                 .frame(height: 200)
@@ -326,22 +326,22 @@ struct HistoryView: View {
             }
         }
         .padding()
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
     
     private var noDataView: some View {
         VStack(spacing: 12) {
             Image(systemName: "chart.line.downtrend.xyaxis")
                 .font(.largeTitle)
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(.tertiary)
             
             Text("No data available")
                 .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(.secondary)
             
             Text("Data collection will begin automatically")
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.4))
+                .foregroundStyle(.tertiary)
         }
         .frame(height: 200)
         .frame(maxWidth: .infinity)
@@ -369,7 +369,7 @@ struct HistoryView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Insights")
                 .font(.headline)
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
             
             VStack(spacing: 8) {
                 if summary.isUnderutilized {
@@ -436,7 +436,7 @@ struct HistoryView: View {
                 }
             }
             .padding()
-            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
     
@@ -545,22 +545,18 @@ struct TimeRangeButton: View {
                         .font(.caption2)
                 }
             }
-            .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
+            .foregroundStyle(isSelected ? .primary : .secondary)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(
                 isSelected ?
-                    AnyShapeStyle(LinearGradient(
-                        colors: [.white.opacity(0.2), .white.opacity(0.1)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )) :
+                    AnyShapeStyle(Color(.tertiarySystemFill)) :
                     AnyShapeStyle(Color.clear)
             )
             .clipShape(Capsule())
             .overlay(
                 Capsule()
-                    .stroke(Color.white.opacity(isSelected ? 0.3 : 0.1), lineWidth: 1)
+                    .stroke(Color.accentColor.opacity(isSelected ? 0.3 : 0.1), lineWidth: 1)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -581,13 +577,15 @@ struct MetricButton: View {
                 Text(metric.rawValue)
                     .font(.subheadline)
             }
-            .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
+            .foregroundStyle(isSelected ? .primary : .secondary)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .glassEffect(
-                isSelected ? .clear.interactive() : .clear,
-                in: Capsule()
+            .background(
+                isSelected ?
+                    AnyShapeStyle(Color(.tertiarySystemFill)) :
+                    AnyShapeStyle(Color.clear)
             )
+            .clipShape(Capsule())
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -616,15 +614,15 @@ struct SummaryCard: View {
             
             Text(value)
                 .font(.title2.bold())
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
             
             Text(title)
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(.secondary)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
     
     private func trendColor(_ trend: UsageTrend) -> Color {
@@ -654,11 +652,11 @@ struct InsightRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()

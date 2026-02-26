@@ -67,7 +67,7 @@ struct FileEditorView: View {
                         HStack {
                             Text(viewModel.filePath)
                                 .font(.caption.monospaced())
-                                .foregroundStyle(.white.opacity(0.7))
+                                .foregroundStyle(.secondary)
                             Spacer()
                             if viewModel.isSaving {
                                 ProgressView()

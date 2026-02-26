@@ -53,7 +53,7 @@ struct ApiKeysView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                LiquidBackgroundView()
+                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                 
                 if viewModel.isLoading && viewModel.apiKeys.isEmpty {
@@ -85,7 +85,7 @@ struct ApiKeysView: View {
                                  .font(.title2.bold())
                                  .foregroundStyle(.white)
                                  .frame(width: 56, height: 56)
-                                 .glassEffect(.clear.interactive(), in: Circle())
+                                 .background(.blue, in: Circle())
                          }
                          .padding()
                      }
@@ -161,7 +161,7 @@ struct ApiKeyRow: View {
                     Text("Created: \(key.createdAt.prefix(10))")
                 }
                 .font(.caption2)
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(.secondary)
             }
             
             Spacer()
@@ -176,7 +176,7 @@ struct ApiKeyRow: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 16))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
         .contentShape(RoundedRectangle(cornerRadius: 16))
     }
 }

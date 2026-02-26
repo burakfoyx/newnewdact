@@ -9,16 +9,13 @@ enum AppTheme: String, CaseIterable, Codable, Identifiable {
     
     var id: String { rawValue }
     
-    var gradientColors: [Color] {
+    var accentColor: Color {
         switch self {
-        case .blue: return [.blue.opacity(0.4), .cyan.opacity(0.3), .indigo.opacity(0.4)]
-        case .purple: return [.purple.opacity(0.4), .pink.opacity(0.3), .indigo.opacity(0.4)]
-        case .red: return [.red.opacity(0.4), .orange.opacity(0.3), .purple.opacity(0.4)]
-        case .green: return [.green.opacity(0.4), .mint.opacity(0.3), .teal.opacity(0.4)]
-        case .gold: return [.orange.opacity(0.4), .yellow.opacity(0.3), .brown.opacity(0.4)]
+        case .blue: return .blue
+        case .purple: return .purple
+        case .red: return .red
+        case .green: return .green
+        case .gold: return .orange
         }
-    }
-    var mainColor: Color {
-        gradientColors.first ?? .blue
     }
 }

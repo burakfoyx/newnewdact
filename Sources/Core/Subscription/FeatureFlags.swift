@@ -166,7 +166,7 @@ struct FeatureGatedModifier: ViewModifier {
                         Image(systemName: "lock.fill")
                             .foregroundStyle(.white)
                             .padding(6)
-                            .glassEffect(.clear, in: Circle())
+                            .background(.regularMaterial, in: Circle())
                     )
             }
             .sheet(isPresented: $showingPaywall) {

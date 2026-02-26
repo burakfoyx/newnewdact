@@ -9,7 +9,7 @@ struct AuthenticationView: View {
         NavigationStack {
             ZStack {
                 // Background - tap to dismiss keyboard
-                LiquidBackgroundView()
+                Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                     .onTapGesture {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -27,10 +27,9 @@ struct AuthenticationView: View {
                             VStack(spacing: 8) {
                                 Text("Connect Panel")
                                     .font(.largeTitle.weight(.bold))
-                                    .foregroundStyle(.white)
                                 Text("Enter your Pterodactyl credentials")
                                     .font(.subheadline)
-                                    .foregroundStyle(.white.opacity(0.7))
+                                    .foregroundStyle(.secondary)
                             }
                             .padding(.top, 60)
                             
@@ -45,7 +44,7 @@ struct AuthenticationView: View {
                                             .textContentType(.name)
                                             .focused($isFieldFocused)
                                             .padding()
-                                            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                                     }
 
                                     VStack(alignment: .leading) {
@@ -58,7 +57,7 @@ struct AuthenticationView: View {
                                             .textInputAutocapitalization(.never)
                                             .focused($isFieldFocused)
                                             .padding()
-                                            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                                     }
                                     
                                     VStack(alignment: .leading) {
@@ -69,7 +68,7 @@ struct AuthenticationView: View {
                                             .textContentType(.password)
                                             .focused($isFieldFocused)
                                             .padding()
-                                            .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 12))
+                                            .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 12))
                                     }
                                     
                                     if let error = viewModel.errorMessage {
@@ -134,7 +133,7 @@ struct PermissionCheckOverlay: View {
                 // Outer ring
                 Circle()
                     .stroke(lineWidth: 3)
-                    .foregroundStyle(.white.opacity(0.2))
+                    .foregroundStyle(.tertiary)
                     .frame(width: 120, height: 120)
                 
                 // Animated ring
@@ -153,24 +152,22 @@ struct PermissionCheckOverlay: View {
                     .scaleEffect(state == .adminDetected || state == .userDetected ? 1.2 : 1.0)
                     .animation(.spring(response: 0.4, dampingFraction: 0.6), value: state)
             }
-            .glassEffect(.clear, in: Circle())
             .frame(width: 140, height: 140)
             
             // Status Text
             VStack(spacing: 8) {
                 Text(statusTitle)
                     .font(.title2.weight(.bold))
-                    .foregroundStyle(.white)
                 
                 Text(statusSubtitle)
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             .padding(.horizontal, 40)
         }
         .padding(40)
-        .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
     }
     
     private var trimValue: CGFloat {

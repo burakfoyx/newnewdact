@@ -10,7 +10,7 @@ struct NetworkSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             if isLoading {
-                ProgressView().tint(.white)
+                ProgressView()
             } else if allocations.isEmpty {
                 ContentUnavailableView("No Allocations", systemImage: "network")
             } else {
@@ -19,13 +19,13 @@ struct NetworkSection: View {
                         VStack(alignment: .leading) {
                             Text("\(allocation.ip):\(allocation.port)")
                                 .font(.system(.body, design: .monospaced))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                                 .textSelection(.enabled)
                             
                             if let alias = allocation.ipAlias {
                                 Text(alias)
                                     .font(.caption)
-                                    .foregroundStyle(.white.opacity(0.6))
+                                    .foregroundStyle(.secondary)
                             }
                         }
                         
@@ -44,11 +44,11 @@ struct NetworkSection: View {
                         if let notes = allocation.notes {
                              Text(notes)
                                 .font(.caption)
-                                .foregroundStyle(.white.opacity(0.5))
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .padding()
-                    .liquidGlassEffect()
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                 }
                 
                 // Add allocation button (shown if server has room for more)
@@ -63,11 +63,11 @@ struct NetworkSection: View {
                                 .foregroundStyle(.blue)
                             Text("Add Allocation")
                                 .font(.subheadline.weight(.medium))
-                                .foregroundStyle(.white.opacity(0.8))
+                                .foregroundStyle(.secondary)
                             Spacer()
                         }
                         .padding()
-                        .liquidGlassEffect()
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                     }
                 }
             }
@@ -99,21 +99,21 @@ struct BackupSection: View {
             HStack {
                 Text("Backups")
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 Spacer()
                 Button {
                     showCreateSheet = true
                 } label: {
                     Image(systemName: "plus")
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                         .padding(8)
-                        .glassEffect(.clear, in: Circle())
+                        .background(.blue, in: Circle())
                 }
             }
             
             if isLoading {
-                ProgressView().tint(.white)
+                ProgressView()
             } else if backups.isEmpty {
                  ContentUnavailableView("No Backups", systemImage: "archivebox")
             } else {
@@ -122,10 +122,10 @@ struct BackupSection: View {
                         VStack(alignment: .leading) {
                             Text(backup.name)
                                 .font(.headline)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             Text(formatBytes(backup.bytes))
                                 .font(.caption)
-                                .foregroundStyle(.white.opacity(0.7))
+                                .foregroundStyle(.secondary)
                         }
                         Spacer()
                         if backup.completedAt != nil {
@@ -139,7 +139,7 @@ struct BackupSection: View {
                         }
                     }
                     .padding()
-                    .liquidGlassEffect()
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                     .contextMenu {
                         Button(role: .destructive) {
                             deleteBackup(backup)
@@ -205,17 +205,17 @@ struct DatabaseSection: View {
                             .foregroundStyle(.purple)
                         Text(db.name)
                             .fontWeight(.medium)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                     }
                     
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider()
                     
                     InfoRow(label: "Endpoint", value: "\(db.host.address):\(db.host.port)")
                     InfoRow(label: "Username", value: db.username)
                     // Pterodactyl doesn't show password by default in list, requires reset usually
                 }
                 .padding()
-                .liquidGlassEffect()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
             }
         }
         .padding(16)
@@ -237,10 +237,10 @@ struct ScheduleSection: View {
                 HStack {
                     VStack(alignment: .leading) {
                         Text(schedule.name)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                         Text("Next: \(schedule.nextRunAt ?? "Never")")
                             .font(.caption)
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(.secondary)
                     }
                     Spacer()
                     if schedule.isActive {
@@ -252,7 +252,7 @@ struct ScheduleSection: View {
                     }
                 }
                 .padding()
-                .liquidGlassEffect()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
             }
         }
         .padding(16)
@@ -281,15 +281,15 @@ struct UserSection: View {
                     
                     VStack(alignment: .leading) {
                         Text(user.username)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                         Text(user.email)
                             .font(.caption)
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(.secondary)
                     }
                     Spacer()
                 }
                 .padding()
-                .liquidGlassEffect()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
             }
         }
         .padding(16)
