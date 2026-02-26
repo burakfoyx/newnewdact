@@ -77,7 +77,8 @@ struct AlertsListView: View {
                             .font(.title2.bold())
                             .foregroundStyle(.white)
                             .frame(width: 56, height: 56)
-                            .background(.blue, in: Circle())\r\n                            .shadow(radius: 4)
+                            .background(.blue, in: Circle())
+                            .shadow(radius: 4)
                     }
                     .padding()
                 }
@@ -176,7 +177,7 @@ struct AlertRuleRow: View {
         .padding(.vertical, 16)
         .padding(.horizontal, 20)
         .frame(maxWidth: .infinity)
-        .liquidGlass(variant: .clear, cornerRadius: 20)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))
     }
     
     func iconFor(_ metric: AlertMetric) -> String {

@@ -162,6 +162,6 @@ struct VariableRow: View {
             }
         }
         .padding()
-        .liquidGlass(variant: .clear)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 }

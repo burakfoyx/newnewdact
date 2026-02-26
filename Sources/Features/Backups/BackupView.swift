@@ -269,7 +269,7 @@ struct BackupRow: View {
             }
         }
         .padding()
-        .liquidGlass(variant: .clear)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
     
     func formatBytes(_ bytes: Int64) -> String {
