@@ -20,7 +20,7 @@ class ResourceCollector: ObservableObject {
     private var lastCollectionPerServer: [String: Date] = [:]
     
     // Cache AlertManagers per server to avoid re-creating from storage on every poll
-    private var alertManagerCache: [String: AlertManager] = []
+    private var alertManagerCache: [String: AlertManager] = [:]
     
     // Polling Timer
     private var pollingTimer: Timer?
