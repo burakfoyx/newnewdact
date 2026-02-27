@@ -536,30 +536,44 @@ class ServerDetailsViewModel: ObservableObject {
         }
         
         WebSocketClient.shared.eventPublisher
-            .receive(on: RunLoop.main)
             .sink { [weak self] event in
                 guard let self = self else { return }
                 switch event {
                 case .consoleOutput(let text):
-                    let newLines = text.components(separatedBy: .newlines).map { line in
-                        ConsoleLine(text: AnsiParser.parse(line))
+                    Task.detached {
+                        let newLines = text.components(separatedBy: .newlines).map { line in
+                            ConsoleLine(text: AnsiParser.parse(line))
+                        }
+                        await MainActor.run {
+                            self.lineBuffer.append(contentsOf: newLines)
+                        }
                     }
-                    // Append to buffer instead of directly to @Published
-                    self.lineBuffer.append(contentsOf: newLines)
                 case .stats(let json):
-                    self.parseStats(json)
+                    Task.detached {
+                        self.parseStats(json)
+                    }
                 case .status(let status):
-                    self.updateStatus(status)
+                    Task { @MainActor in
+                        self.updateStatus(status)
+                    }
                 case .connected:
-                    self.lineBuffer.append(ConsoleLine(text: AttributedString("[System] Connected to server stream.")))
-                    self.isConnected = true
+                    Task { @MainActor in
+                        self.lineBuffer.append(ConsoleLine(text: AttributedString("[System] Connected to server stream.")))
+                        self.isConnected = true
+                    }
                 case .disconnected:
-                    self.lineBuffer.append(ConsoleLine(text: AttributedString("[System] Disconnected.")))
-                    self.isConnected = false
+                    Task { @MainActor in
+                        self.lineBuffer.append(ConsoleLine(text: AttributedString("[System] Disconnected.")))
+                        self.isConnected = false
+                    }
                 case .installOutput(let text):
-                    self.lineBuffer.append(ConsoleLine(text: AttributedString("[Install] \(text)")))
+                    Task { @MainActor in
+                        self.lineBuffer.append(ConsoleLine(text: AttributedString("[Install] \(text)")))
+                    }
                 case .daemonError(let error):
-                    self.lineBuffer.append(ConsoleLine(text: AttributedString("[Error] \(error)")))
+                    Task { @MainActor in
+                        self.lineBuffer.append(ConsoleLine(text: AttributedString("[Error] \(error)")))
+                    }
                 }
             }
             .store(in: &cancellables)

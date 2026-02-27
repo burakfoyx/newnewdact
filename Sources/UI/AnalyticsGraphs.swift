@@ -304,7 +304,6 @@ struct ServerResourceUsageView: View {
                     "Agent": .green
                 ])
                 .chartYScale(domain: 0...vm.yAxisMax)
-                .animation(.easeInOut, value: vm.chartData)
                 .chartXAxis {
                     AxisMarks(values: .automatic(desiredCount: 5)) { value in
                         if let date = value.as(Date.self) {
