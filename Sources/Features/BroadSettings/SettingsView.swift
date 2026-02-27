@@ -177,6 +177,10 @@ struct SettingsView: View {
             Button("Reset Debug Tier") {
                 subscriptionManager.debugTierOverride = nil
             }
+            
+            NavigationLink("Live CPU App Profiler") {
+                AppProfilerView()
+            }
         }
     }
 }
