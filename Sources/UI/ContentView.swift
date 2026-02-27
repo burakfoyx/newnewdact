@@ -5,14 +5,6 @@ struct ContentView: View {
     @StateObject private var accountManager = AccountManager.shared
     @State private var selectedTab = 0
     
-    init() {
-        // Configure UI appearances for iOS 26 native transparent bars
-        configureAppearances()
-        
-        // Trigger Local Network Permission immediately
-        triggerLocalNetworkPermission()
-    }
-    
     var body: some View {
         Group {
             if accountManager.activeAccount != nil {
@@ -20,6 +12,9 @@ struct ContentView: View {
             } else {
                 AuthenticationView(isPresented: .constant(true))
             }
+        }
+        .onAppear {
+            configureAppearances()
         }
     }
     
@@ -71,25 +66,6 @@ struct ContentView: View {
         UINavigationBar.appearance().standardAppearance = navBarAppearance
         UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
         UINavigationBar.appearance().compactAppearance = navBarAppearance
-    }
-    
-    private func triggerLocalNetworkPermission() {
-        DispatchQueue.global(qos: .background).async {
-            let socket = socket(AF_INET, SOCK_STREAM, 0)
-            guard socket >= 0 else { return }
-            
-            var addr = sockaddr_in()
-            addr.sin_family = sa_family_t(AF_INET)
-            addr.sin_port = CFSwapInt16HostToBig(80)
-            addr.sin_addr.s_addr = inet_addr("192.168.0.1")
-            
-            let addrPtr = withUnsafePointer(to: &addr) {
-                $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { $0 }
-            }
-            
-            _ = Darwin.connect(socket, addrPtr, socklen_t(MemoryLayout<sockaddr_in>.size))
-            close(socket)
-        }
     }
 }
 
